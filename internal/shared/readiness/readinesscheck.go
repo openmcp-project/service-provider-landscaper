@@ -18,16 +18,16 @@ func (r CheckResult) Message() string {
 	return strings.Join(r, ", ")
 }
 
-func Ready() CheckResult {
+func NewReadyResult() CheckResult {
 	return CheckResult{}
 }
 
-func NotReady(message string) CheckResult {
+func NewNotReadyResult(message string) CheckResult {
 	return CheckResult{message}
 }
 
-func CheckFailed(err error) CheckResult {
-	return NotReady(fmt.Sprintf("readiness check failed: %v", err))
+func NewFailedResult(err error) CheckResult {
+	return NewNotReadyResult(fmt.Sprintf("readiness check failed: %v", err))
 }
 
 func Aggregate(results ...CheckResult) CheckResult {
@@ -37,7 +37,7 @@ func Aggregate(results ...CheckResult) CheckResult {
 // CheckDeployment checks the readiness of a deployment.
 func CheckDeployment(dp *appsv1.Deployment) CheckResult {
 	if dp.Status.ObservedGeneration < dp.Generation {
-		return NotReady(fmt.Sprintf("deployment %s/%s not ready: observed generation outdated", dp.Namespace, dp.Name))
+		return NewNotReadyResult(fmt.Sprintf("deployment %s/%s not ready: observed generation outdated", dp.Namespace, dp.Name))
 	}
 
 	var specReplicas int32 = 0
@@ -45,9 +45,12 @@ func CheckDeployment(dp *appsv1.Deployment) CheckResult {
 		specReplicas = *dp.Spec.Replicas
 	}
 
-	if specReplicas != dp.Status.Replicas || specReplicas != dp.Status.UpdatedReplicas || specReplicas != dp.Status.AvailableReplicas {
-		return NotReady(fmt.Sprintf("deployment %s/%s not ready: not enough ready replicas (%d/%d)", dp.Namespace, dp.Name, dp.Status.AvailableReplicas, specReplicas))
+	if dp.Generation != dp.Status.ObservedGeneration ||
+		specReplicas != dp.Status.Replicas ||
+		specReplicas != dp.Status.UpdatedReplicas ||
+		specReplicas != dp.Status.AvailableReplicas {
+		return NewNotReadyResult(fmt.Sprintf("deployment %s/%s is not ready", dp.Namespace, dp.Name))
 	}
 
-	return Ready()
+	return NewReadyResult()
 }

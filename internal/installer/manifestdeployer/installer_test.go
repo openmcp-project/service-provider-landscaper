@@ -54,7 +54,6 @@ var _ = Describe("Manifest Deployer Installer", func() {
 			ServiceAccount:         &ServiceAccountValues{Create: true},
 			HostClientSettings:     nil,
 			ResourceClientSettings: nil,
-			NodeSelector:           nil,
 		}
 
 		_, err = InstallManifestDeployer(ctx, values)

@@ -88,14 +88,6 @@ func (h *valuesHelper) hostNamespace() string {
 	return h.values.Instance.Namespace()
 }
 
-func (h *valuesHelper) deployerFullName() string {
-	return h.helmDeployerComponent.NamespacedDefaultResourceName()
-}
-
-func (h *valuesHelper) clusterRoleName() string {
-	return h.helmDeployerComponent.ClusterScopedDefaultResourceName()
-}
-
 func (h *valuesHelper) landscaperClusterKubeconfig() []byte {
 	return []byte(h.values.LandscaperClusterKubeconfig.Kubeconfig)
 }

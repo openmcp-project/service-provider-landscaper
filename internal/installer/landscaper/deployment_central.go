@@ -52,12 +52,9 @@ func (m *centralDeploymentMutator) Mutate(r *appsv1.Deployment) error {
 			Spec: corev1.PodSpec{
 				Volumes:            m.volumes(),
 				Containers:         m.containers(),
-				NodeSelector:       m.values.NodeSelector,
 				ServiceAccountName: m.landscaperFullName(),
 				SecurityContext:    m.values.PodSecurityContext,
 				ImagePullSecrets:   m.values.ImagePullSecrets,
-				Affinity:           m.values.Affinity,
-				Tolerations:        m.values.Tolerations,
 			},
 		},
 	}

@@ -73,9 +73,6 @@ var _ = Describe("Landscaper Controller Installer", func() {
 			ImagePullSecrets:   nil,
 			PodSecurityContext: nil,
 			SecurityContext:    nil,
-			NodeSelector:       nil,
-			Affinity:           nil,
-			Tolerations:        nil,
 		}
 
 		err = InstallLandscaper(ctx, values)

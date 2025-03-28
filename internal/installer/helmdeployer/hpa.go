@@ -21,7 +21,7 @@ func newHPAMutator(b *valuesHelper) resources.Mutator[*v2.HorizontalPodAutoscale
 }
 
 func (d *hpaMutator) String() string {
-	return fmt.Sprintf("hpa %s/%s", d.hostNamespace(), d.deployerFullName())
+	return fmt.Sprintf("hpa %s/%s", d.hostNamespace(), d.helmDeployerComponent.NamespacedDefaultResourceName())
 }
 
 func (d *hpaMutator) Empty() *v2.HorizontalPodAutoscaler {
@@ -31,7 +31,7 @@ func (d *hpaMutator) Empty() *v2.HorizontalPodAutoscaler {
 			Kind:       "HorizontalPodAutoscaler",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      d.deployerFullName(),
+			Name:      d.helmDeployerComponent.NamespacedDefaultResourceName(),
 			Namespace: d.hostNamespace(),
 		},
 	}
@@ -43,7 +43,7 @@ func (d *hpaMutator) Mutate(r *v2.HorizontalPodAutoscaler) error {
 		ScaleTargetRef: v2.CrossVersionObjectReference{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
-			Name:       d.deployerFullName(),
+			Name:       d.helmDeployerComponent.NamespacedDefaultResourceName(),
 		},
 		MinReplicas: ptr.To[int32](1),
 		MaxReplicas: d.values.HPA.MaxReplicas,

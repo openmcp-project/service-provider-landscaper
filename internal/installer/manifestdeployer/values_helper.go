@@ -65,14 +65,6 @@ func (h *valuesHelper) hostNamespace() string {
 	return h.values.Instance.Namespace()
 }
 
-func (h *valuesHelper) deployerFullName() string {
-	return h.manifestDeployerComponent.NamespacedDefaultResourceName()
-}
-
-func (h *valuesHelper) clusterRoleName() string {
-	return h.manifestDeployerComponent.ClusterScopedDefaultResourceName()
-}
-
 func (h *valuesHelper) landscaperClusterKubeconfig() []byte {
 	return []byte(h.values.LandscaperClusterKubeconfig.Kubeconfig)
 }

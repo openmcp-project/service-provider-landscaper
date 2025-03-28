@@ -11,9 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/shared"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/providerconfig"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
 
 func TestConfig(t *testing.T) {
@@ -77,14 +77,13 @@ var _ = Describe("Landscaper Instance Installer", func() {
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.Deployers = []string{manifest, helm}
 		config.HostCluster, err = newHostCluster()
 		Expect(err).NotTo(HaveOccurred())
 		config.ResourceCluster, err = newResourceCluster()
 		Expect(err).NotTo(HaveOccurred())
 
 		// Add optional values
-		config.HelmDeployer.HPA = shared.HPAValues{
+		config.HelmDeployer.HPA = types.HPAValues{
 			MaxReplicas: 3,
 		}
 		config.HelmDeployer.Resources = core.ResourceRequirements{
@@ -119,7 +118,6 @@ var _ = Describe("Landscaper Instance Installer", func() {
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.Deployers = []string{manifest, helm}
 		config.HostCluster, err = newHostCluster()
 		Expect(err).NotTo(HaveOccurred())
 		config.ResourceCluster, err = newResourceCluster()

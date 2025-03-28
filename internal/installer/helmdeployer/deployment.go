@@ -22,7 +22,7 @@ func newDeploymentMutator(b *valuesHelper) resources.Mutator[*appsv1.Deployment]
 }
 
 func (d *deploymentMutator) String() string {
-	return fmt.Sprintf("deployment %s/%s", d.hostNamespace(), d.deployerFullName())
+	return fmt.Sprintf("deployment %s/%s", d.hostNamespace(), d.helmDeployerComponent.NamespacedDefaultResourceName())
 }
 
 func (d *deploymentMutator) Empty() *appsv1.Deployment {
@@ -32,7 +32,7 @@ func (d *deploymentMutator) Empty() *appsv1.Deployment {
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      d.deployerFullName(),
+			Name:      d.helmDeployerComponent.NamespacedDefaultResourceName(),
 			Namespace: d.hostNamespace(),
 		},
 	}
@@ -52,12 +52,9 @@ func (d *deploymentMutator) Mutate(r *appsv1.Deployment) error {
 			Spec: corev1.PodSpec{
 				Volumes:                   d.volumes(),
 				Containers:                d.containers(),
-				NodeSelector:              d.values.NodeSelector,
-				ServiceAccountName:        d.deployerFullName(),
+				ServiceAccountName:        d.helmDeployerComponent.NamespacedDefaultResourceName(),
 				SecurityContext:           d.values.PodSecurityContext,
 				ImagePullSecrets:          d.values.ImagePullSecrets,
-				Affinity:                  d.values.Affinity,
-				Tolerations:               d.values.Tolerations,
 				TopologySpreadConstraints: d.helmDeployerComponent.TopologySpreadConstraints(),
 			},
 		},
@@ -100,7 +97,7 @@ func (d *deploymentMutator) volumes() []corev1.Volume {
 			Name: "config",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: fmt.Sprintf("%s-config", d.deployerFullName()),
+					SecretName: fmt.Sprintf("%s-config", d.helmDeployerComponent.NamespacedDefaultResourceName()),
 				},
 			},
 		},
@@ -111,7 +108,7 @@ func (d *deploymentMutator) volumes() []corev1.Volume {
 			Name: "ociregistry",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: fmt.Sprintf("%s-registries", d.deployerFullName()),
+					SecretName: fmt.Sprintf("%s-registries", d.helmDeployerComponent.NamespacedDefaultResourceName()),
 				},
 			},
 		}
@@ -122,7 +119,7 @@ func (d *deploymentMutator) volumes() []corev1.Volume {
 	if k := d.values.LandscaperClusterKubeconfig; k != nil {
 		secretName := ""
 		if k.Kubeconfig != "" {
-			secretName = fmt.Sprintf("%s-landscaper-cluster-kubeconfig", d.deployerFullName())
+			secretName = fmt.Sprintf("%s-landscaper-cluster-kubeconfig", d.helmDeployerComponent.NamespacedDefaultResourceName())
 		} else {
 			secretName = k.SecretRef
 		}

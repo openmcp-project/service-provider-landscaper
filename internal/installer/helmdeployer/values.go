@@ -9,9 +9,9 @@ import (
 	"k8s.io/utils/ptr"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/shared"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
 
 type Values struct {
@@ -30,10 +30,7 @@ type Values struct {
 	Configuration               v1alpha1.Configuration      `json:"configuration,omitempty"`
 	HostClientSettings          *ClientSettings             `json:"hostClientSettings,omitempty"`
 	ResourceClientSettings      *ClientSettings             `json:"resourceClientSettings,omitempty"`
-	HPA                         shared.HPAValues            `json:"hpa,omitempty"` // <<<
-	NodeSelector                map[string]string           `json:"nodeSelector,omitempty"`
-	Affinity                    *core.Affinity              `json:"affinity,omitempty"`
-	Tolerations                 []core.Toleration           `json:"tolerations,omitempty"`
+	HPA                         types.HPAValues             `json:"hpa,omitempty"`
 	OCI                         *OCIValues                  `json:"oci,omitempty"`
 }
 

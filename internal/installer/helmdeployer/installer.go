@@ -64,7 +64,7 @@ func InstallHelmDeployer(ctx context.Context, values *Values) (*Exports, error) 
 
 	return &Exports{
 		// needed for health checks
-		DeploymentName: valHelper.deployerFullName(),
+		DeploymentName: valHelper.helmDeployerComponent.NamespacedDefaultResourceName(),
 	}, nil
 }
 
@@ -111,13 +111,13 @@ func UninstallHelmDeployer(ctx context.Context, values *Values) error {
 func CheckReadiness(ctx context.Context, values *Values) readiness.CheckResult {
 	valHelper, err := newValuesHelperForDelete(values)
 	if err != nil {
-		return readiness.CheckFailed(err)
+		return readiness.NewFailedResult(err)
 	}
 
 	hostClient := values.HostCluster.Client()
 	dp, err := resources.GetResource(ctx, hostClient, newDeploymentMutator(valHelper))
 	if err != nil {
-		return readiness.CheckFailed(err)
+		return readiness.NewFailedResult(err)
 	}
 	return readiness.CheckDeployment(dp)
 }

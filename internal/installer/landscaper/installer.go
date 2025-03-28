@@ -172,12 +172,12 @@ func UninstallLandscaper(ctx context.Context, values *Values) error {
 func CheckReadiness(ctx context.Context, values *Values) readiness.CheckResult {
 	valHelper, err := newValuesHelperForDelete(values)
 	if err != nil {
-		return readiness.CheckFailed(err)
+		return readiness.NewFailedResult(err)
 	}
 
 	hostClient := values.HostCluster.Client()
 
-	aggregatedResult := readiness.Ready()
+	aggregatedResult := readiness.NewReadyResult()
 	for _, mut := range []resources.Mutator[*appsv1.Deployment]{
 		newCentralDeploymentMutator(valHelper),
 		newMainDeploymentMutator(valHelper),
@@ -185,7 +185,7 @@ func CheckReadiness(ctx context.Context, values *Values) readiness.CheckResult {
 	} {
 		dp, err := resources.GetResource(ctx, hostClient, mut)
 		if err != nil {
-			return readiness.CheckFailed(err)
+			return readiness.NewFailedResult(err)
 		}
 		result := readiness.CheckDeployment(dp)
 		aggregatedResult = readiness.Aggregate(aggregatedResult, result)

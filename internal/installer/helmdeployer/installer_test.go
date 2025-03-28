@@ -54,7 +54,6 @@ var _ = Describe("Helm Deployer Installer", func() {
 			ServiceAccount:         &ServiceAccountValues{Create: true},
 			HostClientSettings:     nil,
 			ResourceClientSettings: nil,
-			NodeSelector:           nil,
 		}
 
 		_, err = InstallHelmDeployer(ctx, values)

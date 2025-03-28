@@ -10,9 +10,9 @@ import (
 	"k8s.io/utils/ptr"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/shared"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
 
 type Values struct {
@@ -27,9 +27,6 @@ type Values struct {
 	ImagePullSecrets   []core.LocalObjectReference      `json:"imagePullSecrets,omitempty"`
 	PodSecurityContext *core.PodSecurityContext         `json:"podSecurityContext,omitempty"`
 	SecurityContext    *core.SecurityContext            `json:"securityContext,omitempty"`
-	NodeSelector       map[string]string                `json:"nodeSelector,omitempty"`
-	Affinity           *core.Affinity                   `json:"affinity,omitempty"`
-	Tolerations        []core.Toleration                `json:"tolerations,omitempty"`
 }
 
 type KubeconfigValues struct {
@@ -59,7 +56,7 @@ type ControllerValues struct {
 	ResourceClientSettings ClientSettings            `json:"resourceClientSettings,omitempty"` // optional, has default value
 	// HPAMain contains the values for the HPA of the main deployment.
 	// (There is no configuration for HPACentral, because its values are fix.)
-	HPAMain            shared.HPAValues                `json:"hpaMain,omitempty"`            // optional, has default value
+	HPAMain            types.HPAValues                 `json:"hpaMain,omitempty"`            // optional, has default value
 	DeployItemTimeouts *v1alpha1.DeployItemTimeouts    `json:"deployItemTimeouts,omitempty"` // optional, has default value
 	HealthChecks       *v1alpha1.AdditionalDeployments `json:"healthChecks,omitempty"`       // optional, has default value
 }
@@ -81,7 +78,7 @@ type WebhooksServerValues struct {
 	ReplicaCount         *int32                    `json:"replicaCount,omitempty"` // optional - has default value
 	Ingress              *IngressValues            `json:"ingress,omitempty"`      // optional - if nil, no ingress will be created.
 	Resources            core.ResourceRequirements `json:"resources,omitempty"`    // optional - has default value
-	HPA                  shared.HPAValues          `json:"hpa,omitempty"`          // optional - has default value
+	HPA                  types.HPAValues           `json:"hpa,omitempty"`          // optional - has default value
 }
 
 type CommonControllerValues struct {

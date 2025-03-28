@@ -3,7 +3,6 @@ package instance
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/helmdeployer"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/landscaper"
@@ -21,31 +20,15 @@ func InstallLandscaperInstance(ctx context.Context, config *Configuration) error
 	}
 
 	// Manifest deployer
-	var manifestExports *manifestdeployer.Exports
-	if slices.Contains(config.Deployers, manifest) {
-		manifestExports, err = manifestdeployer.InstallManifestDeployer(ctx, manifestDeployerValues(config, kubeconfigs))
-		if err != nil {
-			return fmt.Errorf("failed to install manifest deployer: %w", err)
-		}
-	} else {
-		err = manifestdeployer.UninstallManifestDeployer(ctx, manifestDeployerValues(config, kubeconfigs))
-		if err != nil {
-			return fmt.Errorf("failed to uninstall manifest deployer: %w", err)
-		}
+	manifestExports, err := manifestdeployer.InstallManifestDeployer(ctx, manifestDeployerValues(config, kubeconfigs))
+	if err != nil {
+		return fmt.Errorf("failed to install manifest deployer: %w", err)
 	}
 
 	// Helm deployer
-	var helmExports *helmdeployer.Exports
-	if slices.Contains(config.Deployers, helm) {
-		helmExports, err = helmdeployer.InstallHelmDeployer(ctx, helmDeployerValues(config, kubeconfigs))
-		if err != nil {
-			return fmt.Errorf("failed to install helm deployer: %w", err)
-		}
-	} else {
-		err = helmdeployer.UninstallHelmDeployer(ctx, helmDeployerValues(config, kubeconfigs))
-		if err != nil {
-			return fmt.Errorf("failed to uninstall helm deployer: %w", err)
-		}
+	helmExports, err := helmdeployer.InstallHelmDeployer(ctx, helmDeployerValues(config, kubeconfigs))
+	if err != nil {
+		return fmt.Errorf("failed to install helm deployer: %w", err)
 	}
 
 	// Landscaper

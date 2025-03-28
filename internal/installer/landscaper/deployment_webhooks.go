@@ -52,11 +52,8 @@ func (m *webhooksDeploymentMutator) Mutate(r *appsv1.Deployment) error {
 			Spec: corev1.PodSpec{
 				Volumes:                   m.volumes(),
 				Containers:                m.containers(),
-				NodeSelector:              m.values.NodeSelector,
 				SecurityContext:           m.values.PodSecurityContext,
 				ImagePullSecrets:          m.values.ImagePullSecrets,
-				Affinity:                  m.values.Affinity,
-				Tolerations:               m.values.Tolerations,
 				TopologySpreadConstraints: m.webhooksComponent.TopologySpreadConstraints(),
 			},
 		},

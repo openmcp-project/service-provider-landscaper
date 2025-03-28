@@ -1,4 +1,4 @@
-package shared
+package types
 
 type HPAValues struct {
 	MaxReplicas              int32  `json:"maxReplicas,omitempty"`

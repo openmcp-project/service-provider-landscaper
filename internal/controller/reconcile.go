@@ -330,7 +330,6 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, workloadClu
 		Version:         "v0.127.0",
 		HostCluster:     workloadClusterAccess,
 		ResourceCluster: mcpClusterAccess,
-		Deployers:       []string{"helm", "manifest"},
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
 				Image: v1alpha1.ImageConfiguration{
