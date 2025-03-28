@@ -1,0 +1,6 @@
+apiVersion: landscaper.services.openmcp.cloud/v1alpha1
+kind: Landscaper
+metadata:
+  name: sample
+  namespace: my-workspace
+spec: {}

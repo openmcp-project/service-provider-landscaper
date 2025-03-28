@@ -1,0 +1,23 @@
+apiVersion: openmcp.cloud/v1alpha1
+kind: MCPServiceProvider
+metadata:
+  name: service-provider-landscaper
+spec:
+
+  # configuration for the deployment of the service provider
+  deploymentConfig:
+    oci:
+      image: "service-provider-landscaper:v0.0.1"
+      pullSecrets: []
+    deployment: {}
+
+  # provider specific configuration
+  providerConfig:
+    landscaperController:
+      image: ".../landscaper-controller:v0.127.0"
+    landscaperWebhooksServer:
+      image: ".../landscaper-webhooks-server:v0.127.0"
+    helmDeployer:
+      image: ".../helm-deployer-controller:v0.127.0"
+    manifestDeployer:
+      image: ".../manifest-deployer-controller:v0.127.0"
