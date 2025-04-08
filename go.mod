@@ -1,8 +1,6 @@
 module github.com/openmcp-project/service-provider-landscaper
 
-go 1.23.5
-
-toolchain go1.24.1
+go 1.24.1
 
 //godebug default=go1.23
 
