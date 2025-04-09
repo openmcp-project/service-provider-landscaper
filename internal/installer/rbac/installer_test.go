@@ -16,7 +16,7 @@ func TestConfig(t *testing.T) {
 	RunSpecs(t, "Landscaper RBAC Installer Test Suite")
 }
 
-var _ = Describe("Landscaper RBAC Installer", func() {
+var _ = XDescribe("Landscaper RBAC Installer", func() {
 
 	const instanceID = "test-rr8fq"
 

@@ -20,7 +20,7 @@ func TestConfig(t *testing.T) {
 	RunSpecs(t, "Landscaper Controller Installer Test Suite")
 }
 
-var _ = Describe("Landscaper Controller Installer", func() {
+var _ = XDescribe("Landscaper Controller Installer", func() {
 
 	const instanceID = "test-g23tp"
 

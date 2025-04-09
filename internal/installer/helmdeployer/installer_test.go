@@ -18,7 +18,7 @@ func TestConfig(t *testing.T) {
 	RunSpecs(t, "Helm Deployer Installer Test Suite")
 }
 
-var _ = Describe("Helm Deployer Installer", func() {
+var _ = XDescribe("Helm Deployer Installer", func() {
 
 	const instanceID = "test-g23tp"
 

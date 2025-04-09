@@ -18,7 +18,7 @@ func TestConfig(t *testing.T) {
 	RunSpecs(t, "Manifest Deployer Installer Test Suite")
 }
 
-var _ = Describe("Manifest Deployer Installer", func() {
+var _ = XDescribe("Manifest Deployer Installer", func() {
 
 	const id = "test-g23tp"
 

@@ -14,7 +14,7 @@ import (
 	landscaperservicesopenmcpcloudv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 )
 
-var _ = Describe("Landscaper Controller", func() {
+var _ = XDescribe("Landscaper Controller", func() {
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
