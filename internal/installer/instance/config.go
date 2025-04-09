@@ -9,11 +9,6 @@ import (
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
 
-const (
-	helm     = "helm"
-	manifest = "manifest"
-)
-
 type Configuration struct {
 	Instance identity.Instance
 	Version  string

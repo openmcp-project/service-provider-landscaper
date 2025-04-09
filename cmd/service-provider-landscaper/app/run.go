@@ -50,19 +50,22 @@ type runOptions struct {
 	Log                   logging.Logger
 	ServiceProviderConfig *api.LandscaperProviderConfiguration
 
-	//var metricsAddr string
-	//var metricsCertPath, metricsCertName, metricsCertKey string
-	//var webhookCertPath, webhookCertName, webhookCertKey string
-	//var enableLeaderElection bool
-	//var probeAddr string
-	//var secureMetrics bool
-	//var enableHTTP2 bool
-	//var tlsOpts []func(*tls.Config)
+	// var metricsAddr string
+	// var metricsCertPath, metricsCertName, metricsCertKey string
+	// var webhookCertPath, webhookCertName, webhookCertKey string
+	// var enableLeaderElection bool
+	// var probeAddr string
+	// var secureMetrics bool
+	// var enableHTTP2 bool
+	// var tlsOpts []func(*tls.Config)
 }
 
 func (o *runOptions) addFlags(fs *flag.FlagSet) {
-	fs.StringVar(&o.OnboardingKubeconfigPath, "onboarding-kubeconfig-path", "", "Path to the kubeconfig of the onboarding cluster.")
-	fs.StringVar(&o.ServiceProviderResourcePath, "service-provider-resource-path", "", "Path to the yaml manifest of the service provider landscaper.")
+	fs.StringVar(&o.OnboardingKubeconfigPath, "onboarding-kubeconfig-path", "",
+		"Path to the kubeconfig of the onboarding cluster.")
+	fs.StringVar(&o.ServiceProviderResourcePath, "service-provider-resource-path", "",
+		"Path to the yaml manifest of the service provider landscaper.")
+
 	logging.InitFlags(fs)
 	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 }

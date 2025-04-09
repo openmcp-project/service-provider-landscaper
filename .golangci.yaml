@@ -16,8 +16,17 @@ issues:
       linters:
         - dupl
         - lll
+
 linters:
   disable-all: true
+  exclusions:
+    rules:
+      - linters:
+          - gocyclo
+        path: internal/installer/landscaper/values.go
+      - linters:
+          - unparam
+        path: internal/controller/reconcile.go
   enable:
     - dupl
     - errcheck
