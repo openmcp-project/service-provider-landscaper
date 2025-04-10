@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	auth "k8s.io/api/authentication/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	core "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 )
@@ -48,14 +48,14 @@ type User struct {
 	Token string `json:"token"`
 }
 
-func CreateKubeconfig(ctx context.Context, clust *Cluster, serviceAccountName, serviceAccountNamespace string) ([]byte, error) {
+func CreateKubeconfig(ctx context.Context, clust *Cluster, serviceAccount *core.ServiceAccount) ([]byte, error) {
 
-	token, err := requestToken(ctx, clust, serviceAccountName, serviceAccountNamespace)
+	token, err := requestToken(ctx, clust, serviceAccount)
 	if err != nil {
-		return nil, fmt.Errorf("failed to request token for service account %s/%s: %w", serviceAccountNamespace, serviceAccountName, err)
+		return nil, fmt.Errorf("failed to request token for service account %s/%s: %w", serviceAccount.Namespace, serviceAccount.Name, err)
 	}
 
-	contextName := fmt.Sprintf("%s-%s", serviceAccountNamespace, serviceAccountName)
+	contextName := fmt.Sprintf("%s-%s", serviceAccount.Namespace, serviceAccount.Name)
 
 	kubeConfig := KubeConfig{
 		APIVersion:     "v1",
@@ -97,7 +97,7 @@ func CreateKubeconfig(ctx context.Context, clust *Cluster, serviceAccountName, s
 	return kubeconfigYaml, nil
 }
 
-func requestToken(ctx context.Context, clust *Cluster, serviceAccountName, serviceAccountNamespace string) (string, error) {
+func requestToken(ctx context.Context, clust *Cluster, serviceAccount *core.ServiceAccount) (string, error) {
 
 	tokenRequest := &auth.TokenRequest{
 		Spec: auth.TokenRequestSpec{
@@ -105,8 +105,7 @@ func requestToken(ctx context.Context, clust *Cluster, serviceAccountName, servi
 		},
 	}
 
-	tokenRequest, err := clust.ClientSet().CoreV1().ServiceAccounts(serviceAccountNamespace).CreateToken(ctx, serviceAccountName, tokenRequest, metav1.CreateOptions{})
-	if err != nil {
+	if err := clust.Client().SubResource("token").Create(ctx, serviceAccount, tokenRequest); err != nil {
 		return "", fmt.Errorf("failed to create token: %w", err)
 	}
 

@@ -66,19 +66,19 @@ func InstallLandscaperRBACResources(ctx context.Context, values *Values) (kubeco
 		kubeconfigs = &Kubeconfigs{}
 
 		controllerServiceAccount := newControllerServiceAccountMutator(valHelper).Empty()
-		kubeconfigs.ControllerKubeconfig, err = cluster.CreateKubeconfig(ctx, values.ResourceCluster, controllerServiceAccount.Name, controllerServiceAccount.Namespace)
+		kubeconfigs.ControllerKubeconfig, err = cluster.CreateKubeconfig(ctx, values.ResourceCluster, controllerServiceAccount)
 		if err != nil {
 			return kubeconfigs, err
 		}
 
 		webhooksServiceAccount := newWebhooksServiceAccountMutator(valHelper).Empty()
-		kubeconfigs.WebhooksKubeconfig, err = cluster.CreateKubeconfig(ctx, values.ResourceCluster, webhooksServiceAccount.Name, webhooksServiceAccount.Namespace)
+		kubeconfigs.WebhooksKubeconfig, err = cluster.CreateKubeconfig(ctx, values.ResourceCluster, webhooksServiceAccount)
 		if err != nil {
 			return kubeconfigs, err
 		}
 
 		userServiceAccount := userServiceAccountMutator.Empty()
-		kubeconfigs.UserKubeconfig, err = cluster.CreateKubeconfig(ctx, values.ResourceCluster, userServiceAccount.Name, userServiceAccount.Namespace)
+		kubeconfigs.UserKubeconfig, err = cluster.CreateKubeconfig(ctx, values.ResourceCluster, userServiceAccount)
 		if err != nil {
 			return kubeconfigs, err
 		}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -14,7 +13,6 @@ type Cluster struct {
 	kubeconfig []byte
 	restConfig *rest.Config
 	client     client.Client
-	clientSet  *kubernetes.Clientset
 }
 
 func NewCluster(kubeconfigPath string) (*Cluster, error) {
@@ -29,11 +27,6 @@ func NewCluster(kubeconfigPath string) (*Cluster, error) {
 		return nil, fmt.Errorf("unable to create kubernetes rest config: %w", err)
 	}
 
-	clientSet, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create kubernetes clientset: %w", err)
-	}
-
 	client, err := client.New(restConfig, client.Options{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to create kubernetes client: %w", err)
@@ -43,7 +36,6 @@ func NewCluster(kubeconfigPath string) (*Cluster, error) {
 		kubeconfig: kubeconfig,
 		restConfig: restConfig,
 		client:     client,
-		clientSet:  clientSet,
 	}, nil
 }
 
@@ -57,8 +49,4 @@ func (c *Cluster) RestConfig() *rest.Config {
 
 func (c *Cluster) Client() client.Client {
 	return c.client
-}
-
-func (c *Cluster) ClientSet() *kubernetes.Clientset {
-	return c.clientSet
 }

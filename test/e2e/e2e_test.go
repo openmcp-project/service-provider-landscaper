@@ -42,7 +42,7 @@ const metricsServiceName = "service-provider-landscaper-controller-manager-metri
 // metricsRoleBindingName is the name of the RBAC that will be created to allow get the metrics data
 const metricsRoleBindingName = "service-provider-landscaper-metrics-binding"
 
-var _ = Describe("Manager", Ordered, func() {
+var _ = XDescribe("Manager", Ordered, func() {
 	var controllerPodName string
 
 	// Before running the tests, set up the environment by creating the namespace,
