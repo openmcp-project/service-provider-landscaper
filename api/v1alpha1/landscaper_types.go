@@ -53,6 +53,7 @@ type LandscaperStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:metadata:labels="openmcp.cloud/cluster=onboarding"
 
 // Landscaper is the Schema for the landscapers API.
 type Landscaper struct {

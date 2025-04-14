@@ -10,7 +10,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/resources"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 type webhooksDeploymentMutator struct {

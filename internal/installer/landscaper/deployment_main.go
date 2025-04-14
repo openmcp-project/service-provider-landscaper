@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/resources"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 type mainDeploymentMutator struct {

@@ -4,7 +4,7 @@ import (
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/resources"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 func newServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {

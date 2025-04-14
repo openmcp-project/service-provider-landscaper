@@ -3,8 +3,8 @@ package manifestdeployer
 import (
 	"context"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/resources"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/readiness"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 type Exports struct {

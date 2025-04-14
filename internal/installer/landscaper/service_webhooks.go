@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/resources"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 type webhooksServiceMutator struct {

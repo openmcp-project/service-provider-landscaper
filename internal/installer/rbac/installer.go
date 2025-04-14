@@ -3,8 +3,8 @@ package rbac
 import (
 	"context"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/resources"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 type Kubeconfigs struct {
