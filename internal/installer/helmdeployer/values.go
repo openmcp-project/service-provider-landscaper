@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/gardener/landscaper/apis/deployer/helm/v1alpha1"
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
@@ -17,7 +17,7 @@ import (
 type Values struct {
 	Instance                    identity.Instance `json:"instance,omitempty"`
 	Version                     string            `json:"version,omitempty"`
-	HostCluster                 *cluster.Cluster
+	HostCluster                 *clusters.Cluster
 	VerbosityLevel              string                      `json:"verbosityLevel,omitempty"`
 	LandscaperClusterKubeconfig *KubeconfigValues           `json:"landscaperClusterKubeconfig,omitempty"`
 	Image                       api.ImageConfiguration      `json:"image,omitempty"`

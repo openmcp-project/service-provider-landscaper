@@ -1,10 +1,10 @@
 package instance
 
 import (
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	core "k8s.io/api/core/v1"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
@@ -13,8 +13,8 @@ type Configuration struct {
 	Instance identity.Instance
 	Version  string
 
-	HostCluster     *cluster.Cluster
-	ResourceCluster *cluster.Cluster
+	HostCluster     *clusters.Cluster
+	ResourceCluster *clusters.Cluster
 
 	Landscaper LandscaperConfig
 

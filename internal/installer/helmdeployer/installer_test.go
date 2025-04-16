@@ -22,14 +22,10 @@ var _ = XDescribe("Helm Deployer Installer", func() {
 
 	const instanceID = "test-g23tp"
 
-	newHostCluster := func() (*cluster.Cluster, error) {
-		return cluster.NewCluster(os.Getenv("KUBECONFIG"))
-	}
-
 	It("should install the helm deployer", func() {
 		ctx := context.Background()
 
-		hostCluster, err := newHostCluster()
+		hostCluster, err := cluster.WorkloadCluster()
 		Expect(err).ToNot(HaveOccurred())
 
 		kubeconfig, err := os.ReadFile(os.Getenv("KUBECONFIG"))
@@ -63,7 +59,7 @@ var _ = XDescribe("Helm Deployer Installer", func() {
 	XIt("should uninstall the helm deployer", func() {
 		ctx := context.Background()
 
-		hostCluster, err := newHostCluster()
+		hostCluster, err := cluster.WorkloadCluster()
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{

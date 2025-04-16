@@ -25,14 +25,6 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 
 	const instanceID = "test2501"
 
-	newHostCluster := func() (*cluster.Cluster, error) {
-		return cluster.NewCluster(os.Getenv("HOST_CLUSTER_KUBECONFIG"))
-	}
-
-	newResourceCluster := func() (*cluster.Cluster, error) {
-		return cluster.NewCluster(os.Getenv("RESOURCE_CLUSTER_KUBECONFIG"))
-	}
-
 	// newConfiguration creates a  Configuration which is partially filled, namely with the instance independent values.
 	newConfiguration := func() (*Configuration, error) {
 		serviceProviderConfig, err := providerconfig.ReadProviderConfig(os.Getenv("SERVICE_PROVIDER_RESOURCE_PATH"))
@@ -77,9 +69,9 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.HostCluster, err = newHostCluster()
+		config.HostCluster, err = cluster.WorkloadCluster()
 		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = newResourceCluster()
+		config.ResourceCluster, err = cluster.MCPCluster()
 		Expect(err).NotTo(HaveOccurred())
 
 		// Add optional values
@@ -118,9 +110,9 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.HostCluster, err = newHostCluster()
+		config.HostCluster, err = cluster.WorkloadCluster()
 		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = newResourceCluster()
+		config.ResourceCluster, err = cluster.MCPCluster()
 		Expect(err).NotTo(HaveOccurred())
 
 		err = UninstallLandscaperInstance(ctx, config)

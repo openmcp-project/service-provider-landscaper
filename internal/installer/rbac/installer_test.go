@@ -2,7 +2,6 @@ package rbac
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -20,14 +19,10 @@ var _ = XDescribe("Landscaper RBAC Installer", func() {
 
 	const instanceID = "test-rr8fq"
 
-	newResourceCluster := func() (*cluster.Cluster, error) {
-		return cluster.NewCluster(os.Getenv("RESOURCE_CLUSTER_KUBECONFIG"))
-	}
-
 	It("should install the landscaper rbac resources", func() {
 		ctx := context.Background()
 
-		resourceCluster, err := newResourceCluster()
+		resourceCluster, err := cluster.MCPCluster()
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{
@@ -47,7 +42,7 @@ var _ = XDescribe("Landscaper RBAC Installer", func() {
 	XIt("should uninstall the landscaper rbac resources", func() {
 		ctx := context.Background()
 
-		resourceCluster, err := newResourceCluster()
+		resourceCluster, err := cluster.MCPCluster()
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{

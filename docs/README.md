@@ -8,5 +8,5 @@
 ## Technical Documentation
 
 - [Installing the Service Provider Landscaper](technical/install.md)
-- [Package Dependencies](technical/packages.md)
+- [Packages](technical/packages.md)
 

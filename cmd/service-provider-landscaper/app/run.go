@@ -6,22 +6,26 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	"github.com/openmcp-project/controller-utils/pkg/logging"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	"github.com/openmcp-project/service-provider-landscaper/api/install"
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 	controller1 "github.com/openmcp-project/service-provider-landscaper/internal/controller"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/providerconfig"
 )
 
 func NewRunCommand(ctx context.Context) *cobra.Command {
-	options := &runOptions{}
+	options := &runOptions{
+		OnboardingCluster: clusters.New("onboarding"),
+	}
 
 	cmd := &cobra.Command{
 		Use:   "run",
@@ -44,7 +48,7 @@ func NewRunCommand(ctx context.Context) *cobra.Command {
 }
 
 type runOptions struct {
-	OnboardingKubeconfigPath    string
+	OnboardingCluster           *clusters.Cluster
 	ServiceProviderResourcePath string
 
 	Log                   logging.Logger
@@ -61,8 +65,9 @@ type runOptions struct {
 }
 
 func (o *runOptions) addFlags(fs *flag.FlagSet) {
-	fs.StringVar(&o.OnboardingKubeconfigPath, "onboarding-kubeconfig-path", "",
-		"Path to the kubeconfig of the onboarding cluster.")
+	// register flag '--onboarding-cluster' for the path to the kubeconfig of the onboarding cluster
+	o.OnboardingCluster.RegisterConfigPathFlag(fs)
+
 	fs.StringVar(&o.ServiceProviderResourcePath, "service-provider-resource-path", "",
 		"Path to the yaml manifest of the service provider landscaper.")
 
@@ -72,6 +77,9 @@ func (o *runOptions) addFlags(fs *flag.FlagSet) {
 
 func (o *runOptions) complete() (err error) {
 	if err = o.setupLogger(); err != nil {
+		return err
+	}
+	if err = o.setupOnboardingClusterClient(); err != nil {
 		return err
 	}
 
@@ -93,28 +101,27 @@ func (o *runOptions) setupLogger() error {
 	return nil
 }
 
-func (o *runOptions) run() error {
-	o.Log.Info("Starting service provider landscaper",
-		"onboarding-kubeconfig-path", o.OnboardingKubeconfigPath,
-		"service-provider-resource-path", o.ServiceProviderResourcePath)
+func (o *runOptions) setupOnboardingClusterClient() error {
+	if err := o.OnboardingCluster.InitializeRESTConfig(); err != nil {
+		return fmt.Errorf("unable to initialize onboarding cluster rest config: %w", err)
+	}
+	if err := o.OnboardingCluster.InitializeClient(install.InstallCRDAPIs(runtime.NewScheme())); err != nil {
+		return fmt.Errorf("unable to initialize onboarding cluster client: %w", err)
+	}
+	return nil
+}
 
-	onboardingKubeconfig, err := os.ReadFile(o.OnboardingKubeconfigPath)
-	if err != nil {
-		o.Log.Error(err, "unable to read onboarding cluster kubeconfig")
-		os.Exit(1)
-	}
-	onboardingRestConfig, err := clientcmd.RESTConfigFromKubeConfig(onboardingKubeconfig)
-	if err != nil {
-		o.Log.Error(err, "unable to create onboarding cluster rest config")
-		os.Exit(1)
-	}
+func (o *runOptions) run() error {
+	o.Log.Info("starting service provider landscaper",
+		"onboarding-cluster", o.OnboardingCluster.ConfigPath(),
+		"service-provider-resource-path", o.ServiceProviderResourcePath)
 
 	mgrOptions := ctrl.Options{
 		Metrics:        metricsserver.Options{BindAddress: "0"},
 		LeaderElection: false,
 	}
 
-	mgr, err := ctrl.NewManager(onboardingRestConfig, mgrOptions)
+	mgr, err := ctrl.NewManager(o.OnboardingCluster.RESTConfig(), mgrOptions)
 	if err != nil {
 		return fmt.Errorf("unable to setup manager: %w", err)
 	}

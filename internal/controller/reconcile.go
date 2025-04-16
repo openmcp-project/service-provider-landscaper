@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	"github.com/openmcp-project/controller-utils/pkg/controller"
 	"github.com/openmcp-project/controller-utils/pkg/logging"
 	core "k8s.io/api/core/v1"
@@ -79,12 +80,12 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context, 
 
 	initConditions(ls)
 
-	workloadClusterAccess, err := r.getWorkloadClusterAccess()
+	workloadClusterAccess, err := cluster.WorkloadCluster()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	mcpClusterAccess, err := r.getMCPClusterAccess()
+	mcpClusterAccess, err := cluster.MCPCluster()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -154,12 +155,12 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 		return reconcile.Result{}, err
 	}
 
-	workloadClusterAccess, err := r.getWorkloadClusterAccess()
+	workloadClusterAccess, err := cluster.WorkloadCluster()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	mcpClusterAccess, err := r.getMCPClusterAccess()
+	mcpClusterAccess, err := cluster.MCPCluster()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -290,25 +291,29 @@ func (r *LandscaperReconciler) ensureInstanceID(ctx context.Context, ls *v1alpha
 	return nil
 }
 
-func (r *LandscaperReconciler) getMCPClusterAccess() (*cluster.Cluster, error) {
-	// TODO: use reference to mcp resource
-	mcpCluster, err := cluster.NewCluster(os.Getenv("MCP_KUBECONFIG_PATH"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create access to mcp cluster: %w", err)
+func (r *LandscaperReconciler) getMCPClusterAccess() (*clusters.Cluster, error) {
+	mcpCluster := clusters.New("mcp").WithConfigPath(os.Getenv("MCP_KUBECONFIG_PATH"))
+	if err := mcpCluster.InitializeRESTConfig(); err != nil {
+		return nil, fmt.Errorf("failed to initialize rest config for mcp cluster: %w", err)
+	}
+	if err := mcpCluster.InitializeClient(nil); err != nil {
+		return nil, fmt.Errorf("failed to initialize rest config for mcp cluster: %w", err)
 	}
 	return mcpCluster, nil
 }
 
-func (r *LandscaperReconciler) getWorkloadClusterAccess() (*cluster.Cluster, error) {
-	// TODO: use the cluster request
-	workloadCluster, err := cluster.NewCluster(os.Getenv("WORKLOAD_KUBECONFIG_PATH"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create access to workload cluster: %w", err)
+func (r *LandscaperReconciler) getWorkloadClusterAccess() (*clusters.Cluster, error) {
+	workloadCluster := clusters.New("workload").WithConfigPath(os.Getenv("WORKLOAD_KUBECONFIG_PATH"))
+	if err := workloadCluster.InitializeRESTConfig(); err != nil {
+		return nil, fmt.Errorf("failed to initialize rest config for workload cluster: %w", err)
+	}
+	if err := workloadCluster.InitializeClient(nil); err != nil {
+		return nil, fmt.Errorf("failed to initialize rest config for workload cluster: %w", err)
 	}
 	return workloadCluster, nil
 }
 
-func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, workloadClusterAccess, mcpClusterAccess *cluster.Cluster) (*instance.Configuration, error) {
+func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, workloadClusterAccess, mcpClusterAccess *clusters.Cluster) (*instance.Configuration, error) {
 	inst := identity.Instance(identity.GetInstanceID(ls))
 
 	cpu, err := resource.ParseQuantity("10m")
