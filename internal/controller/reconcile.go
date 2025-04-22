@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
@@ -289,28 +288,6 @@ func (r *LandscaperReconciler) ensureInstanceID(ctx context.Context, ls *v1alpha
 		}
 	}
 	return nil
-}
-
-func (r *LandscaperReconciler) getMCPClusterAccess() (*clusters.Cluster, error) {
-	mcpCluster := clusters.New("mcp").WithConfigPath(os.Getenv("MCP_KUBECONFIG_PATH"))
-	if err := mcpCluster.InitializeRESTConfig(); err != nil {
-		return nil, fmt.Errorf("failed to initialize rest config for mcp cluster: %w", err)
-	}
-	if err := mcpCluster.InitializeClient(nil); err != nil {
-		return nil, fmt.Errorf("failed to initialize rest config for mcp cluster: %w", err)
-	}
-	return mcpCluster, nil
-}
-
-func (r *LandscaperReconciler) getWorkloadClusterAccess() (*clusters.Cluster, error) {
-	workloadCluster := clusters.New("workload").WithConfigPath(os.Getenv("WORKLOAD_KUBECONFIG_PATH"))
-	if err := workloadCluster.InitializeRESTConfig(); err != nil {
-		return nil, fmt.Errorf("failed to initialize rest config for workload cluster: %w", err)
-	}
-	if err := workloadCluster.InitializeClient(nil); err != nil {
-		return nil, fmt.Errorf("failed to initialize rest config for workload cluster: %w", err)
-	}
-	return workloadCluster, nil
 }
 
 func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, workloadClusterAccess, mcpClusterAccess *clusters.Cluster) (*instance.Configuration, error) {
