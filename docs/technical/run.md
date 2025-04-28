@@ -1,4 +1,4 @@
-# Running/Debugging the Service Provider Landscaper
+# Running the Service Provider Landscaper
 
 ## Init Command
 
