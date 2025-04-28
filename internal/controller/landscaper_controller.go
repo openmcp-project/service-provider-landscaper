@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 )
 
 const (
@@ -18,7 +19,10 @@ const (
 
 // LandscaperReconciler reconciles a Landscaper object
 type LandscaperReconciler struct {
-	OnboardingClient         client.Client
+	OnboardingClient      client.Client
+	WorkloadCluster       cluster.Cluster
+	WorkloadClusterDomain string
+
 	Scheme                   *runtime.Scheme
 	LandscaperProviderConfig *api.LandscaperProviderConfiguration
 }

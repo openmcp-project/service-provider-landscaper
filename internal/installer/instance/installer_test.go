@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
@@ -71,7 +72,7 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 		config.Instance = instanceID
 		config.HostCluster, err = cluster.WorkloadCluster()
 		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = cluster.MCPCluster()
+		config.ResourceCluster, err = cluster.MCPCluster(ctx, client.ObjectKey{}, nil)
 		Expect(err).NotTo(HaveOccurred())
 
 		// Add optional values
@@ -112,7 +113,7 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 		config.Instance = instanceID
 		config.HostCluster, err = cluster.WorkloadCluster()
 		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = cluster.MCPCluster()
+		config.ResourceCluster, err = cluster.MCPCluster(ctx, client.ObjectKey{}, nil)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = UninstallLandscaperInstance(ctx, config)

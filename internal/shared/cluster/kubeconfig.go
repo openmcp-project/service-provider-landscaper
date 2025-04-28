@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	auth "k8s.io/api/authentication/v1"
 	core "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
@@ -49,7 +48,7 @@ type User struct {
 	Token string `json:"token"`
 }
 
-func CreateKubeconfig(ctx context.Context, clust *clusters.Cluster, serviceAccount *core.ServiceAccount) ([]byte, error) {
+func CreateKubeconfig(ctx context.Context, clust Cluster, serviceAccount *core.ServiceAccount) ([]byte, error) {
 
 	token, err := requestToken(ctx, clust, serviceAccount)
 	if err != nil {
@@ -98,7 +97,7 @@ func CreateKubeconfig(ctx context.Context, clust *clusters.Cluster, serviceAccou
 	return kubeconfigYaml, nil
 }
 
-func requestToken(ctx context.Context, clust *clusters.Cluster, serviceAccount *core.ServiceAccount) (string, error) {
+func requestToken(ctx context.Context, clust Cluster, serviceAccount *core.ServiceAccount) (string, error) {
 
 	tokenRequest := &auth.TokenRequest{
 		Spec: auth.TokenRequestSpec{

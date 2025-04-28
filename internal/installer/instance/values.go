@@ -2,7 +2,6 @@ package instance
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/gardener/landscaper/apis/config/v1alpha1"
 	"k8s.io/utils/ptr"
@@ -94,7 +93,7 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 			Image:       c.Landscaper.WebhooksServer.Image,
 			ServicePort: 9443,
 			Ingress: &landscaper.IngressValues{
-				Host:      fmt.Sprintf("ls-system-%s.%s", c.Instance, os.Getenv("WORKLOAD_CLUSTER_DOMAIN")),
+				Host:      fmt.Sprintf("ls-system-%s.%s", c.Instance, c.HostClusterDomain),
 				DNSClass:  "garden",
 				ClassName: ptr.To("nginx"),
 			},

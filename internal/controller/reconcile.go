@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	"github.com/openmcp-project/controller-utils/pkg/controller"
 	"github.com/openmcp-project/controller-utils/pkg/logging"
 	core "k8s.io/api/core/v1"
@@ -15,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -79,17 +79,12 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context, 
 
 	initConditions(ls)
 
-	workloadClusterAccess, err := cluster.WorkloadCluster()
+	mcpClusterAccess, err := cluster.MCPCluster(ctx, client.ObjectKeyFromObject(ls), r.OnboardingClient)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	mcpClusterAccess, err := cluster.MCPCluster()
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	conf, err := r.createConfig(ls, workloadClusterAccess, mcpClusterAccess)
+	conf, err := r.createConfig(ls, r.WorkloadCluster, mcpClusterAccess)
 	if err != nil {
 		log.Error(err, "failed to create configuration for landscaper instance")
 		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
@@ -154,17 +149,12 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 		return reconcile.Result{}, err
 	}
 
-	workloadClusterAccess, err := cluster.WorkloadCluster()
+	mcpCluster, err := cluster.MCPCluster(ctx, client.ObjectKeyFromObject(ls), r.OnboardingClient)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	mcpClusterAccess, err := cluster.MCPCluster()
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	conf, err := r.createConfig(ls, workloadClusterAccess, mcpClusterAccess)
+	conf, err := r.createConfig(ls, r.WorkloadCluster, mcpCluster)
 	if err != nil {
 		log.Error(err, "failed to create configuration to uninstall landscaper instance")
 		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
@@ -290,7 +280,7 @@ func (r *LandscaperReconciler) ensureInstanceID(ctx context.Context, ls *v1alpha
 	return nil
 }
 
-func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, workloadClusterAccess, mcpClusterAccess *clusters.Cluster) (*instance.Configuration, error) {
+func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, workloadCluster, mcpCluster cluster.Cluster) (*instance.Configuration, error) {
 	inst := identity.Instance(identity.GetInstanceID(ls))
 
 	cpu, err := resource.ParseQuantity("10m")
@@ -308,10 +298,11 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, workloadClu
 		},
 	}
 	conf := &instance.Configuration{
-		Instance:        inst,
-		Version:         "v0.127.0",
-		HostCluster:     workloadClusterAccess,
-		ResourceCluster: mcpClusterAccess,
+		Instance:          inst,
+		Version:           "v0.127.0",
+		ResourceCluster:   mcpCluster,
+		HostCluster:       workloadCluster,
+		HostClusterDomain: r.WorkloadClusterDomain,
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
 				Image: v1alpha1.ImageConfiguration{

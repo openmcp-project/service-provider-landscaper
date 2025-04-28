@@ -22,9 +22,10 @@ import (
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/providerconfig"
 )
 
-func NewRunCommand(ctx context.Context) *cobra.Command {
+func NewRunCommand(_ context.Context) *cobra.Command {
 	options := &runOptions{
 		OnboardingCluster: clusters.New("onboarding"),
+		WorkloadCluster:   clusters.New("workload"),
 	}
 
 	cmd := &cobra.Command{
@@ -49,6 +50,8 @@ func NewRunCommand(ctx context.Context) *cobra.Command {
 
 type runOptions struct {
 	OnboardingCluster           *clusters.Cluster
+	WorkloadCluster             *clusters.Cluster
+	WorkloadClusterDomain       string
 	ServiceProviderResourcePath string
 
 	Log                   logging.Logger
@@ -68,6 +71,12 @@ func (o *runOptions) addFlags(fs *flag.FlagSet) {
 	// register flag '--onboarding-cluster' for the path to the kubeconfig of the onboarding cluster
 	o.OnboardingCluster.RegisterConfigPathFlag(fs)
 
+	// register flag '--workload-cluster' for the path to the kubeconfig of the workload cluster
+	o.WorkloadCluster.RegisterConfigPathFlag(fs)
+
+	fs.StringVar(&o.WorkloadClusterDomain, "workload-cluster-domain", "",
+		"Domain of the workload cluster.")
+
 	fs.StringVar(&o.ServiceProviderResourcePath, "service-provider-resource-path", "",
 		"Path to the yaml manifest of the service provider landscaper.")
 
@@ -80,6 +89,9 @@ func (o *runOptions) complete() (err error) {
 		return err
 	}
 	if err = o.setupOnboardingClusterClient(); err != nil {
+		return err
+	}
+	if err = o.setupWorkloadClusterClient(); err != nil {
 		return err
 	}
 
@@ -111,6 +123,16 @@ func (o *runOptions) setupOnboardingClusterClient() error {
 	return nil
 }
 
+func (o *runOptions) setupWorkloadClusterClient() error {
+	if err := o.WorkloadCluster.InitializeRESTConfig(); err != nil {
+		return fmt.Errorf("unable to initialize workload cluster rest config: %w", err)
+	}
+	if err := o.WorkloadCluster.InitializeClient(install.InstallCRDAPIs(runtime.NewScheme())); err != nil {
+		return fmt.Errorf("unable to initialize workload cluster client: %w", err)
+	}
+	return nil
+}
+
 func (o *runOptions) run() error {
 	o.Log.Info("starting service provider landscaper",
 		"onboarding-cluster", o.OnboardingCluster.ConfigPath(),
@@ -131,6 +153,8 @@ func (o *runOptions) run() error {
 
 	if err = (&controller1.LandscaperReconciler{
 		OnboardingClient:         mgr.GetClient(),
+		WorkloadCluster:          o.WorkloadCluster,
+		WorkloadClusterDomain:    o.WorkloadClusterDomain,
 		Scheme:                   mgr.GetScheme(),
 		LandscaperProviderConfig: o.ServiceProviderConfig,
 	}).SetupWithManager(mgr); err != nil {

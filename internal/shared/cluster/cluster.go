@@ -2,31 +2,48 @@ package cluster
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// WorkloadCluster will be replaced when the cluster scheduler is available.
-func WorkloadCluster() (*clusters.Cluster, error) {
-	workloadCluster := clusters.New("workload").WithConfigPath(os.Getenv("WORKLOAD_KUBECONFIG_PATH"))
-	if err := workloadCluster.InitializeRESTConfig(); err != nil {
-		return nil, fmt.Errorf("failed to initialize rest config for workload cluster: %w", err)
-	}
-	if err := workloadCluster.InitializeClient(nil); err != nil {
-		return nil, fmt.Errorf("failed to initialize rest config for workload cluster: %w", err)
-	}
-	return workloadCluster, nil
+type Cluster interface {
+	Client() client.Client
+	RESTConfig() *rest.Config
 }
 
-// MCPCluster will be replaced when the cluster scheduler is available.
-func MCPCluster() (*clusters.Cluster, error) {
-	mcpCluster := clusters.New("mcp").WithConfigPath(os.Getenv("MCP_KUBECONFIG_PATH"))
-	if err := mcpCluster.InitializeRESTConfig(); err != nil {
-		return nil, fmt.Errorf("failed to initialize rest config for mcp cluster: %w", err)
+var _ Cluster = (*clusters.Cluster)(nil)
+var _ Cluster = (*clusterImpl)(nil)
+
+func newClusterFromKubeconfigBytes(kubeconfigBytes []byte, scheme *runtime.Scheme) (Cluster, error) {
+	restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rest config from kubeconfig: %w", err)
 	}
-	if err := mcpCluster.InitializeClient(nil); err != nil {
-		return nil, fmt.Errorf("failed to initialize rest config for mcp cluster: %w", err)
+
+	cl, err := client.New(restCfg, client.Options{Scheme: scheme})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client from rest config: %w", err)
 	}
-	return mcpCluster, nil
+
+	return &clusterImpl{
+		restCfg: restCfg,
+		client:  cl,
+	}, nil
+}
+
+type clusterImpl struct {
+	restCfg *rest.Config
+	client  client.Client
+}
+
+func (c *clusterImpl) Client() client.Client {
+	return c.client
+}
+
+func (c *clusterImpl) RESTConfig() *rest.Config {
+	return c.restCfg
 }
