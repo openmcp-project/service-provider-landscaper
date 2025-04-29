@@ -8,6 +8,7 @@ vars:
   COMPONENTS: 'service-provider-landscaper'
   REPO_URL: 'https://github.com/openmcp-project/service-provider-landscaper'
   GENERATE_DOCS_INDEX: "true"
+  CHART_COMPONENTS: ""
 
 includes:
   shared:
@@ -22,3 +23,4 @@ includes:
       COMPONENTS: 'service-provider-landscaper'
       REPO_URL: 'https://github.com/openmcp-project/service-provider-landscaper'
       GENERATE_DOCS_INDEX: "true"
+      CHART_COMPONENTS: ""
