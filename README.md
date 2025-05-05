@@ -59,7 +59,7 @@ flowchart LR
 
 ## Requirements and Setup
 
-*Insert a short description what is required to get your project running...*
+The setup of the Service Provider Landscaper  within an OpenMCP landscape is described in: [Installing the Service Provider Landscaper](docs/technical/install.md).
 
 ## Support, Feedback, Contributing
 

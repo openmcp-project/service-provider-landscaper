@@ -75,3 +75,27 @@ and a phase:
 - `Terminating`
 
 and an `observedGeneration`.
+
+
+## Temporary Workaround
+
+The OpenMCP project is still in an early stage. There are some temporary workarounds.
+
+In the final scenario, the user has to create an MCP resource with some name <name> and namespace <namespace>. Temporarily, we skip the MCP resource, and assume that the kubeconfig for the MCP cluster can be obtained from a Secret with name `<name>.kubeconfig` in namespace `<namespace>`.
+
+```shell
+kubectl create secret generic <name>.kubeconfig -n <namespace> \
+  --from-file=kubeconfig=<path to kubeconfig file of the mcp cluster>
+```
+Next the user has to create a Landscaper resource with the name <name> and namespace <namespace>.
+
+```shell
+
+```yaml
+apiVersion: landscaper.services.openmcp.cloud/v1alpha1
+kind: Landscaper
+metadata:
+  name: <name>
+  namespace: <namespace>
+spec: {}
+```
