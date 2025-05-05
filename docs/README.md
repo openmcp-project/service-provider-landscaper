@@ -9,5 +9,4 @@
 
 - [Installing the Service Provider Landscaper](technical/install.md)
 - [Packages](technical/packages.md)
-- [Running the Service Provider Landscaper](technical/run.md)
 
