@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
@@ -49,16 +48,8 @@ func ReadProviderConfigFromSecret(serviceProviderResourcePath string) (*api.Land
 		return nil, fmt.Errorf("unable to read service provider resource file: %w", err)
 	}
 
-	s := &v1.Secret{}
-	err = yaml.Unmarshal(data, s)
-
-	providerBytes, found := s.Data["mcpServiceProvider"]
-	if !found {
-		return nil, fmt.Errorf("unable to find service provider resource: %w", err)
-	}
-
 	p := &serviceProvider{}
-	err = yaml.Unmarshal(providerBytes, p)
+	err = yaml.Unmarshal(data, p)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal service provider resource: %w", err)
 	}
