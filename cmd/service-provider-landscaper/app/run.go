@@ -95,7 +95,7 @@ func (o *runOptions) complete() (err error) {
 		return err
 	}
 
-	o.ServiceProviderConfig, err = providerconfig.ReadProviderConfig(o.ServiceProviderResourcePath)
+	o.ServiceProviderConfig, err = providerconfig.ReadProviderConfigFromSecret(o.ServiceProviderResourcePath)
 	if err != nil {
 		return err
 	}
