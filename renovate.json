@@ -10,5 +10,16 @@
   ],
   "postUpdateOptions": [
     "gomodTidy"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "github.com/gardener/landscaper"
+      ],
+      "description": "Update landscaper immediately",
+      "rebaseWhen": "auto",
+      "minimumReleaseAge": "0 days",
+      "enabled": true
+    }
   ]
 }
