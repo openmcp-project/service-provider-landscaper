@@ -9,16 +9,8 @@ import (
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 )
 
-type serviceProviderSpec struct {
-	ProviderConfig api.LandscaperProviderConfiguration `json:"providerConfig"`
-}
-
-type serviceProvider struct {
-	Spec serviceProviderSpec `json:"spec"`
-}
-
 // ReadProviderConfig reads a ServiceProvider yaml file and returns the landscaper provider specific config.
-func ReadProviderConfig(serviceProviderResourcePath string) (*api.LandscaperProviderConfiguration, error) {
+func ReadProviderConfig(serviceProviderResourcePath string) (*api.ProviderConfig, error) {
 	if serviceProviderResourcePath == "" {
 		return nil, fmt.Errorf("service provider resource path is required")
 	}
@@ -28,17 +20,17 @@ func ReadProviderConfig(serviceProviderResourcePath string) (*api.LandscaperProv
 		return nil, fmt.Errorf("unable to read service provider resource file: %w", err)
 	}
 
-	p := &serviceProvider{}
+	p := &api.ProviderConfig{}
 	err = yaml.Unmarshal(data, p)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal service provider resource: %w", err)
 	}
 
-	return &p.Spec.ProviderConfig, nil
+	return p, nil
 }
 
 // ReadProviderConfigFromSecret reads a ServiceProvider yaml file and returns the landscaper provider specific config.
-func ReadProviderConfigFromSecret(serviceProviderResourcePath string) (*api.LandscaperProviderConfiguration, error) {
+func ReadProviderConfigFromSecret(serviceProviderResourcePath string) (*api.ProviderConfig, error) {
 	if serviceProviderResourcePath == "" {
 		return nil, fmt.Errorf("service provider resource path is required")
 	}
@@ -48,11 +40,11 @@ func ReadProviderConfigFromSecret(serviceProviderResourcePath string) (*api.Land
 		return nil, fmt.Errorf("unable to read service provider resource file: %w", err)
 	}
 
-	p := &serviceProvider{}
+	p := &api.ProviderConfig{}
 	err = yaml.Unmarshal(data, p)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal service provider resource: %w", err)
 	}
 
-	return &p.Spec.ProviderConfig, nil
+	return p, nil
 }

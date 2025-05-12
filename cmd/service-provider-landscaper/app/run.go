@@ -2,60 +2,52 @@ package app
 
 import (
 	"context"
-	goflag "flag"
 	"fmt"
 	"os"
 
-	"github.com/openmcp-project/controller-utils/pkg/clusters"
-	"github.com/openmcp-project/controller-utils/pkg/logging"
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	providerscheme "github.com/openmcp-project/service-provider-landscaper/api/install"
+
+	"sigs.k8s.io/yaml"
+
+	"github.com/spf13/cobra"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"github.com/openmcp-project/service-provider-landscaper/api/install"
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 	controller1 "github.com/openmcp-project/service-provider-landscaper/internal/controller"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/providerconfig"
 )
 
-func NewRunCommand(_ context.Context) *cobra.Command {
-	options := &runOptions{
-		OnboardingCluster: clusters.New("onboarding"),
-		WorkloadCluster:   clusters.New("workload"),
+func NewRunCommand(so *SharedOptions) *cobra.Command {
+	opts := &RunOptions{
+		SharedOptions: so,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Start the service provider landscaper",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := options.complete(); err != nil {
-				fmt.Print(err)
-				os.Exit(1)
+			opts.PrintRawOptions(cmd)
+			if err := opts.Complete(cmd.Context()); err != nil {
+				panic(fmt.Errorf("error completing options: %w", err))
 			}
-			if err := options.run(); err != nil {
-				options.Log.Error(err, "unable to run service provider landscaper")
-				os.Exit(1)
+			opts.PrintCompletedOptions(cmd)
+			if err := opts.Run(cmd.Context()); err != nil {
+				panic(err)
 			}
 		},
 	}
 
-	options.addFlags(cmd.Flags())
+	opts.AddFlags(cmd)
 
 	return cmd
 }
 
-type runOptions struct {
-	OnboardingCluster           *clusters.Cluster
-	WorkloadCluster             *clusters.Cluster
-	WorkloadClusterDomain       string
-	ServiceProviderResourcePath string
-
-	Log                   logging.Logger
-	ServiceProviderConfig *api.LandscaperProviderConfiguration
+type RawRunOptions struct {
+	WorkloadClusterDomain string
 
 	// var metricsAddr string
 	// var metricsCertPath, metricsCertName, metricsCertKey string
@@ -67,96 +59,87 @@ type runOptions struct {
 	// var tlsOpts []func(*tls.Config)
 }
 
-func (o *runOptions) addFlags(fs *flag.FlagSet) {
-	// register flag '--onboarding-cluster' for the path to the kubeconfig of the onboarding cluster
-	o.OnboardingCluster.RegisterConfigPathFlag(fs)
+type RunOptions struct {
+	*SharedOptions
+	RawRunOptions
+}
 
-	// register flag '--workload-cluster' for the path to the kubeconfig of the workload cluster
-	o.WorkloadCluster.RegisterConfigPathFlag(fs)
-
-	fs.StringVar(&o.WorkloadClusterDomain, "workload-cluster-domain", "",
+func (o *RunOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.WorkloadClusterDomain, "workload-cluster-domain", "",
 		"Domain of the workload cluster.")
-
-	fs.StringVar(&o.ServiceProviderResourcePath, "service-provider-resource-path", "",
-		"Path to the yaml manifest of the service provider landscaper.")
-
-	logging.InitFlags(fs)
-	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 }
 
-func (o *runOptions) complete() (err error) {
-	if err = o.setupLogger(); err != nil {
-		return err
-	}
-	if err = o.setupOnboardingClusterClient(); err != nil {
-		return err
-	}
-	if err = o.setupWorkloadClusterClient(); err != nil {
-		return err
-	}
-
-	o.ServiceProviderConfig, err = providerconfig.ReadProviderConfigFromSecret(o.ServiceProviderResourcePath)
+func (o *RunOptions) PrintRaw(cmd *cobra.Command) {
+	data, err := yaml.Marshal(o.RawRunOptions)
 	if err != nil {
+		cmd.Println(fmt.Errorf("error marshalling raw options: %w", err).Error())
+		return
+	}
+	cmd.Print(string(data))
+}
+
+func (o *RunOptions) PrintRawOptions(cmd *cobra.Command) {
+	cmd.Println("########## RAW OPTIONS START ##########")
+	o.SharedOptions.PrintRaw(cmd)
+	o.PrintRaw(cmd)
+	cmd.Println("########## RAW OPTIONS END ##########")
+}
+
+func (o *RunOptions) Complete(_ context.Context) (err error) {
+	if err := o.SharedOptions.Complete(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (o *runOptions) setupLogger() error {
-	log, err := logging.GetLogger()
-	if err != nil {
+func (o *RunOptions) PrintCompleted(cmd *cobra.Command) {}
+
+func (o *RunOptions) PrintCompletedOptions(cmd *cobra.Command) {
+	cmd.Println("########## COMPLETED OPTIONS START ##########")
+	o.SharedOptions.PrintCompleted(cmd)
+	o.PrintCompleted(cmd)
+	cmd.Println("########## COMPLETED OPTIONS END ##########")
+}
+
+func (o *RunOptions) Run(_ context.Context) error {
+	o.Log.Info("running service provider landscaper")
+
+	if err := o.Clusters.Onboarding.InitializeClient(providerscheme.InstallProviderAPIs(runtime.NewScheme())); err != nil {
 		return err
 	}
-	o.Log = log
-	ctrl.SetLogger(log.Logr())
-	return nil
-}
-
-func (o *runOptions) setupOnboardingClusterClient() error {
-	if err := o.OnboardingCluster.InitializeRESTConfig(); err != nil {
-		return fmt.Errorf("unable to initialize onboarding cluster rest config: %w", err)
+	if err := o.Clusters.Platform.InitializeClient(providerscheme.InstallProviderAPIs(runtime.NewScheme())); err != nil {
+		return err
 	}
-	if err := o.OnboardingCluster.InitializeClient(install.InstallCRDAPIs(runtime.NewScheme())); err != nil {
-		return fmt.Errorf("unable to initialize onboarding cluster client: %w", err)
+	workloadClusterScheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(workloadClusterScheme))
+	if err := o.Clusters.Workload.InitializeClient(workloadClusterScheme); err != nil {
+		return err
 	}
-	return nil
-}
-
-func (o *runOptions) setupWorkloadClusterClient() error {
-	if err := o.WorkloadCluster.InitializeRESTConfig(); err != nil {
-		return fmt.Errorf("unable to initialize workload cluster rest config: %w", err)
-	}
-	if err := o.WorkloadCluster.InitializeClient(install.InstallCRDAPIs(runtime.NewScheme())); err != nil {
-		return fmt.Errorf("unable to initialize workload cluster client: %w", err)
-	}
-	return nil
-}
-
-func (o *runOptions) run() error {
-	o.Log.Info("starting service provider landscaper",
-		"onboarding-cluster", o.OnboardingCluster.ConfigPath(),
-		"service-provider-resource-path", o.ServiceProviderResourcePath)
 
 	mgrOptions := ctrl.Options{
 		Metrics:        metricsserver.Options{BindAddress: "0"},
 		LeaderElection: false,
 	}
 
-	mgr, err := ctrl.NewManager(o.OnboardingCluster.RESTConfig(), mgrOptions)
+	mgr, err := ctrl.NewManager(o.Clusters.Onboarding.RESTConfig(), mgrOptions)
 	if err != nil {
 		return fmt.Errorf("unable to setup manager: %w", err)
+	}
+
+	if err = mgr.Add(o.Clusters.Platform.Cluster()); err != nil {
+		return fmt.Errorf("unable to add platform cluster to manager: %w", err)
 	}
 
 	utilruntime.Must(clientgoscheme.AddToScheme(mgr.GetScheme()))
 	utilruntime.Must(api.AddToScheme(mgr.GetScheme()))
 
 	if err = (&controller1.LandscaperReconciler{
-		OnboardingClient:         mgr.GetClient(),
-		WorkloadCluster:          o.WorkloadCluster,
-		WorkloadClusterDomain:    o.WorkloadClusterDomain,
-		Scheme:                   mgr.GetScheme(),
-		LandscaperProviderConfig: o.ServiceProviderConfig,
+		OnboardingCluster:     o.Clusters.Onboarding,
+		PlatformCluster:       o.Clusters.Platform,
+		WorkloadCluster:       o.Clusters.Workload,
+		WorkloadClusterDomain: o.WorkloadClusterDomain,
+		Scheme:                mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller: %w", err)
 	}

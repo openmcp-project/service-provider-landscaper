@@ -42,7 +42,7 @@ var _ = XDescribe("Manifest Deployer Installer", func() {
 				Kubeconfig: string(kubeconfig),
 			},
 			Image: api.ImageConfiguration{
-				Image: serviceProviderConfig.ManifestDeployer.Image,
+				Image: serviceProviderConfig.Spec.Deployment.ManifestDeployer.Image,
 			},
 			ImagePullSecrets:       nil,
 			PodSecurityContext:     nil,

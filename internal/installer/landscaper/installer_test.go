@@ -48,7 +48,7 @@ var _ = XDescribe("Landscaper Controller Installer", func() {
 					Kubeconfig: string(kubeconfig),
 				},
 				Image: api.ImageConfiguration{
-					Image: serviceProviderConfig.LandscaperController.Image,
+					Image: serviceProviderConfig.Spec.Deployment.LandscaperController.Image,
 				},
 				ReplicaCount:  nil,
 				Resources:     corev1.ResourceRequirements{},
@@ -61,7 +61,7 @@ var _ = XDescribe("Landscaper Controller Installer", func() {
 					Kubeconfig: string(kubeconfig),
 				},
 				Image: api.ImageConfiguration{
-					Image: serviceProviderConfig.LandscaperWebhooksServer.Image,
+					Image: serviceProviderConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
 				},
 				ServicePort: 0,
 				Ingress:     nil,

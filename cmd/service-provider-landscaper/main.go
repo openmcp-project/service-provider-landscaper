@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -9,9 +8,7 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-	defer ctx.Done()
-	cmd := app.NewServiceProviderLandscaperCommand(ctx)
+	cmd := app.NewServiceProviderLandscaperCommand()
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Print(err)

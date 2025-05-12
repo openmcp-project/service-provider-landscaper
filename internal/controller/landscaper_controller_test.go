@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -53,8 +55,8 @@ var _ = XDescribe("Landscaper Controller", func() {
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &LandscaperReconciler{
-				OnboardingClient: k8sClient,
-				Scheme:           k8sClient.Scheme(),
+				OnboardingCluster: clusters.New("onboarding").WithRESTConfig(cfg),
+				Scheme:            k8sClient.Scheme(),
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{

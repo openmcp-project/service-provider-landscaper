@@ -3,14 +3,21 @@ package controller
 import (
 	"context"
 
-	"github.com/openmcp-project/controller-utils/pkg/logging"
+	"github.com/openmcp-project/controller-utils/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
+
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
+	"github.com/openmcp-project/controller-utils/pkg/logging"
 )
 
 const (
@@ -19,12 +26,12 @@ const (
 
 // LandscaperReconciler reconciles a Landscaper object
 type LandscaperReconciler struct {
-	OnboardingClient      client.Client
-	WorkloadCluster       cluster.Cluster
+	PlatformCluster       *clusters.Cluster
+	OnboardingCluster     *clusters.Cluster
+	WorkloadCluster       *clusters.Cluster
 	WorkloadClusterDomain string
 
-	Scheme                   *runtime.Scheme
-	LandscaperProviderConfig *api.LandscaperProviderConfiguration
+	Scheme *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=landscaper.services.openmcp.cloud,resources=landscapers,verbs=get;list;watch;create;update;patch;delete
@@ -52,6 +59,28 @@ func (r *LandscaperReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&api.Landscaper{}).
+		WatchesRawSource(source.Kind(r.PlatformCluster.Cluster().GetCache(), &api.ProviderConfig{},
+			handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, providerConfig *api.ProviderConfig) []ctrl.Request {
+				// Find all Landscaper resources referencing this ProviderConfig
+				var requests []reconcile.Request
+				landscapers := &api.LandscaperList{}
+				if err := r.OnboardingCluster.Client().List(ctx, landscapers); err != nil {
+					return nil
+				}
+
+				for _, landscaper := range landscapers.Items {
+					if landscaper.Status.ProviderConfigRef != nil && landscaper.Status.ProviderConfigRef.Name == providerConfig.Name {
+						requests = append(requests, reconcile.Request{
+							NamespacedName: client.ObjectKey{
+								Namespace: landscaper.Namespace,
+								Name:      landscaper.Name,
+							},
+						})
+					}
+				}
+				return requests
+			}), controller.ToTypedPredicate[*api.ProviderConfig](predicate.GenerationChangedPredicate{}),
+		)).
 		Named(controllerName).
 		Complete(r)
 }

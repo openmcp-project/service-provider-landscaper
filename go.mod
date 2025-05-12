@@ -9,8 +9,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
 	github.com/openmcp-project/controller-utils v0.7.0
+	github.com/openmcp-project/openmcp-operator/api v0.0.0-localdev
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/pflag v1.0.6
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 	k8s.io/api v0.33.0
 	k8s.io/apiextensions-apiserver v0.33.0
@@ -19,7 +19,10 @@ require (
 	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979
 	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/yaml v1.4.0
+
 )
+
+replace github.com/openmcp-project/openmcp-operator/api v0.0.0-localdev => ../openmcp-operator/api
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -55,6 +58,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
+
 	auth "k8s.io/api/authentication/v1"
 	core "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
@@ -48,9 +50,9 @@ type User struct {
 	Token string `json:"token"`
 }
 
-func CreateKubeconfig(ctx context.Context, clust Cluster, serviceAccount *core.ServiceAccount) ([]byte, error) {
+func CreateKubeconfig(ctx context.Context, cluster *clusters.Cluster, serviceAccount *core.ServiceAccount) ([]byte, error) {
 
-	token, err := requestToken(ctx, clust, serviceAccount)
+	token, err := requestToken(ctx, cluster, serviceAccount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to request token for service account %s/%s: %w", serviceAccount.Namespace, serviceAccount.Name, err)
 	}
@@ -74,8 +76,8 @@ func CreateKubeconfig(ctx context.Context, clust Cluster, serviceAccount *core.S
 			{
 				Name: contextName,
 				Cluster: KubeConfigCluster{
-					Server:                   clust.RESTConfig().Host,
-					CertificateAuthorityData: clust.RESTConfig().CAData,
+					Server:                   cluster.RESTConfig().Host,
+					CertificateAuthorityData: cluster.RESTConfig().CAData,
 				},
 			},
 		},
@@ -97,7 +99,7 @@ func CreateKubeconfig(ctx context.Context, clust Cluster, serviceAccount *core.S
 	return kubeconfigYaml, nil
 }
 
-func requestToken(ctx context.Context, clust Cluster, serviceAccount *core.ServiceAccount) (string, error) {
+func requestToken(ctx context.Context, cluster *clusters.Cluster, serviceAccount *core.ServiceAccount) (string, error) {
 
 	tokenRequest := &auth.TokenRequest{
 		Spec: auth.TokenRequestSpec{
@@ -105,7 +107,7 @@ func requestToken(ctx context.Context, clust Cluster, serviceAccount *core.Servi
 		},
 	}
 
-	if err := clust.Client().SubResource("token").Create(ctx, serviceAccount, tokenRequest); err != nil {
+	if err := cluster.Client().SubResource("token").Create(ctx, serviceAccount, tokenRequest); err != nil {
 		return "", fmt.Errorf("failed to create token: %w", err)
 	}
 
