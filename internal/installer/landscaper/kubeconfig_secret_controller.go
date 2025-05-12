@@ -1,45 +1,18 @@
 package landscaper
 
 import (
-	"fmt"
-
+	"github.com/openmcp-project/controller-utils/pkg/resources"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
-type controllerKubeconfigSecretMutator struct {
-	*valuesHelper
-}
-
-var _ resources.Mutator[*v1.Secret] = &controllerKubeconfigSecretMutator{}
-
 func newControllerKubeconfigSecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
-	return &controllerKubeconfigSecretMutator{valuesHelper: b}
-}
-
-func (d *controllerKubeconfigSecretMutator) String() string {
-	return fmt.Sprintf("secret %s/%s", d.hostNamespace(), d.controllerKubeconfigSecretName())
-}
-
-func (d *controllerKubeconfigSecretMutator) Empty() *v1.Secret {
-	return &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
+	return resources.NewSecretMutator(
+		b.controllerKubeconfigSecretName(),
+		b.hostNamespace(),
+		map[string][]byte{
+			"kubeconfig": []byte(b.values.Controller.LandscaperKubeconfig.Kubeconfig),
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      d.controllerKubeconfigSecretName(),
-			Namespace: d.hostNamespace(),
-		},
-	}
-}
-
-func (d *controllerKubeconfigSecretMutator) Mutate(r *v1.Secret) error {
-	r.ObjectMeta.Labels = d.controllerComponent.Labels()
-	r.Data = map[string][]byte{
-		"kubeconfig": []byte(d.values.Controller.LandscaperKubeconfig.Kubeconfig),
-	}
-	return nil
+		v1.SecretTypeOpaque,
+		b.controllerComponent.Labels(),
+		nil)
 }

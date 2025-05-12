@@ -3,8 +3,9 @@ package manifestdeployer
 import (
 	"context"
 
+	"github.com/openmcp-project/controller-utils/pkg/resources"
+
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/readiness"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 type Exports struct {
@@ -20,7 +21,7 @@ func InstallManifestDeployer(ctx context.Context, values *Values) (*Exports, err
 
 	hostClient := values.HostCluster.Client()
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.hostNamespace())); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.hostNamespace(), nil, nil)); err != nil {
 		return nil, err
 	}
 

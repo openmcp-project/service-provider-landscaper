@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
+	"github.com/openmcp-project/controller-utils/pkg/resources"
 )
 
 type centralDeploymentMutator struct {
@@ -27,10 +27,6 @@ func (m *centralDeploymentMutator) String() string {
 
 func (m *centralDeploymentMutator) Empty() *appsv1.Deployment {
 	return &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperFullName(),
 			Namespace: m.hostNamespace(),

@@ -9,8 +9,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
+	"github.com/openmcp-project/controller-utils/pkg/resources"
+
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 type webhooksDeploymentMutator struct {
@@ -29,10 +30,6 @@ func (m *webhooksDeploymentMutator) String() string {
 
 func (m *webhooksDeploymentMutator) Empty() *appsv1.Deployment {
 	return &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperWebhooksFullName(),
 			Namespace: m.hostNamespace(),

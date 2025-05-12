@@ -4,7 +4,7 @@ import (
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
+	"github.com/openmcp-project/controller-utils/pkg/resources"
 )
 
 const (
@@ -12,28 +12,32 @@ const (
 )
 
 func newUserServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {
-	return &resources.ServiceAccountMutator{
-		Name:      userServiceAccountName,
-		Namespace: h.resourceNamespace(),
-		Labels:    h.rbacComponent.Labels(),
-	}
+	return resources.NewServiceAccountMutator(
+		userServiceAccountName,
+		h.resourceNamespace(),
+		h.rbacComponent.Labels(),
+		nil)
 }
 
 func newUserClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRoleBinding] {
-	return &resources.ClusterRoleBindingMutator{
-		ClusterRoleBindingName:  userClusterRoleName(h),
-		ClusterRoleName:         userClusterRoleName(h),
-		ServiceAccountName:      userServiceAccountName,
-		ServiceAccountNamespace: h.resourceNamespace(),
-		Labels:                  h.rbacComponent.Labels(),
-	}
+	return resources.NewClusterRoleBindingMutator(
+		userClusterRoleName(h),
+		[]rbac.Subject{
+			{
+				Kind:      rbac.ServiceAccountKind,
+				Name:      userServiceAccountName,
+				Namespace: h.resourceNamespace(),
+			},
+		},
+		resources.NewClusterRoleRef(userClusterRoleName(h)),
+		h.rbacComponent.Labels(),
+		nil)
 }
 
 func newUserClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole] {
-	return &resources.ClusterRoleMutator{
-		Name:   userClusterRoleName(h),
-		Labels: h.rbacComponent.Labels(),
-		Rules: []rbac.PolicyRule{
+	return resources.NewClusterRoleMutator(
+		userClusterRoleName(h),
+		[]rbac.PolicyRule{
 			{
 				APIGroups: []string{"landscaper.gardener.cloud"},
 				Resources: []string{"*"},
@@ -45,7 +49,9 @@ func newUserClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterR
 				Verbs:     []string{"*"},
 			},
 		},
-	}
+		h.rbacComponent.Labels(),
+		nil,
+	)
 }
 
 func userClusterRoleName(h *valuesHelper) string {
