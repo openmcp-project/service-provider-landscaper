@@ -4,32 +4,36 @@ import (
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
+	"github.com/openmcp-project/controller-utils/pkg/resources"
 )
 
 func newServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {
-	return &resources.ServiceAccountMutator{
-		Name:      h.landscaperFullName(),
-		Namespace: h.hostNamespace(),
-		Labels:    h.controllerComponent.Labels(),
-	}
+	return resources.NewServiceAccountMutator(
+		h.landscaperFullName(),
+		h.hostNamespace(),
+		h.controllerComponent.Labels(),
+		nil)
 }
 
 func newClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRoleBinding] {
-	return &resources.ClusterRoleBindingMutator{
-		ClusterRoleBindingName:  h.controllerComponent.ClusterScopedDefaultResourceName(),
-		ClusterRoleName:         h.controllerComponent.ClusterScopedDefaultResourceName(),
-		ServiceAccountName:      h.landscaperFullName(),
-		ServiceAccountNamespace: h.hostNamespace(),
-		Labels:                  h.controllerComponent.Labels(),
-	}
+	return resources.NewClusterRoleBindingMutator(
+		h.controllerComponent.ClusterScopedDefaultResourceName(),
+		[]rbac.Subject{
+			{
+				Kind:      rbac.ServiceAccountKind,
+				Name:      h.landscaperFullName(),
+				Namespace: h.hostNamespace(),
+			},
+		},
+		resources.NewClusterRoleRef(h.controllerComponent.ClusterScopedDefaultResourceName()),
+		h.controllerComponent.Labels(),
+		nil)
 }
 
 func newClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole] {
-	return &resources.ClusterRoleMutator{
-		Name:   h.controllerComponent.ClusterScopedDefaultResourceName(),
-		Labels: h.controllerComponent.Labels(),
-		Rules: []rbac.PolicyRule{
+	return resources.NewClusterRoleMutator(
+		h.controllerComponent.ClusterScopedDefaultResourceName(),
+		[]rbac.PolicyRule{
 			{
 				APIGroups: []string{"landscaper.gardener.cloud"},
 				Resources: []string{"*"},
@@ -43,5 +47,6 @@ func newClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole]
 				Verbs:     []string{"*"},
 			},
 		},
-	}
+		h.controllerComponent.Labels(),
+		nil)
 }

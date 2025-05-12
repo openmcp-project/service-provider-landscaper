@@ -16,9 +16,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	"github.com/openmcp-project/controller-utils/pkg/resources"
+
 	"github.com/openmcp-project/service-provider-landscaper/api/crds"
 	"github.com/openmcp-project/service-provider-landscaper/api/install"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 const (
@@ -116,7 +117,7 @@ func (o *initOptions) createOrUpdateCRDs(ctx context.Context) error {
 		}
 
 		o.Log.Info("creating/updating CRD", "name", crd.Name, "cluster", c.ID())
-		err = resources.CreateOrUpdateResource(ctx, c.Client(), resources.NewCRDMutator(crd))
+		err = resources.CreateOrUpdateResource(ctx, c.Client(), resources.NewCRDMutator(crd, nil, nil))
 		errs = errors.Join(errs, err)
 	}
 	if errs != nil {

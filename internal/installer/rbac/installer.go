@@ -3,8 +3,9 @@ package rbac
 import (
 	"context"
 
+	"github.com/openmcp-project/controller-utils/pkg/resources"
+
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
 type Kubeconfigs struct {
@@ -21,7 +22,7 @@ func InstallLandscaperRBACResources(ctx context.Context, values *Values) (kubeco
 
 	resourceClient := values.ResourceCluster.Client()
 
-	if err := resources.CreateOrUpdateResource(ctx, resourceClient, resources.NewNamespaceMutator(valHelper.resourceNamespace())); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, resourceClient, resources.NewNamespaceMutator(valHelper.resourceNamespace(), nil, nil)); err != nil {
 		return kubeconfigs, err
 	}
 
