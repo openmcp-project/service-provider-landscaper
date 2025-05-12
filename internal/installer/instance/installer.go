@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/openmcp-project/controller-utils/pkg/readiness"
+
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/helmdeployer"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/landscaper"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/manifestdeployer"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/readiness"
 )
 
 func InstallLandscaperInstance(ctx context.Context, config *Configuration) error {
