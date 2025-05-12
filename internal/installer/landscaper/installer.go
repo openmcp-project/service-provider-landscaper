@@ -5,9 +5,8 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 
+	"github.com/openmcp-project/controller-utils/pkg/readiness"
 	"github.com/openmcp-project/controller-utils/pkg/resources"
-
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/readiness"
 )
 
 func InstallLandscaper(ctx context.Context, values *Values) error {

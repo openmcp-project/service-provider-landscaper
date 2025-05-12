@@ -3,9 +3,8 @@ package helmdeployer
 import (
 	"context"
 
+	"github.com/openmcp-project/controller-utils/pkg/readiness"
 	"github.com/openmcp-project/controller-utils/pkg/resources"
-
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/readiness"
 )
 
 type Exports struct {
