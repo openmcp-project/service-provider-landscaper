@@ -1,16 +1,10 @@
 ---
-name: Bug Report
-about: Report a bug
-labels: kind/bug
+name: Enhancement Request
+about: Suggest an enhancement
+labels: kind/enhancement
 
 ---
 
-**What happened**:
+**What would you like to be added**:
 
-**What you expected to happen**:
-
-**How to reproduce it (as minimally and precisely as possible)**:
-
-**Anything else we need to know**:
-
-**Environment**:
+**Why is this needed**:
