@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
+	"github.com/openmcp-project/controller-utils/pkg/resources"
 )
 
 type webhooksHPAMutator struct {
@@ -26,10 +26,6 @@ func (m *webhooksHPAMutator) String() string {
 
 func (m *webhooksHPAMutator) Empty() *v2.HorizontalPodAutoscaler {
 	return &v2.HorizontalPodAutoscaler{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "autoscaling/v2",
-			Kind:       "HorizontalPodAutoscaler",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperWebhooksFullName(),
 			Namespace: m.hostNamespace(),

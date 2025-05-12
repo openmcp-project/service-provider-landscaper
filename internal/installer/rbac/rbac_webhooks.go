@@ -4,7 +4,7 @@ import (
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
+	"github.com/openmcp-project/controller-utils/pkg/resources"
 )
 
 const (
@@ -12,28 +12,32 @@ const (
 )
 
 func newWebhooksServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {
-	return &resources.ServiceAccountMutator{
-		Name:      WebhooksServiceAccountName,
-		Namespace: h.resourceNamespace(),
-		Labels:    h.rbacComponent.Labels(),
-	}
+	return resources.NewServiceAccountMutator(
+		WebhooksServiceAccountName,
+		h.resourceNamespace(),
+		h.rbacComponent.Labels(),
+		nil)
 }
 
 func newWebhooksClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRoleBinding] {
-	return &resources.ClusterRoleBindingMutator{
-		ClusterRoleBindingName:  webhooksClusterRoleName(h),
-		ClusterRoleName:         webhooksClusterRoleName(h),
-		ServiceAccountName:      WebhooksServiceAccountName,
-		ServiceAccountNamespace: h.resourceNamespace(),
-		Labels:                  h.rbacComponent.Labels(),
-	}
+	return resources.NewClusterRoleBindingMutator(
+		webhooksClusterRoleName(h),
+		[]rbac.Subject{
+			{
+				Kind:      rbac.ServiceAccountKind,
+				Name:      WebhooksServiceAccountName,
+				Namespace: h.resourceNamespace(),
+			},
+		},
+		resources.NewClusterRoleRef(webhooksClusterRoleName(h)),
+		h.rbacComponent.Labels(),
+		nil)
 }
 
 func newWebhooksClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole] {
-	return &resources.ClusterRoleMutator{
-		Name:   webhooksClusterRoleName(h),
-		Labels: h.rbacComponent.Labels(),
-		Rules: []rbac.PolicyRule{
+	return resources.NewClusterRoleMutator(
+		webhooksClusterRoleName(h),
+		[]rbac.PolicyRule{
 			{
 				APIGroups: []string{"landscaper.gardener.cloud"},
 				Resources: []string{"installations"},
@@ -50,7 +54,8 @@ func newWebhooksClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.Clus
 				Verbs:     []string{"*"},
 			},
 		},
-	}
+		h.rbacComponent.Labels(),
+		nil)
 }
 
 func webhooksClusterRoleName(h *valuesHelper) string {

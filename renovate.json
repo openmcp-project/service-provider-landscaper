@@ -14,9 +14,11 @@
   "packageRules": [
     {
       "matchPackageNames": [
-        "github.com/gardener/landscaper"
+        "github.com/gardener/landscaper",
+        "github.com/gardener/landscaper-service",
+        "github.com/openmcp-project/*"
       ],
-      "description": "Update landscaper immediately",
+      "description": "Update all components from openmcp-project and landscaper immediately",
       "rebaseWhen": "auto",
       "minimumReleaseAge": "0 days",
       "enabled": true

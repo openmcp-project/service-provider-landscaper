@@ -1,45 +1,18 @@
 package landscaper
 
 import (
-	"fmt"
-
+	"github.com/openmcp-project/controller-utils/pkg/resources"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
 )
 
-type webhooksKubeconfigSecretMutator struct {
-	*valuesHelper
-}
-
-var _ resources.Mutator[*v1.Secret] = &webhooksKubeconfigSecretMutator{}
-
 func newWebhooksKubeconfigSecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
-	return &webhooksKubeconfigSecretMutator{valuesHelper: b}
-}
-
-func (d *webhooksKubeconfigSecretMutator) String() string {
-	return fmt.Sprintf("secret %s/%s", d.hostNamespace(), d.webhooksKubeconfigSecretName())
-}
-
-func (d *webhooksKubeconfigSecretMutator) Empty() *v1.Secret {
-	return &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
+	return resources.NewSecretMutator(
+		b.webhooksKubeconfigSecretName(),
+		b.hostNamespace(),
+		map[string][]byte{
+			"kubeconfig": []byte(b.values.WebhooksServer.LandscaperKubeconfig.Kubeconfig),
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      d.webhooksKubeconfigSecretName(),
-			Namespace: d.hostNamespace(),
-		},
-	}
-}
-
-func (d *webhooksKubeconfigSecretMutator) Mutate(r *v1.Secret) error {
-	r.ObjectMeta.Labels = d.webhooksComponent.Labels()
-	r.Data = map[string][]byte{
-		"kubeconfig": []byte(d.values.WebhooksServer.LandscaperKubeconfig.Kubeconfig),
-	}
-	return nil
+		v1.SecretTypeOpaque,
+		b.webhooksComponent.Labels(),
+		nil)
 }

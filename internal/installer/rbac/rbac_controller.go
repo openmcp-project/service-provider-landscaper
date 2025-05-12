@@ -4,7 +4,7 @@ import (
 	core "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/resources"
+	"github.com/openmcp-project/controller-utils/pkg/resources"
 )
 
 const (
@@ -12,28 +12,32 @@ const (
 )
 
 func newControllerServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {
-	return &resources.ServiceAccountMutator{
-		Name:      controllerServiceAccountName,
-		Namespace: h.resourceNamespace(),
-		Labels:    h.rbacComponent.Labels(),
-	}
+	return resources.NewServiceAccountMutator(
+		controllerServiceAccountName,
+		h.resourceNamespace(),
+		h.rbacComponent.Labels(),
+		nil)
 }
 
 func newControllerClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRoleBinding] {
-	return &resources.ClusterRoleBindingMutator{
-		ClusterRoleBindingName:  controllerClusterRoleName(h),
-		ClusterRoleName:         controllerClusterRoleName(h),
-		ServiceAccountName:      controllerServiceAccountName,
-		ServiceAccountNamespace: h.resourceNamespace(),
-		Labels:                  h.rbacComponent.Labels(),
-	}
+	return resources.NewClusterRoleBindingMutator(
+		controllerClusterRoleName(h),
+		[]rbac.Subject{
+			{
+				Kind:      rbac.ServiceAccountKind,
+				Name:      controllerServiceAccountName,
+				Namespace: h.resourceNamespace(),
+			},
+		},
+		resources.NewClusterRoleRef(controllerClusterRoleName(h)),
+		h.rbacComponent.Labels(),
+		nil)
 }
 
 func newControllerClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole] {
-	return &resources.ClusterRoleMutator{
-		Name:   controllerClusterRoleName(h),
-		Labels: h.rbacComponent.Labels(),
-		Rules: []rbac.PolicyRule{
+	return resources.NewClusterRoleMutator(
+		controllerClusterRoleName(h),
+		[]rbac.PolicyRule{
 			{
 				APIGroups: []string{"apiextensions.k8s.io"},
 				Resources: []string{"customresourcedefinitions"},
@@ -75,7 +79,8 @@ func newControllerClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.Cl
 				Verbs:     []string{"get", "watch", "create", "update", "patch"},
 			},
 		},
-	}
+		h.rbacComponent.Labels(),
+		nil)
 }
 
 func controllerClusterRoleName(h *valuesHelper) string {
