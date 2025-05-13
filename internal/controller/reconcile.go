@@ -26,13 +26,6 @@ import (
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 )
 
-const (
-	landscaperDomain    = "landscaper.services.openmcp.cloud"
-	landscaperFinalizer = landscaperDomain + "/finalizer"
-	landscaperOperation = landscaperDomain + "/operation"
-	operationReconcile  = "reconcile"
-)
-
 func (r *LandscaperReconciler) reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logging.FromContextOrPanic(ctx)
 
@@ -53,7 +46,11 @@ func (r *LandscaperReconciler) reconcile(ctx context.Context, req ctrl.Request) 
 
 	updateErr := r.updateStatus(ctx, ls)
 	err = errors.Join(err, updateErr)
-	return res, err
+	if err != nil {
+		return reconcile.Result{}, err
+	} else {
+		return res, nil
+	}
 }
 
 func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context, ls *v1alpha1.Landscaper) (reconcile.Result, error) {
@@ -71,11 +68,9 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context, 
 		return reconcile.Result{}, err
 	}
 
-	/*
-		if ls.Status.Phase == v1alpha1.Ready {
-			return reconcile.Result{}, nil
-		}
-	*/
+	if ls.Status.Phase == v1alpha1.Ready {
+		return reconcile.Result{}, nil
+	}
 
 	if err := r.ensureInstanceID(ctx, ls); err != nil {
 		return reconcile.Result{}, err
@@ -237,8 +232,8 @@ func (r *LandscaperReconciler) updateStatus(ctx context.Context, ls *v1alpha1.La
 }
 
 func (r *LandscaperReconciler) ensureFinalizer(ctx context.Context, ls *v1alpha1.Landscaper) error {
-	if !controllerutil.ContainsFinalizer(ls, landscaperFinalizer) && ls.DeletionTimestamp.IsZero() {
-		controllerutil.AddFinalizer(ls, landscaperFinalizer)
+	if !controllerutil.ContainsFinalizer(ls, v1alpha1.LandscaperFinalizer) && ls.DeletionTimestamp.IsZero() {
+		controllerutil.AddFinalizer(ls, v1alpha1.LandscaperFinalizer)
 		if err := r.OnboardingCluster.Client().Update(ctx, ls); err != nil {
 			log := logging.FromContextOrPanic(ctx)
 			log.Error(err, "failed to add finalizer to landscaper resource")
@@ -249,8 +244,8 @@ func (r *LandscaperReconciler) ensureFinalizer(ctx context.Context, ls *v1alpha1
 }
 
 func (r *LandscaperReconciler) removeFinalizer(ctx context.Context, ls *v1alpha1.Landscaper) error {
-	if controllerutil.ContainsFinalizer(ls, landscaperFinalizer) {
-		controllerutil.RemoveFinalizer(ls, landscaperFinalizer)
+	if controllerutil.ContainsFinalizer(ls, v1alpha1.LandscaperFinalizer) {
+		controllerutil.RemoveFinalizer(ls, v1alpha1.LandscaperFinalizer)
 		if err := r.OnboardingCluster.Client().Update(ctx, ls); err != nil {
 			log := logging.FromContextOrPanic(ctx)
 			log.Error(err, "failed to remove finalizer from landscaper resource")
@@ -274,7 +269,7 @@ func (r *LandscaperReconciler) observeGeneration(ctx context.Context, ls *v1alph
 }
 
 func (r *LandscaperReconciler) checkReconcileAnnotation(ctx context.Context, ls *v1alpha1.Landscaper) error {
-	if controller.HasAnnotationWithValue(ls, landscaperOperation, operationReconcile) && ls.Status.Phase == v1alpha1.Ready {
+	if controller.HasAnnotationWithValue(ls, v1alpha1.LandscaperOperation, v1alpha1.OperationReconcile) && ls.Status.Phase == v1alpha1.Ready {
 		log := logging.FromContextOrPanic(ctx)
 		ls.Status.Phase = v1alpha1.Progressing
 		if err := r.updateStatus(ctx, ls); err != nil {
@@ -282,7 +277,7 @@ func (r *LandscaperReconciler) checkReconcileAnnotation(ctx context.Context, ls 
 			return fmt.Errorf("failed to handle reconcile annotation: unable to change phase of landscaper resource %s/%s to progressing: %w", ls.Namespace, ls.Name, err)
 		}
 
-		if err := controller.EnsureAnnotation(ctx, r.OnboardingCluster.Client(), ls, landscaperOperation, operationReconcile, true, controller.DELETE); err != nil {
+		if err := controller.EnsureAnnotation(ctx, r.OnboardingCluster.Client(), ls, v1alpha1.LandscaperOperation, v1alpha1.OperationReconcile, true, controller.DELETE); err != nil {
 			log.Error(err, "failed to remove reconcile annotation from landscaper resource")
 			return fmt.Errorf("failed to remove reconcile annotation from landscaper resource %s/%s: %w", ls.Namespace, ls.Name, err)
 		}
@@ -327,7 +322,7 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 	// if provider config name is empty, find the one with label "landscaper.services.openmcp.cloud/type=default"
 	if providerConfigName == "" {
 		providerConfigList := &v1alpha1.ProviderConfigList{}
-		if err := platformCluster.Client().List(ctx, providerConfigList, client.MatchingLabels{"landscaper.services.openmcp.cloud/type": "default"}); err != nil {
+		if err := platformCluster.Client().List(ctx, providerConfigList, client.MatchingLabels{v1alpha1.ProviderConfigTypeLabel: v1alpha1.DefaultProviderConfigValue}); err != nil {
 			return nil, fmt.Errorf("failed to list provider config resources: %w", err)
 		}
 		if len(providerConfigList.Items) == 0 {
