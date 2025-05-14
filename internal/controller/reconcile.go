@@ -314,7 +314,7 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 		providerConfigName = ls.Status.ProviderConfigRef.Name
 	}
 
-	// if not, check if the landscaper has a provider config reference in its spec
+	// check if the landscaper has a provider config reference in its spec, which shall override the one in the status
 	if ls.Spec.ProviderConfigRef != nil {
 		providerConfigName = ls.Spec.ProviderConfigRef.Name
 	}
