@@ -3,6 +3,8 @@ package landscaper
 import (
 	"time"
 
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
+
 	"github.com/gardener/landscaper/apis/config/v1alpha1"
 	lscore "github.com/gardener/landscaper/apis/core/v1alpha1"
 	core "k8s.io/api/core/v1"
@@ -10,7 +12,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
@@ -18,7 +19,7 @@ import (
 type Values struct {
 	Instance           identity.Instance `json:"instance,omitempty"`
 	Version            string            `json:"version,omitempty"`
-	HostCluster        cluster.Cluster
+	HostCluster        *clusters.Cluster
 	VerbosityLevel     string                           `json:"verbosityLevel,omitempty"`
 	Configuration      v1alpha1.LandscaperConfiguration `json:"configuration,omitempty"`
 	ServiceAccount     *ServiceAccountValues            `json:"serviceAccount,omitempty"`

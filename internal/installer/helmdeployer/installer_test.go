@@ -42,7 +42,7 @@ var _ = XDescribe("Helm Deployer Installer", func() {
 				Kubeconfig: string(kubeconfig),
 			},
 			Image: api.ImageConfiguration{
-				Image: serviceProviderConfig.HelmDeployer.Image,
+				Image: serviceProviderConfig.Spec.Deployment.HelmDeployer.Image,
 			},
 			ImagePullSecrets:       nil,
 			PodSecurityContext:     nil,

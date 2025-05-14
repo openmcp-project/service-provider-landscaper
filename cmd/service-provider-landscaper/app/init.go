@@ -3,101 +3,88 @@ package app
 import (
 	"context"
 	"errors"
-	goflag "flag"
 	"fmt"
-	"os"
+
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	ctrlutil "github.com/openmcp-project/controller-utils/pkg/controller"
-	"github.com/openmcp-project/controller-utils/pkg/logging"
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
-	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-
 	"github.com/openmcp-project/controller-utils/pkg/resources"
+	"github.com/spf13/cobra"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
 
 	"github.com/openmcp-project/service-provider-landscaper/api/crds"
-	"github.com/openmcp-project/service-provider-landscaper/api/install"
+
+	providerscheme "github.com/openmcp-project/service-provider-landscaper/api/install"
 )
 
-const (
-	clusterLabel      = "openmcp.cloud/cluster"
-	clusterOnboarding = "onboarding"
-)
-
-func NewInitCommand(ctx context.Context) *cobra.Command {
-	options := &initOptions{
-		OnboardingCluster: clusters.New("onboarding"),
+func NewInitCommand(so *SharedOptions) *cobra.Command {
+	opts := &InitOptions{
+		SharedOptions: so,
 	}
 
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize the service provider landscaper",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := options.complete(); err != nil {
-				fmt.Print(err)
-				os.Exit(1)
+			opts.PrintRawOptions(cmd)
+			if err := opts.Complete(cmd.Context()); err != nil {
+				panic(fmt.Errorf("error completing options: %w", err))
 			}
-			if err := options.run(ctx); err != nil {
-				options.Log.Error(err, "unable to initialize service provider landscaper")
-				os.Exit(1)
+			opts.PrintCompletedOptions(cmd)
+			if err := opts.Run(cmd.Context()); err != nil {
+				panic(err)
 			}
 		},
 	}
 
-	options.addFlags(cmd.Flags())
+	opts.AddFlags(cmd)
 
 	return cmd
 }
 
-type initOptions struct {
-	OnboardingCluster *clusters.Cluster
-	Log               logging.Logger
+type InitOptions struct {
+	*SharedOptions
 }
 
-func (o *initOptions) addFlags(fs *flag.FlagSet) {
-	// register flag '--onboarding-cluster' for the path to the kubeconfig of the onboarding cluster
-	o.OnboardingCluster.RegisterConfigPathFlag(fs)
+func (o *InitOptions) AddFlags(cmd *cobra.Command) {}
 
-	logging.InitFlags(fs)
-	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+func (o *InitOptions) PrintRaw(cmd *cobra.Command) {}
+
+func (o *InitOptions) PrintRawOptions(cmd *cobra.Command) {
+	cmd.Println("########## RAW OPTIONS START ##########")
+	o.SharedOptions.PrintRaw(cmd)
+	o.PrintRaw(cmd)
+	cmd.Println("########## RAW OPTIONS END ##########")
 }
 
-func (o *initOptions) complete() (err error) {
-	if err = o.setupLogger(); err != nil {
-		return err
-	}
-	if err = o.setupOnboardingClusterClient(); err != nil {
+func (o *InitOptions) Complete(ctx context.Context) error {
+	if err := o.SharedOptions.Complete(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (o *initOptions) setupLogger() error {
-	log, err := logging.GetLogger()
-	if err != nil {
+func (o *InitOptions) PrintCompleted(cmd *cobra.Command) {}
+
+func (o *InitOptions) PrintCompletedOptions(cmd *cobra.Command) {
+	cmd.Println("########## COMPLETED OPTIONS START ##########")
+	o.SharedOptions.PrintCompleted(cmd)
+	o.PrintCompleted(cmd)
+	cmd.Println("########## COMPLETED OPTIONS END ##########")
+}
+
+func (o *InitOptions) Run(ctx context.Context) error {
+	o.Log.Info("initializing service provider landscaper")
+
+	if err := o.Clusters.Onboarding.InitializeClient(providerscheme.InstallCRDAPIs(runtime.NewScheme())); err != nil {
 		return err
 	}
-	o.Log = log
-	ctrl.SetLogger(log.Logr())
-	return nil
-}
-
-func (o *initOptions) setupOnboardingClusterClient() error {
-	if err := o.OnboardingCluster.InitializeRESTConfig(); err != nil {
-		return fmt.Errorf("unable to initialize onboarding cluster rest config: %w", err)
+	if err := o.Clusters.Platform.InitializeClient(providerscheme.InstallCRDAPIs(runtime.NewScheme())); err != nil {
+		return err
 	}
-	if err := o.OnboardingCluster.InitializeClient(install.InstallCRDAPIs(runtime.NewScheme())); err != nil {
-		return fmt.Errorf("unable to initialize onboarding cluster client: %w", err)
-	}
-	return nil
-}
-
-func (o *initOptions) run(ctx context.Context) error {
-	o.Log.Info("initializing service provider landscaper",
-		"onboarding-cluster", o.OnboardingCluster.ConfigPath())
 
 	if err := o.createOrUpdateCRDs(ctx); err != nil {
 		return err
@@ -107,7 +94,7 @@ func (o *initOptions) run(ctx context.Context) error {
 	return nil
 }
 
-func (o *initOptions) createOrUpdateCRDs(ctx context.Context) error {
+func (o *InitOptions) createOrUpdateCRDs(ctx context.Context) error {
 	crdList := crds.CRDs()
 	var errs error
 	for _, crd := range crdList {
@@ -126,13 +113,15 @@ func (o *initOptions) createOrUpdateCRDs(ctx context.Context) error {
 	return nil
 }
 
-func (o *initOptions) clusterForCRD(crd *apiextv1.CustomResourceDefinition) (*clusters.Cluster, error) {
-	purpose, _ := ctrlutil.GetLabel(crd, clusterLabel)
+func (o *InitOptions) clusterForCRD(crd *apiextv1.CustomResourceDefinition) (*clusters.Cluster, error) {
+	purpose, _ := ctrlutil.GetLabel(crd, clustersv1alpha1.ClusterLabel)
 	switch purpose {
-	case clusterOnboarding:
-		return o.OnboardingCluster, nil
+	case clustersv1alpha1.PURPOSE_ONBOARDING:
+		return o.Clusters.Onboarding, nil
+	case clustersv1alpha1.PURPOSE_PLATFORM:
+		return o.Clusters.Platform, nil
 	default:
 		return nil, fmt.Errorf("missing cluster label '%s' or unsupported value '%s' for CRD '%s'",
-			clusterLabel, purpose, crd.Name)
+			clustersv1alpha1.ClusterLabel, purpose, crd.Name)
 	}
 }

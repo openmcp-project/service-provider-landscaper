@@ -38,23 +38,23 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 			Landscaper: LandscaperConfig{
 				Controller: ControllerConfig{
 					Image: api.ImageConfiguration{
-						Image: serviceProviderConfig.LandscaperController.Image,
+						Image: serviceProviderConfig.Spec.Deployment.LandscaperController.Image,
 					},
 				},
 				WebhooksServer: WebhooksServerConfig{
 					Image: api.ImageConfiguration{
-						Image: serviceProviderConfig.LandscaperWebhooksServer.Image,
+						Image: serviceProviderConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
 					},
 				},
 			},
 			ManifestDeployer: ManifestDeployerConfig{
 				Image: api.ImageConfiguration{
-					Image: serviceProviderConfig.ManifestDeployer.Image,
+					Image: serviceProviderConfig.Spec.Deployment.ManifestDeployer.Image,
 				},
 			},
 			HelmDeployer: HelmDeployerConfig{
 				Image: api.ImageConfiguration{
-					Image: serviceProviderConfig.HelmDeployer.Image,
+					Image: serviceProviderConfig.Spec.Deployment.HelmDeployer.Image,
 				},
 			},
 		}, nil
