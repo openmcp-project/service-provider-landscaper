@@ -2,6 +2,14 @@ package controller
 
 import (
 	"context"
+	"time"
+
+	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
+	rbac "k8s.io/api/rbac/v1"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/openmcp-project/service-provider-landscaper/api/install"
 
 	"github.com/openmcp-project/controller-utils/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -16,6 +24,8 @@ import (
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	"github.com/openmcp-project/controller-utils/pkg/logging"
+
+	"github.com/openmcp-project/openmcp-operator/lib/clusteraccess"
 )
 
 const (
@@ -24,12 +34,10 @@ const (
 
 // LandscaperReconciler reconciles a Landscaper object
 type LandscaperReconciler struct {
-	PlatformCluster       *clusters.Cluster
-	OnboardingCluster     *clusters.Cluster
-	WorkloadCluster       *clusters.Cluster
-	WorkloadClusterDomain string
-
-	Scheme *runtime.Scheme
+	PlatformCluster         *clusters.Cluster
+	OnboardingCluster       *clusters.Cluster
+	ClusterAccessReconciler clusteraccess.Reconciler
+	Scheme                  *runtime.Scheme
 }
 
 //nolint:lll
@@ -47,6 +55,41 @@ func (r *LandscaperReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	mcpScheme := runtime.NewScheme()
+	install.InstallProviderAPIs(mcpScheme)
+	utilruntime.Must(clientgoscheme.AddToScheme(mcpScheme))
+
+	workloadScheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(workloadScheme))
+
+	r.ClusterAccessReconciler = clusteraccess.NewClusterAccessReconciler(r.PlatformCluster.Client(), v1alpha1.LandscaperProviderName)
+	r.ClusterAccessReconciler.
+		WithMCPScheme(mcpScheme).
+		WithWorkloadScheme(workloadScheme).
+		WithRetryInterval(10 * time.Second).
+		WithMCPPermissions([]clustersv1alpha1.PermissionsRequest{
+			{
+				Rules: []rbac.PolicyRule{
+					{
+						APIGroups: []string{"*"},
+						Resources: []string{"*"},
+						Verbs:     []string{"*"},
+					},
+				},
+			},
+		}).
+		WithWorkloadPermissions([]clustersv1alpha1.PermissionsRequest{
+			{
+				Rules: []rbac.PolicyRule{
+					{
+						APIGroups: []string{"*"},
+						Resources: []string{"*"},
+						Verbs:     []string{"*"},
+					},
+				},
+			},
+		})
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Landscaper{}).
 		WatchesRawSource(source.Kind(r.PlatformCluster.Cluster().GetCache(), &v1alpha1.ProviderConfig{},

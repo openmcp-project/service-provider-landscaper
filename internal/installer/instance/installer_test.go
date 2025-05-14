@@ -72,7 +72,7 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 		config.Instance = instanceID
 		config.HostCluster, err = cluster.WorkloadCluster()
 		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = cluster.MCPCluster(ctx, client.ObjectKey{}, nil)
+		config.ResourceCluster, err = cluster.MCPClusterTest(ctx, client.ObjectKey{}, nil)
 		Expect(err).NotTo(HaveOccurred())
 
 		// Add optional values
@@ -113,7 +113,7 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 		config.Instance = instanceID
 		config.HostCluster, err = cluster.WorkloadCluster()
 		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = cluster.MCPCluster(ctx, client.ObjectKey{}, nil)
+		config.ResourceCluster, err = cluster.MCPClusterTest(ctx, client.ObjectKey{}, nil)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = UninstallLandscaperInstance(ctx, config)

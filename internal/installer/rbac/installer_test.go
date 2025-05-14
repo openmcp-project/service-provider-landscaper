@@ -23,7 +23,7 @@ var _ = XDescribe("Landscaper RBAC Installer", func() {
 	It("should install the landscaper rbac resources", func() {
 		ctx := context.Background()
 
-		resourceCluster, err := cluster.MCPCluster(ctx, client.ObjectKey{}, nil)
+		resourceCluster, err := cluster.MCPClusterTest(ctx, client.ObjectKey{}, nil)
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{
@@ -43,7 +43,7 @@ var _ = XDescribe("Landscaper RBAC Installer", func() {
 	XIt("should uninstall the landscaper rbac resources", func() {
 		ctx := context.Background()
 
-		resourceCluster, err := cluster.MCPCluster(ctx, client.ObjectKey{}, nil)
+		resourceCluster, err := cluster.MCPClusterTest(ctx, client.ObjectKey{}, nil)
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{
