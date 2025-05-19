@@ -34,13 +34,13 @@ func (m *ingressMutator) Empty() *networking.Ingress {
 }
 
 func (m *ingressMutator) Mutate(r *networking.Ingress) error {
-	r.ObjectMeta.Labels = m.webhooksComponent.Labels()
-	r.ObjectMeta.Annotations = map[string]string{
+	r.Labels = m.webhooksComponent.Labels()
+	r.Annotations = map[string]string{
 		"nginx.ingress.kubernetes.io/ssl-passthrough": "true",
 	}
 	if m.values.WebhooksServer.Ingress.DNSClass != "" {
-		r.ObjectMeta.Annotations["dns.gardener.cloud/class"] = m.values.WebhooksServer.Ingress.DNSClass
-		r.ObjectMeta.Annotations["dns.gardener.cloud/dnsnames"] = m.values.WebhooksServer.Ingress.Host
+		r.Annotations["dns.gardener.cloud/class"] = m.values.WebhooksServer.Ingress.DNSClass
+		r.Annotations["dns.gardener.cloud/dnsnames"] = m.values.WebhooksServer.Ingress.Host
 	}
 	r.Spec = networking.IngressSpec{
 		IngressClassName: m.values.WebhooksServer.Ingress.ClassName,

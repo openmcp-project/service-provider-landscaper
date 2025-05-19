@@ -35,7 +35,7 @@ func (d *deploymentMutator) Empty() *appsv1.Deployment {
 }
 
 func (d *deploymentMutator) Mutate(r *appsv1.Deployment) error {
-	r.ObjectMeta.Labels = d.helmDeployerComponent.Labels()
+	r.Labels = d.helmDeployerComponent.Labels()
 	r.Spec = appsv1.DeploymentSpec{
 		Replicas: d.values.ReplicaCount,
 		Selector: &metav1.LabelSelector{MatchLabels: d.helmDeployerComponent.SelectorLabels()},

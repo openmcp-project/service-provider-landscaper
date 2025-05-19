@@ -27,7 +27,7 @@ func SetInstanceID(ls *v1alpha1.Landscaper, tenantID string) {
 func ComputeInstanceID(ls *v1alpha1.Landscaper) string {
 	// TODO: use utils.K8sNameHash of the mcp-operator
 	h := sha1.New()
-	_, _ = h.Write([]byte(fmt.Sprintf("%s/%s", ls.Namespace, ls.Name)))
+	_, _ = fmt.Fprintf(h, ls.Namespace, "/", ls.Name)
 	id := base32.NewEncoding(base32EncodeStdLowerCase).WithPadding(base32.NoPadding).EncodeToString(h.Sum(nil))
 	return id
 }

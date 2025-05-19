@@ -38,7 +38,7 @@ func (m *webhooksDeploymentMutator) Empty() *appsv1.Deployment {
 }
 
 func (m *webhooksDeploymentMutator) Mutate(r *appsv1.Deployment) error {
-	r.ObjectMeta.Labels = m.webhooksComponent.Labels()
+	r.Labels = m.webhooksComponent.Labels()
 	r.Spec = appsv1.DeploymentSpec{
 		Replicas: m.values.WebhooksServer.ReplicaCount,
 		Selector: &metav1.LabelSelector{MatchLabels: m.webhooksComponent.SelectorLabels()},

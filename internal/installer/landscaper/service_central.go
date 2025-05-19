@@ -38,7 +38,7 @@ func (m *serviceMutator) Empty() *core.Service {
 }
 
 func (m *serviceMutator) Mutate(r *core.Service) error {
-	r.ObjectMeta.Labels = m.controllerComponent.Labels()
+	r.Labels = m.controllerComponent.Labels()
 	r.Spec = core.ServiceSpec{
 		Ports: []core.ServicePort{
 			{
