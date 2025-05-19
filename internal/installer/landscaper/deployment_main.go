@@ -35,7 +35,7 @@ func (m *mainDeploymentMutator) Empty() *appsv1.Deployment {
 }
 
 func (m *mainDeploymentMutator) Mutate(r *appsv1.Deployment) error {
-	r.ObjectMeta.Labels = m.controllerMainComponent.Labels()
+	r.Labels = m.controllerMainComponent.Labels()
 	r.Spec = appsv1.DeploymentSpec{
 		Replicas: m.values.Controller.ReplicaCount,
 		Selector: &metav1.LabelSelector{MatchLabels: m.controllerMainComponent.SelectorLabels()},

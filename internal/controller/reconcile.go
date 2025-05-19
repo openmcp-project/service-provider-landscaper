@@ -53,7 +53,8 @@ func (r *LandscaperReconciler) reconcile(ctx context.Context, req ctrl.Request) 
 	}
 }
 
-func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context, ls *v1alpha1.Landscaper) (reconcile.Result, error) {
+func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
+	ls *v1alpha1.Landscaper) (reconcile.Result, error) {
 	log := logging.FromContextOrPanic(ctx)
 
 	if err := r.ensureFinalizer(ctx, ls); err != nil {

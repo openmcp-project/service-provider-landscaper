@@ -38,7 +38,7 @@ func (m *webhooksServiceMutator) Empty() *core.Service {
 }
 
 func (m *webhooksServiceMutator) Mutate(r *core.Service) error {
-	r.ObjectMeta.Labels = m.webhooksComponent.Labels()
+	r.Labels = m.webhooksComponent.Labels()
 	r.Spec = core.ServiceSpec{
 		Ports: []core.ServicePort{
 			{
