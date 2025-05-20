@@ -6,13 +6,14 @@ import (
 )
 
 func newConfigSecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
-	return resources.NewSecretMutator(
+	m := resources.NewSecretMutator(
 		b.helmDeployerComponent.NamespacedResourceName("config"),
 		b.hostNamespace(),
 		map[string][]byte{
 			"config.yaml": b.configYaml,
 		},
-		v1.SecretTypeOpaque,
-		b.helmDeployerComponent.Labels(),
-		nil)
+		v1.SecretTypeOpaque)
+
+	m.MetadataMutator().WithLabels(b.helmDeployerComponent.Labels())
+	return m
 }

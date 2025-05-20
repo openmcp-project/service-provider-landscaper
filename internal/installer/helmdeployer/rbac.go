@@ -8,15 +8,15 @@ import (
 )
 
 func newServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {
-	return resources.NewServiceAccountMutator(
+	m := resources.NewServiceAccountMutator(
 		h.helmDeployerComponent.NamespacedDefaultResourceName(),
-		h.hostNamespace(),
-		h.helmDeployerComponent.Labels(),
-		nil)
+		h.hostNamespace())
+	m.MetadataMutator().WithLabels(h.helmDeployerComponent.Labels())
+	return m
 }
 
 func newClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRoleBinding] {
-	return resources.NewClusterRoleBindingMutator(
+	m := resources.NewClusterRoleBindingMutator(
 		h.helmDeployerComponent.ClusterScopedDefaultResourceName(),
 		[]rbac.Subject{
 			{
@@ -25,13 +25,13 @@ func newClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.Clust
 				Namespace: h.hostNamespace(),
 			},
 		},
-		resources.NewClusterRoleRef(h.helmDeployerComponent.ClusterScopedDefaultResourceName()),
-		h.helmDeployerComponent.Labels(),
-		nil)
+		resources.NewClusterRoleRef(h.helmDeployerComponent.ClusterScopedDefaultResourceName()))
+	m.MetadataMutator().WithLabels(h.helmDeployerComponent.Labels())
+	return m
 }
 
 func newClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole] {
-	return resources.NewClusterRoleMutator(
+	m := resources.NewClusterRoleMutator(
 		h.helmDeployerComponent.ClusterScopedDefaultResourceName(),
 		[]rbac.PolicyRule{
 			{
@@ -69,7 +69,7 @@ func newClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole]
 				Resources: []string{"events"},
 				Verbs:     []string{"get", "watch", "create", "update", "patch"},
 			},
-		},
-		h.helmDeployerComponent.Labels(),
-		nil)
+		})
+	m.MetadataMutator().WithLabels(h.helmDeployerComponent.Labels())
+	return m
 }

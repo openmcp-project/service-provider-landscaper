@@ -12,15 +12,15 @@ const (
 )
 
 func newControllerServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {
-	return resources.NewServiceAccountMutator(
+	m := resources.NewServiceAccountMutator(
 		controllerServiceAccountName,
-		h.resourceNamespace(),
-		h.rbacComponent.Labels(),
-		nil)
+		h.resourceNamespace())
+	m.MetadataMutator().WithLabels(h.rbacComponent.Labels())
+	return m
 }
 
 func newControllerClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRoleBinding] {
-	return resources.NewClusterRoleBindingMutator(
+	m := resources.NewClusterRoleBindingMutator(
 		controllerClusterRoleName(h),
 		[]rbac.Subject{
 			{
@@ -29,13 +29,13 @@ func newControllerClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*
 				Namespace: h.resourceNamespace(),
 			},
 		},
-		resources.NewClusterRoleRef(controllerClusterRoleName(h)),
-		h.rbacComponent.Labels(),
-		nil)
+		resources.NewClusterRoleRef(controllerClusterRoleName(h)))
+	m.MetadataMutator().WithLabels(h.rbacComponent.Labels())
+	return m
 }
 
 func newControllerClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole] {
-	return resources.NewClusterRoleMutator(
+	m := resources.NewClusterRoleMutator(
 		controllerClusterRoleName(h),
 		[]rbac.PolicyRule{
 			{
@@ -78,9 +78,9 @@ func newControllerClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.Cl
 				Resources: []string{"events"},
 				Verbs:     []string{"get", "watch", "create", "update", "patch"},
 			},
-		},
-		h.rbacComponent.Labels(),
-		nil)
+		})
+	m.MetadataMutator().WithLabels(h.rbacComponent.Labels())
+	return m
 }
 
 func controllerClusterRoleName(h *valuesHelper) string {

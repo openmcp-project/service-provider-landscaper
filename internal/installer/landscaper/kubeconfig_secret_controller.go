@@ -6,13 +6,13 @@ import (
 )
 
 func newControllerKubeconfigSecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
-	return resources.NewSecretMutator(
+	m := resources.NewSecretMutator(
 		b.controllerKubeconfigSecretName(),
 		b.hostNamespace(),
 		map[string][]byte{
 			"kubeconfig": []byte(b.values.Controller.LandscaperKubeconfig.Kubeconfig),
 		},
-		v1.SecretTypeOpaque,
-		b.controllerComponent.Labels(),
-		nil)
+		v1.SecretTypeOpaque)
+	m.MetadataMutator().WithLabels(b.controllerComponent.Labels())
+	return m
 }

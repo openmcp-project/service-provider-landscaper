@@ -12,12 +12,13 @@ import (
 
 type webhooksHPAMutator struct {
 	*valuesHelper
+	metadata resources.MetadataMutator
 }
 
 var _ resources.Mutator[*v2.HorizontalPodAutoscaler] = &webhooksHPAMutator{}
 
 func newWebhooksHPAMutator(b *valuesHelper) resources.Mutator[*v2.HorizontalPodAutoscaler] {
-	return &webhooksHPAMutator{valuesHelper: b}
+	return &webhooksHPAMutator{valuesHelper: b, metadata: resources.NewMetadataMutator()}
 }
 
 func (m *webhooksHPAMutator) String() string {
@@ -31,6 +32,10 @@ func (m *webhooksHPAMutator) Empty() *v2.HorizontalPodAutoscaler {
 			Namespace: m.hostNamespace(),
 		},
 	}
+}
+
+func (m *webhooksHPAMutator) MetadataMutator() resources.MetadataMutator {
+	return m.metadata
 }
 
 func (m *webhooksHPAMutator) Mutate(r *v2.HorizontalPodAutoscaler) error {

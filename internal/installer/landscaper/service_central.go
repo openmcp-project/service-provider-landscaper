@@ -12,12 +12,13 @@ import (
 
 type serviceMutator struct {
 	*valuesHelper
+	metadata resources.MetadataMutator
 }
 
 var _ resources.Mutator[*core.Service] = &serviceMutator{}
 
 func newServiceMutator(b *valuesHelper) resources.Mutator[*core.Service] {
-	return &serviceMutator{valuesHelper: b}
+	return &serviceMutator{valuesHelper: b, metadata: resources.NewMetadataMutator()}
 }
 
 func (m *serviceMutator) String() string {
@@ -35,6 +36,10 @@ func (m *serviceMutator) Empty() *core.Service {
 			Namespace: m.hostNamespace(),
 		},
 	}
+}
+
+func (m *serviceMutator) MetadataMutator() resources.MetadataMutator {
+	return m.metadata
 }
 
 func (m *serviceMutator) Mutate(r *core.Service) error {

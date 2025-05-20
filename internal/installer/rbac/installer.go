@@ -22,7 +22,7 @@ func InstallLandscaperRBACResources(ctx context.Context, values *Values) (kubeco
 
 	resourceClient := values.ResourceCluster.Client()
 
-	if err := resources.CreateOrUpdateResource(ctx, resourceClient, resources.NewNamespaceMutator(valHelper.resourceNamespace(), nil, nil)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, resourceClient, resources.NewNamespaceMutator(valHelper.resourceNamespace())); err != nil {
 		return kubeconfigs, err
 	}
 

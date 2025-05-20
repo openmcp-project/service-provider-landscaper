@@ -13,12 +13,13 @@ import (
 
 type deploymentMutator struct {
 	*valuesHelper
+	metadata resources.MetadataMutator
 }
 
 var _ resources.Mutator[*appsv1.Deployment] = &deploymentMutator{}
 
 func newDeploymentMutator(b *valuesHelper) resources.Mutator[*appsv1.Deployment] {
-	return &deploymentMutator{valuesHelper: b}
+	return &deploymentMutator{valuesHelper: b, metadata: resources.NewMetadataMutator()}
 }
 
 func (d *deploymentMutator) String() string {
@@ -32,6 +33,10 @@ func (d *deploymentMutator) Empty() *appsv1.Deployment {
 			Namespace: d.hostNamespace(),
 		},
 	}
+}
+
+func (d *deploymentMutator) MetadataMutator() resources.MetadataMutator {
+	return d.metadata
 }
 
 func (d *deploymentMutator) Mutate(r *appsv1.Deployment) error {

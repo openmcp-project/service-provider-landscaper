@@ -6,11 +6,11 @@ import (
 )
 
 func newRegistrySecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
-	return resources.NewSecretMutator(
+	m := resources.NewSecretMutator(
 		b.helmDeployerComponent.NamespacedResourceName("registries"),
 		b.hostNamespace(),
 		b.registrySecretsData,
-		v1.SecretTypeOpaque,
-		b.helmDeployerComponent.Labels(),
-		nil)
+		v1.SecretTypeOpaque)
+	m.MetadataMutator().WithLabels(b.helmDeployerComponent.Labels())
+	return m
 }

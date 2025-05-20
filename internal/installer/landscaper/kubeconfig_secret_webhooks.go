@@ -6,13 +6,13 @@ import (
 )
 
 func newWebhooksKubeconfigSecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
-	return resources.NewSecretMutator(
+	m := resources.NewSecretMutator(
 		b.webhooksKubeconfigSecretName(),
 		b.hostNamespace(),
 		map[string][]byte{
 			"kubeconfig": []byte(b.values.WebhooksServer.LandscaperKubeconfig.Kubeconfig),
 		},
-		v1.SecretTypeOpaque,
-		b.webhooksComponent.Labels(),
-		nil)
+		v1.SecretTypeOpaque)
+	m.MetadataMutator().WithLabels(b.webhooksComponent.Labels())
+	return m
 }

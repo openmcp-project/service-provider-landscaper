@@ -8,15 +8,15 @@ import (
 )
 
 func newServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {
-	return resources.NewServiceAccountMutator(
+	m := resources.NewServiceAccountMutator(
 		h.manifestDeployerComponent.NamespacedDefaultResourceName(),
-		h.hostNamespace(),
-		h.manifestDeployerComponent.Labels(),
-		nil)
+		h.hostNamespace())
+	m.MetadataMutator().WithLabels(h.manifestDeployerComponent.Labels())
+	return m
 }
 
 func newClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRoleBinding] {
-	return resources.NewClusterRoleBindingMutator(
+	m := resources.NewClusterRoleBindingMutator(
 		h.manifestDeployerComponent.ClusterScopedDefaultResourceName(),
 		[]rbac.Subject{
 			{
@@ -25,13 +25,13 @@ func newClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.Clust
 				Namespace: h.hostNamespace(),
 			},
 		},
-		resources.NewClusterRoleRef(h.manifestDeployerComponent.ClusterScopedDefaultResourceName()),
-		h.manifestDeployerComponent.Labels(),
-		nil)
+		resources.NewClusterRoleRef(h.manifestDeployerComponent.ClusterScopedDefaultResourceName()))
+	m.MetadataMutator().WithLabels(h.manifestDeployerComponent.Labels())
+	return m
 }
 
 func newClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole] {
-	return resources.NewClusterRoleMutator(
+	m := resources.NewClusterRoleMutator(
 		h.manifestDeployerComponent.ClusterScopedDefaultResourceName(),
 		[]rbac.PolicyRule{
 			{
@@ -69,7 +69,7 @@ func newClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole]
 				Resources: []string{"events"},
 				Verbs:     []string{"get", "watch", "create", "update", "patch"},
 			},
-		},
-		h.manifestDeployerComponent.Labels(),
-		nil)
+		})
+	m.MetadataMutator().WithLabels(h.manifestDeployerComponent.Labels())
+	return m
 }

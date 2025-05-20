@@ -6,13 +6,13 @@ import (
 )
 
 func newKubeconfigSecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
-	return resources.NewSecretMutator(
+	m := resources.NewSecretMutator(
 		b.manifestDeployerComponent.NamespacedResourceName("landscaper-cluster-kubeconfig"),
 		b.hostNamespace(),
 		map[string][]byte{
 			"kubeconfig": b.landscaperClusterKubeconfig(),
 		},
-		v1.SecretTypeOpaque,
-		b.manifestDeployerComponent.Labels(),
-		nil)
+		v1.SecretTypeOpaque)
+	m.MetadataMutator().WithLabels(b.manifestDeployerComponent.Labels())
+	return m
 }

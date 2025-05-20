@@ -12,12 +12,13 @@ import (
 
 type mainHPAMutator struct {
 	*valuesHelper
+	metadata resources.MetadataMutator
 }
 
 var _ resources.Mutator[*v2.HorizontalPodAutoscaler] = &mainHPAMutator{}
 
 func newMainHPAMutator(b *valuesHelper) resources.Mutator[*v2.HorizontalPodAutoscaler] {
-	return &mainHPAMutator{valuesHelper: b}
+	return &mainHPAMutator{valuesHelper: b, metadata: resources.NewMetadataMutator()}
 }
 
 func (m *mainHPAMutator) String() string {
@@ -31,6 +32,10 @@ func (m *mainHPAMutator) Empty() *v2.HorizontalPodAutoscaler {
 			Namespace: m.hostNamespace(),
 		},
 	}
+}
+
+func (m *mainHPAMutator) MetadataMutator() resources.MetadataMutator {
+	return m.metadata
 }
 
 func (m *mainHPAMutator) Mutate(r *v2.HorizontalPodAutoscaler) error {
