@@ -20,7 +20,7 @@ func InstallManifestDeployer(ctx context.Context, values *Values) (*Exports, err
 
 	hostClient := values.HostCluster.Client()
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.hostNamespace(), nil, nil)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.hostNamespace())); err != nil {
 		return nil, err
 	}
 

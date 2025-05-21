@@ -104,7 +104,7 @@ func (o *InitOptions) createOrUpdateCRDs(ctx context.Context) error {
 		}
 
 		o.Log.Info("creating/updating CRD", "name", crd.Name, "cluster", c.ID())
-		err = resources.CreateOrUpdateResource(ctx, c.Client(), resources.NewCRDMutator(crd, nil, nil))
+		err = resources.CreateOrUpdateResource(ctx, c.Client(), resources.NewCRDMutator(crd))
 		errs = errors.Join(errs, err)
 	}
 	if errs != nil {

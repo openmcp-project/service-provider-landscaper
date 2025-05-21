@@ -12,15 +12,15 @@ const (
 )
 
 func newWebhooksServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {
-	return resources.NewServiceAccountMutator(
+	m := resources.NewServiceAccountMutator(
 		WebhooksServiceAccountName,
-		h.resourceNamespace(),
-		h.rbacComponent.Labels(),
-		nil)
+		h.resourceNamespace())
+	m.MetadataMutator().WithLabels(h.rbacComponent.Labels())
+	return m
 }
 
 func newWebhooksClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRoleBinding] {
-	return resources.NewClusterRoleBindingMutator(
+	m := resources.NewClusterRoleBindingMutator(
 		webhooksClusterRoleName(h),
 		[]rbac.Subject{
 			{
@@ -29,13 +29,13 @@ func newWebhooksClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rb
 				Namespace: h.resourceNamespace(),
 			},
 		},
-		resources.NewClusterRoleRef(webhooksClusterRoleName(h)),
-		h.rbacComponent.Labels(),
-		nil)
+		resources.NewClusterRoleRef(webhooksClusterRoleName(h)))
+	m.MetadataMutator().WithLabels(h.rbacComponent.Labels())
+	return m
 }
 
 func newWebhooksClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole] {
-	return resources.NewClusterRoleMutator(
+	m := resources.NewClusterRoleMutator(
 		webhooksClusterRoleName(h),
 		[]rbac.PolicyRule{
 			{
@@ -53,9 +53,9 @@ func newWebhooksClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.Clus
 				Resources: []string{"validatingwebhookconfigurations"},
 				Verbs:     []string{"*"},
 			},
-		},
-		h.rbacComponent.Labels(),
-		nil)
+		})
+	m.MetadataMutator().WithLabels(h.rbacComponent.Labels())
+	return m
 }
 
 func webhooksClusterRoleName(h *valuesHelper) string {

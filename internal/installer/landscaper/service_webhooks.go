@@ -12,16 +12,21 @@ import (
 
 type webhooksServiceMutator struct {
 	*valuesHelper
+	metadata resources.MetadataMutator
 }
 
 var _ resources.Mutator[*core.Service] = &webhooksServiceMutator{}
 
 func newWebhooksServiceMutator(b *valuesHelper) resources.Mutator[*core.Service] {
-	return &webhooksServiceMutator{valuesHelper: b}
+	return &webhooksServiceMutator{valuesHelper: b, metadata: resources.NewMetadataMutator()}
 }
 
 func (m *webhooksServiceMutator) String() string {
 	return fmt.Sprintf("landscaper webhooks service %s/%s", m.hostNamespace(), m.landscaperWebhooksFullName())
+}
+
+func (m *webhooksServiceMutator) MetadataMutator() resources.MetadataMutator {
+	return m.metadata
 }
 
 func (m *webhooksServiceMutator) Empty() *core.Service {

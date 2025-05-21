@@ -12,15 +12,15 @@ const (
 )
 
 func newUserServiceAccountMutator(h *valuesHelper) resources.Mutator[*core.ServiceAccount] {
-	return resources.NewServiceAccountMutator(
+	m := resources.NewServiceAccountMutator(
 		userServiceAccountName,
-		h.resourceNamespace(),
-		h.rbacComponent.Labels(),
-		nil)
+		h.resourceNamespace())
+	m.MetadataMutator().WithLabels(h.rbacComponent.Labels())
+	return m
 }
 
 func newUserClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRoleBinding] {
-	return resources.NewClusterRoleBindingMutator(
+	m := resources.NewClusterRoleBindingMutator(
 		userClusterRoleName(h),
 		[]rbac.Subject{
 			{
@@ -29,13 +29,13 @@ func newUserClusterRoleBindingMutator(h *valuesHelper) resources.Mutator[*rbac.C
 				Namespace: h.resourceNamespace(),
 			},
 		},
-		resources.NewClusterRoleRef(userClusterRoleName(h)),
-		h.rbacComponent.Labels(),
-		nil)
+		resources.NewClusterRoleRef(userClusterRoleName(h)))
+	m.MetadataMutator().WithLabels(h.rbacComponent.Labels())
+	return m
 }
 
 func newUserClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterRole] {
-	return resources.NewClusterRoleMutator(
+	m := resources.NewClusterRoleMutator(
 		userClusterRoleName(h),
 		[]rbac.PolicyRule{
 			{
@@ -48,10 +48,9 @@ func newUserClusterRoleMutator(h *valuesHelper) resources.Mutator[*rbac.ClusterR
 				Resources: []string{"namespaces", "secrets", "configmaps"},
 				Verbs:     []string{"*"},
 			},
-		},
-		h.rbacComponent.Labels(),
-		nil,
-	)
+		})
+	m.MetadataMutator().WithLabels(h.rbacComponent.Labels())
+	return m
 }
 
 func userClusterRoleName(h *valuesHelper) string {

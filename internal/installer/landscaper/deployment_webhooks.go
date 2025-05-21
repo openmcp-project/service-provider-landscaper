@@ -16,12 +16,13 @@ import (
 
 type webhooksDeploymentMutator struct {
 	*valuesHelper
+	metadata resources.MetadataMutator
 }
 
 var _ resources.Mutator[*appsv1.Deployment] = &webhooksDeploymentMutator{}
 
 func newWebhooksDeploymentMutator(h *valuesHelper) resources.Mutator[*appsv1.Deployment] {
-	return &webhooksDeploymentMutator{valuesHelper: h}
+	return &webhooksDeploymentMutator{valuesHelper: h, metadata: resources.NewMetadataMutator()}
 }
 
 func (m *webhooksDeploymentMutator) String() string {
@@ -35,6 +36,10 @@ func (m *webhooksDeploymentMutator) Empty() *appsv1.Deployment {
 			Namespace: m.hostNamespace(),
 		},
 	}
+}
+
+func (m *webhooksDeploymentMutator) MetadataMutator() resources.MetadataMutator {
+	return m.metadata
 }
 
 func (m *webhooksDeploymentMutator) Mutate(r *appsv1.Deployment) error {

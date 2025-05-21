@@ -12,12 +12,13 @@ import (
 
 type ingressMutator struct {
 	*valuesHelper
+	metadata resources.MetadataMutator
 }
 
 var _ resources.Mutator[*networking.Ingress] = &ingressMutator{}
 
 func newIngressMutator(b *valuesHelper) resources.Mutator[*networking.Ingress] {
-	return &ingressMutator{valuesHelper: b}
+	return &ingressMutator{valuesHelper: b, metadata: resources.NewMetadataMutator()}
 }
 
 func (m *ingressMutator) String() string {
@@ -31,6 +32,10 @@ func (m *ingressMutator) Empty() *networking.Ingress {
 			Namespace: m.hostNamespace(),
 		},
 	}
+}
+
+func (m *ingressMutator) MetadataMutator() resources.MetadataMutator {
+	return m.metadata
 }
 
 func (m *ingressMutator) Mutate(r *networking.Ingress) error {
