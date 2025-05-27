@@ -39,3 +39,22 @@ jobs:
 
       - name: task test
         run: task test --verbose
+
+  validate-pr-content:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate PR content
+        run: |
+          PR_BODY=$(jq -r .pull_request.body "$GITHUB_EVENT_PATH")
+          REQUIRED_SECTIONS=("**What this PR does / why we need it**:" "**Release note**:")
+
+          for SECTION in "${REQUIRED_SECTIONS[@]}"; do
+            if ! echo "$PR_BODY" | grep -q "$SECTION"; then
+              echo "Pull request message is missing required section: $SECTION" >&2
+              exit 1
+            fi
+          done
