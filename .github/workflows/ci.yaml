@@ -41,6 +41,7 @@ jobs:
         run: task test --verbose
 
   validate-pr-content:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
