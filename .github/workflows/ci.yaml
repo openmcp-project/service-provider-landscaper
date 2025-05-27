@@ -51,7 +51,7 @@ jobs:
         run: |
           PR_BODY=$(jq -r .pull_request.body "$GITHUB_EVENT_PATH")
           echo "DEBUG: PR_BODY content is: $PR_BODY"
-          REQUIRED_SECTIONS=("**What this PR does / why we need it**:" "**Release note**:")
+          REQUIRED_SECTIONS=("\\*\\*What this PR does / why we need it\\*\\*:" "\\*\\*Release note\\*\\*:")
 
           for SECTION in "${REQUIRED_SECTIONS[@]}"; do
             echo "DEBUG: Checking for section: $SECTION"
