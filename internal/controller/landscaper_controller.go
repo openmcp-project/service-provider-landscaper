@@ -69,6 +69,7 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithRetryInterval(10 * time.Second).
 		WithMCPPermissions([]clustersv1alpha1.PermissionsRequest{
 			{
+				// TODO: find the correct set of permissions for the Landscaper provider on the MCP cluster
 				Rules: []rbac.PolicyRule{
 					{
 						APIGroups: []string{"*"},
@@ -80,6 +81,7 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}).
 		WithWorkloadPermissions([]clustersv1alpha1.PermissionsRequest{
 			{
+				// TODO: find the correct set of permissions for the Landscaper provider on the Workload cluster
 				Rules: []rbac.PolicyRule{
 					{
 						APIGroups: []string{"*"},
