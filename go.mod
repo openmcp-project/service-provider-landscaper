@@ -8,7 +8,7 @@ require (
 	github.com/gardener/landscaper/apis v0.130.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
-	github.com/openmcp-project/controller-utils v0.9.0
+	github.com/openmcp-project/controller-utils v0.10.0
 	github.com/openmcp-project/openmcp-operator/api v0.5.0
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
@@ -32,7 +32,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/gardener/component-spec/bindings-go v0.0.98 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
-	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
