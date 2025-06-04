@@ -105,6 +105,7 @@ func (o *RunOptions) Run(ctx context.Context) error {
 	onboardingCluster, err := clusterAccessManager.CreateAndWaitForCluster(ctx, "onboarding", clustersv1alpha1.PURPOSE_ONBOARDING,
 		onboardingScheme, []clustersv1alpha1.PermissionsRequest{
 			{
+				// TODO: define the specific permissions needed for the onboarding cluster
 				Rules: []rbacv1.PolicyRule{
 					{
 						APIGroups: []string{"*"},
