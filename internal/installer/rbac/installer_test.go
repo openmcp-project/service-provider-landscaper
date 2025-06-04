@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/openmcp-project/service-provider-landscaper/test/utils"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 )
 
 func TestConfig(t *testing.T) {
@@ -23,7 +23,7 @@ var _ = XDescribe("Landscaper RBAC Installer", func() {
 	It("should install the landscaper rbac resources", func() {
 		ctx := context.Background()
 
-		resourceCluster, err := cluster.MCPClusterTest(ctx, client.ObjectKey{}, nil)
+		resourceCluster, err := utils.ClusterFromKey(ctx, client.ObjectKey{}, nil, "mcp")
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{
@@ -43,7 +43,7 @@ var _ = XDescribe("Landscaper RBAC Installer", func() {
 	XIt("should uninstall the landscaper rbac resources", func() {
 		ctx := context.Background()
 
-		resourceCluster, err := cluster.MCPClusterTest(ctx, client.ObjectKey{}, nil)
+		resourceCluster, err := utils.ClusterFromKey(ctx, client.ObjectKey{}, nil, "mcp")
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{

@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/openmcp-project/service-provider-landscaper/test/utils"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
@@ -12,7 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/providerconfig"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
@@ -70,9 +71,9 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.HostCluster, err = cluster.WorkloadCluster()
+		config.HostCluster, err = utils.ClusterFromEnv("WORKLOAD_KUBECONFIG_PATH")
 		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = cluster.MCPClusterTest(ctx, client.ObjectKey{}, nil)
+		config.ResourceCluster, err = utils.ClusterFromKey(ctx, client.ObjectKey{}, nil, "mcp")
 		Expect(err).NotTo(HaveOccurred())
 
 		// Add optional values
@@ -111,9 +112,9 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.HostCluster, err = cluster.WorkloadCluster()
+		config.HostCluster, err = utils.ClusterFromEnv("WORKLOAD_KUBECONFIG_PATH")
 		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = cluster.MCPClusterTest(ctx, client.ObjectKey{}, nil)
+		config.ResourceCluster, err = utils.ClusterFromKey(ctx, client.ObjectKey{}, nil, "mcp")
 		Expect(err).NotTo(HaveOccurred())
 
 		err = UninstallLandscaperInstance(ctx, config)
