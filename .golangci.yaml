@@ -32,7 +32,7 @@ linters:
         path: api/*
       - linters:
           - dupl
-          - lllgit ad
+          - lll
         path: internal/*
 
       - linters:
