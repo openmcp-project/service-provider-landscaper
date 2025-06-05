@@ -4,20 +4,23 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
-	"k8s.io/apimachinery/pkg/runtime"
+	"github.com/openmcp-project/openmcp-operator/lib/clusteraccess"
 
-	providerscheme "github.com/openmcp-project/service-provider-landscaper/api/install"
+	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 
-	"sigs.k8s.io/yaml"
+	rbacv1 "k8s.io/api/rbac/v1"
 
+	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	providerscheme "github.com/openmcp-project/service-provider-landscaper/api/install"
 	controller1 "github.com/openmcp-project/service-provider-landscaper/internal/controller"
 )
 
@@ -46,37 +49,13 @@ func NewRunCommand(so *SharedOptions) *cobra.Command {
 	return cmd
 }
 
-type RawRunOptions struct {
-	WorkloadClusterDomain string
-
-	// var metricsAddr string
-	// var metricsCertPath, metricsCertName, metricsCertKey string
-	// var webhookCertPath, webhookCertName, webhookCertKey string
-	// var enableLeaderElection bool
-	// var probeAddr string
-	// var secureMetrics bool
-	// var enableHTTP2 bool
-	// var tlsOpts []func(*tls.Config)
-}
-
 type RunOptions struct {
 	*SharedOptions
-	RawRunOptions
 }
 
-func (o *RunOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.WorkloadClusterDomain, "workload-cluster-domain", "",
-		"Domain of the workload cluster.")
-}
+func (o *RunOptions) AddFlags(cmd *cobra.Command) {}
 
-func (o *RunOptions) PrintRaw(cmd *cobra.Command) {
-	data, err := yaml.Marshal(o.RawRunOptions)
-	if err != nil {
-		cmd.Println(fmt.Errorf("error marshalling raw options: %w", err).Error())
-		return
-	}
-	cmd.Print(string(data))
-}
+func (o *RunOptions) PrintRaw(cmd *cobra.Command) {}
 
 func (o *RunOptions) PrintRawOptions(cmd *cobra.Command) {
 	cmd.Println("########## RAW OPTIONS START ##########")
@@ -102,27 +81,52 @@ func (o *RunOptions) PrintCompletedOptions(cmd *cobra.Command) {
 	cmd.Println("########## COMPLETED OPTIONS END ##########")
 }
 
-func (o *RunOptions) Run(_ context.Context) error {
+func (o *RunOptions) Run(ctx context.Context) error {
 	o.Log.Info("running service provider landscaper")
 
-	if err := o.Clusters.Onboarding.InitializeClient(providerscheme.InstallProviderAPIs(runtime.NewScheme())); err != nil {
+	platformScheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(platformScheme))
+	utilruntime.Must(clustersv1alpha1.AddToScheme(platformScheme))
+	providerscheme.InstallProviderAPIs(platformScheme)
+
+	onboardingScheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(onboardingScheme))
+	providerscheme.InstallProviderAPIs(onboardingScheme)
+
+	if err := o.Clusters.Platform.InitializeClient(platformScheme); err != nil {
 		return err
 	}
-	if err := o.Clusters.Platform.InitializeClient(providerscheme.InstallProviderAPIs(runtime.NewScheme())); err != nil {
-		return err
-	}
-	workloadClusterScheme := runtime.NewScheme()
-	utilruntime.Must(clientgoscheme.AddToScheme(workloadClusterScheme))
-	if err := o.Clusters.Workload.InitializeClient(workloadClusterScheme); err != nil {
-		return err
+
+	clusterAccessManager := clusteraccess.NewClusterAccessManager(o.Clusters.Platform.Client(), v1alpha1.LandscaperProviderName)
+	clusterAccessManager.WithLogger(&o.Log).
+		WithInterval(10 * time.Second).
+		WithTimeout(30 * time.Minute)
+
+	onboardingCluster, err := clusterAccessManager.CreateAndWaitForCluster(ctx, "onboarding", clustersv1alpha1.PURPOSE_ONBOARDING,
+		onboardingScheme, []clustersv1alpha1.PermissionsRequest{
+			{
+				// TODO: define the specific permissions needed for the onboarding cluster
+				Rules: []rbacv1.PolicyRule{
+					{
+						APIGroups: []string{"*"},
+						Resources: []string{"*"},
+						Verbs:     []string{"*"},
+					},
+				},
+			},
+		})
+
+	if err != nil {
+		return fmt.Errorf("error creating/updating onboarding cluster: %w", err)
 	}
 
 	mgrOptions := ctrl.Options{
 		Metrics:        metricsserver.Options{BindAddress: "0"},
 		LeaderElection: false,
+		Scheme:         onboardingScheme,
 	}
 
-	mgr, err := ctrl.NewManager(o.Clusters.Onboarding.RESTConfig(), mgrOptions)
+	mgr, err := ctrl.NewManager(onboardingCluster.RESTConfig(), mgrOptions)
 	if err != nil {
 		return fmt.Errorf("unable to setup manager: %w", err)
 	}
@@ -131,15 +135,10 @@ func (o *RunOptions) Run(_ context.Context) error {
 		return fmt.Errorf("unable to add platform cluster to manager: %w", err)
 	}
 
-	utilruntime.Must(clientgoscheme.AddToScheme(mgr.GetScheme()))
-	utilruntime.Must(api.AddToScheme(mgr.GetScheme()))
-
 	if err = (&controller1.LandscaperReconciler{
-		OnboardingCluster:     o.Clusters.Onboarding,
-		PlatformCluster:       o.Clusters.Platform,
-		WorkloadCluster:       o.Clusters.Workload,
-		WorkloadClusterDomain: o.WorkloadClusterDomain,
-		Scheme:                mgr.GetScheme(),
+		OnboardingCluster: onboardingCluster,
+		PlatformCluster:   o.Clusters.Platform,
+		Scheme:            mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller: %w", err)
 	}

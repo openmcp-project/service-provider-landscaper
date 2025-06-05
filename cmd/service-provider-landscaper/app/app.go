@@ -14,6 +14,7 @@ import (
 )
 
 type RawSharedOptions struct {
+	Environment string
 }
 
 type SharedOptions struct {
@@ -25,18 +26,16 @@ type SharedOptions struct {
 }
 
 type Clusters struct {
-	Onboarding *clusters.Cluster
-	Platform   *clusters.Cluster
-	Workload   *clusters.Cluster
+	Platform *clusters.Cluster
 }
 
 func (o *SharedOptions) AddPersistentFlags(cmd *cobra.Command) {
+	// environment
+	cmd.PersistentFlags().StringVar(&o.Environment, "environment", "", "Environment to use")
 	// logging
 	logging.InitFlags(cmd.PersistentFlags())
 	// clusters
-	o.Clusters.Onboarding.RegisterConfigPathFlag(cmd.PersistentFlags())
-	o.Clusters.Platform.RegisterConfigPathFlag(cmd.PersistentFlags())
-	o.Clusters.Workload.RegisterConfigPathFlag(cmd.PersistentFlags())
+	o.Clusters.Platform.RegisterSingleConfigPathFlag(cmd.PersistentFlags())
 }
 
 func (o *SharedOptions) PrintRaw(cmd *cobra.Command) {
@@ -51,9 +50,7 @@ func (o *SharedOptions) PrintRaw(cmd *cobra.Command) {
 func (o *SharedOptions) PrintCompleted(cmd *cobra.Command) {
 	raw := map[string]any{
 		"clusters": map[string]any{
-			"onboarding": o.Clusters.Onboarding.APIServerEndpoint(),
-			"platform":   o.Clusters.Platform.APIServerEndpoint(),
-			"workload":   o.Clusters.Workload.APIServerEndpoint(),
+			"platform": o.Clusters.Platform.APIServerEndpoint(),
 		},
 	}
 	data, err := yaml.Marshal(raw)
@@ -65,15 +62,7 @@ func (o *SharedOptions) PrintCompleted(cmd *cobra.Command) {
 }
 
 func (o *SharedOptions) Complete() error {
-	if err := o.Clusters.Onboarding.InitializeRESTConfig(); err != nil {
-		return err
-	}
-
 	if err := o.Clusters.Platform.InitializeRESTConfig(); err != nil {
-		return err
-	}
-
-	if err := o.Clusters.Workload.InitializeRESTConfig(); err != nil {
 		return err
 	}
 
@@ -99,9 +88,7 @@ func NewServiceProviderLandscaperCommand() *cobra.Command {
 	so := &SharedOptions{
 		RawSharedOptions: &RawSharedOptions{},
 		Clusters: &Clusters{
-			Onboarding: clusters.New("onboarding"),
-			Platform:   clusters.New("platform"),
-			Workload:   clusters.New("workload"),
+			Platform: clusters.New("platform"),
 		},
 	}
 	so.AddPersistentFlags(cmd)

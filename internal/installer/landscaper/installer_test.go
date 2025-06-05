@@ -5,13 +5,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/openmcp-project/service-provider-landscaper/test/utils"
+
 	"github.com/gardener/landscaper/apis/config/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 
 	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/providerconfig"
 )
 
@@ -27,7 +28,7 @@ var _ = XDescribe("Landscaper Controller Installer", func() {
 	It("should install the landscaper controllers", func() {
 		ctx := context.Background()
 
-		hostCluster, err := cluster.WorkloadCluster()
+		hostCluster, err := utils.ClusterFromEnv("WORKLOAD_KUBECONFIG_PATH")
 		Expect(err).ToNot(HaveOccurred())
 
 		kubeconfig, err := os.ReadFile(os.Getenv("KUBECONFIG"))
@@ -78,7 +79,7 @@ var _ = XDescribe("Landscaper Controller Installer", func() {
 	XIt("should uninstall the landscaper controllers", func() {
 		ctx := context.Background()
 
-		hostCluster, err := cluster.WorkloadCluster()
+		hostCluster, err := utils.ClusterFromEnv("WORKLOAD_KUBECONFIG_PATH")
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{

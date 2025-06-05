@@ -22,7 +22,6 @@ import (
 
 	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/instance"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 )
 
@@ -77,13 +76,58 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return reconcile.Result{}, err
 	}
 
-	initConditions(ls)
-
-	mcpCluster, err := cluster.MCPCluster(ctx, client.ObjectKeyFromObject(ls), r.OnboardingCluster.Client())
-
+	req := reconcile.Request{NamespacedName: client.ObjectKeyFromObject(ls)}
+	res, err := r.ClusterAccessReconciler.Reconcile(ctx, req)
 	if err != nil {
+		log.Error(err, "failed to reconcile cluster access for landscaper instance")
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Installed",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "ClusterAccessError",
+			Message:            err.Error(),
+		})
 		return reconcile.Result{}, err
 	}
+
+	if res.RequeueAfter > 0 {
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Installed",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "WaitingForClusterAccessToBeReady",
+			Message:            "MCP and/or Workload Clusters are not yet ready",
+		})
+		return res, nil
+	}
+
+	mcpCluster, err := r.ClusterAccessReconciler.MCPCluster(ctx, req)
+	if err != nil {
+		log.Error(err, "failed to get MCP cluster for landscaper instance")
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Installed",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "MCPClusterError",
+			Message:            err.Error(),
+		})
+		return reconcile.Result{}, err
+	}
+
+	workloadCluster, err := r.ClusterAccessReconciler.WorkloadCluster(ctx, req)
+	if err != nil {
+		log.Error(err, "failed to get Workload cluster for landscaper instance")
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Installed",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "WorkloadClusterError",
+			Message:            err.Error(),
+		})
+		return reconcile.Result{}, err
+	}
+
+	initConditions(ls)
 
 	providerConfig, err := r.getProviderConfigForLandscaper(ctx, ls, r.PlatformCluster)
 	if err != nil {
@@ -98,7 +142,7 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return reconcile.Result{}, err
 	}
 
-	conf, err := r.createConfig(ls, mcpCluster, providerConfig)
+	conf, err := r.createConfig(ls, mcpCluster, workloadCluster, providerConfig)
 	if err != nil {
 		log.Error(err, "failed to create configuration for landscaper instance")
 		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
@@ -160,15 +204,69 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 	log := logging.FromContextOrPanic(ctx)
 
 	if err := r.ensurePhaseTerminating(ctx, ls); err != nil {
+		log.Error(err, "failed to ensure landscaper instance is in terminating phase")
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Uninstalled",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "PhaseError",
+			Message:            err.Error(),
+		})
 		return reconcile.Result{}, err
 	}
 
-	mcpCluster, err := cluster.MCPCluster(ctx, client.ObjectKeyFromObject(ls), r.OnboardingCluster.Client())
+	req := reconcile.Request{NamespacedName: client.ObjectKeyFromObject(ls)}
+	res, err := r.ClusterAccessReconciler.Reconcile(ctx, req)
 	if err != nil {
+		log.Error(err, "failed to reconcile cluster access for landscaper instance deletion")
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Uninstalled",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "ClusterAccessError",
+			Message:            err.Error(),
+		})
+		return res, err
+	}
+
+	if res.RequeueAfter > 0 {
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Uninstalled",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "WaitingForClusterAccessToBeReady",
+			Message:            "MCP and/or Workload Clusters are not yet ready",
+		})
+		return res, nil
+	}
+
+	mcpCluster, err := r.ClusterAccessReconciler.MCPCluster(ctx, req)
+	if err != nil {
+		log.Error(err, "failed to get MCP cluster for landscaper instance")
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Uninstalled",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "MCPClusterError",
+			Message:            err.Error(),
+		})
 		return reconcile.Result{}, err
 	}
 
-	providerConfig, err := r.getProviderConfigForLandscaper(ctx, ls, mcpCluster)
+	workloadCluster, err := r.ClusterAccessReconciler.WorkloadCluster(ctx, req)
+	if err != nil {
+		log.Error(err, "failed to get Workload cluster for landscaper instance")
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Uninstalled",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "WorkloadClusterError",
+			Message:            err.Error(),
+		})
+		return reconcile.Result{}, err
+	}
+
+	providerConfig, err := r.getProviderConfigForLandscaper(ctx, ls, r.PlatformCluster)
 	if err != nil {
 		log.Error(err, "failed to get provider config for landscaper instance")
 		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
@@ -181,7 +279,7 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 		return reconcile.Result{}, err
 	}
 
-	conf, err := r.createConfig(ls, mcpCluster, providerConfig)
+	conf, err := r.createConfig(ls, mcpCluster, workloadCluster, providerConfig)
 	if err != nil {
 		log.Error(err, "failed to create configuration to uninstall landscaper instance")
 		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
@@ -214,7 +312,22 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 		Message:            "Landscaper has been uninstalled",
 	})
 
-	// TODO: remove workload cluster request
+	result, err := r.ClusterAccessReconciler.ReconcileDelete(ctx, req)
+	if err != nil {
+		log.Error(err, "failed to reconcile cluster access for landscaper instance deletion")
+		apimeta.SetStatusCondition(&ls.Status.Conditions, meta.Condition{
+			Type:               "Uninstalled",
+			Status:             meta.ConditionFalse,
+			ObservedGeneration: ls.Generation,
+			Reason:             "ClusterAccessError",
+			Message:            err.Error(),
+		})
+		return result, err
+	}
+
+	if result.RequeueAfter > 0 {
+		return result, nil
+	}
 
 	if err := r.removeFinalizer(ctx, ls); err != nil {
 		return reconcile.Result{}, err
@@ -353,7 +466,7 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 	return providerConfig, nil
 }
 
-func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, mcpCluster *clusters.Cluster, providerConfig *v1alpha1.ProviderConfig) (*instance.Configuration, error) {
+func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, mcpCluster, workloadCluster *clusters.Cluster, providerConfig *v1alpha1.ProviderConfig) (*instance.Configuration, error) {
 	inst := identity.Instance(identity.GetInstanceID(ls))
 
 	cpu, err := resource.ParseQuantity("10m")
@@ -374,8 +487,8 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, mcpCluster 
 		Instance:          inst,
 		Version:           "v0.127.0",
 		ResourceCluster:   mcpCluster,
-		HostCluster:       r.WorkloadCluster,
-		HostClusterDomain: r.WorkloadClusterDomain,
+		HostCluster:       workloadCluster,
+		HostClusterDomain: providerConfig.Spec.WorkloadClusterDomain,
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
 				Image: v1alpha1.ImageConfiguration{

@@ -19,10 +19,18 @@ package utils
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ginkgo "github.com/onsi/ginkgo/v2" //nolint:golint,revive
 )
@@ -248,4 +256,42 @@ func UncommentCode(filename, target, prefix string) error {
 	// false positive
 	// nolint:gosec
 	return os.WriteFile(filename, out.Bytes(), 0644)
+}
+
+func ClusterFromEnv(varName string) (*clusters.Cluster, error) {
+	c := clusters.New("workload").WithConfigPath(os.Getenv(varName))
+	if err := c.InitializeRESTConfig(); err != nil {
+		return nil, fmt.Errorf("failed to initialize rest config for cluster: %w", err)
+	}
+	if err := c.InitializeClient(nil); err != nil {
+		return nil, fmt.Errorf("failed to initialize rest config for cluster: %w", err)
+	}
+	return c, nil
+}
+
+func ClusterFromKey(ctx context.Context, lsObjectKey client.ObjectKey,
+	onboardingClient client.Client, clusterId string) (*clusters.Cluster, error) {
+	k := client.ObjectKey{Namespace: lsObjectKey.Namespace, Name: lsObjectKey.Name + ".kubeconfig"}
+	s := &corev1.Secret{}
+	if err := onboardingClient.Get(ctx, k, s); err != nil {
+		return nil, fmt.Errorf("failed to get secret %s: %w", k, err)
+	}
+	kubeconfigBytes, ok := s.Data["kubeconfig"]
+	if !ok {
+		return nil, fmt.Errorf("kubeconfig not found in secret %s", k)
+	}
+	config, err := clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rest config from kubeconfig bytes: %w", err)
+	}
+	mcp := clusters.New(clusterId).WithRESTConfig(config)
+	scheme := runtime.NewScheme()
+	if err = clientgoscheme.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add client-go scheme: %w", err)
+	}
+
+	if err = mcp.InitializeClient(scheme); err != nil {
+		return nil, fmt.Errorf("failed to initialize client: %w", err)
+	}
+	return mcp, nil
 }

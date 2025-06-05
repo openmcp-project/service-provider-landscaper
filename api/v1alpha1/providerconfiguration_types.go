@@ -23,6 +23,8 @@ import (
 type ProviderConfigSpec struct {
 	// +kubebuilder:validation:Required
 	Deployment Deployment `json:"deployment"`
+	// +kubebuilder:validation:MinLength=1
+	WorkloadClusterDomain string `json:"workloadClusterDomain,omitempty"`
 }
 
 type ProviderConfigStatus struct{}
