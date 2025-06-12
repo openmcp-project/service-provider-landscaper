@@ -170,7 +170,7 @@ func (s *reconcileStatus) setInstallConfigurationError(err error) {
 }
 
 func (s *reconcileStatus) setUninstallConfigurationError(err error) {
-	s.InstallCondition = &meta.Condition{
+	s.UninstallCondition = &meta.Condition{
 		Type:               typeUninstalled,
 		Status:             meta.ConditionFalse,
 		ObservedGeneration: s.ObservedGeneration,
