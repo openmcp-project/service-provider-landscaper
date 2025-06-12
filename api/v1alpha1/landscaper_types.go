@@ -29,6 +29,15 @@ const (
 	Ready       LandscaperPhase = "Ready"
 )
 
+type LandscaperComponent struct {
+	// Name is the name of the component.
+	// +optional
+	Name string `json:"name,omitempty"`
+	// Version is the version of the component.
+	// +optional
+	Version string `json:"version,omitempty"`
+}
+
 // LandscaperSpec defines the desired state of Landscaper.
 type LandscaperSpec struct {
 	// +optional
@@ -46,7 +55,11 @@ type LandscaperStatus struct {
 	// ObservedGeneration is the last observed generation.
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
+	// The current phase of the Landscaper instance deployment.
 	Phase LandscaperPhase `json:"phase,omitempty"`
+
+	// +optional
+	LandscaperComponents []LandscaperComponent `json:"LandscaperComponents,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
@@ -35,6 +36,7 @@ func (r *LandscaperReconciler) reconcile(ctx context.Context, req ctrl.Request) 
 		return reconcile.Result{}, err
 	}
 
+	oldStatus := ls.Status.DeepCopy()
 	var status *reconcileStatus
 
 	if ls.DeletionTimestamp.IsZero() {
@@ -47,7 +49,7 @@ func (r *LandscaperReconciler) reconcile(ctx context.Context, req ctrl.Request) 
 		status.convertToLandscaperStatus(&ls.Status)
 	}
 
-	updateErr := r.updateStatus(ctx, ls)
+	updateErr := r.updateStatus(ctx, ls, oldStatus)
 	err = errors.Join(err, updateErr)
 	if err != nil {
 		return reconcile.Result{}, err
@@ -208,11 +210,13 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 	return reconcile.Result{}, status, nil
 }
 
-func (r *LandscaperReconciler) updateStatus(ctx context.Context, ls *v1alpha1.Landscaper) error {
+func (r *LandscaperReconciler) updateStatus(ctx context.Context, ls *v1alpha1.Landscaper, oldStatus *v1alpha1.LandscaperStatus) error {
 	log := logging.FromContextOrPanic(ctx)
-	if err := r.OnboardingCluster.Client().Status().Update(ctx, ls); err != nil {
-		log.Error(err, "failed to update status of landscaper resource")
-		return fmt.Errorf("failed to update status of landscaper resource %s/%s: %w", ls.Namespace, ls.Name, err)
+	if !reflect.DeepEqual(oldStatus, &ls.Status) {
+		if err := r.OnboardingCluster.Client().Status().Update(ctx, ls); err != nil {
+			log.Error(err, "failed to update status of landscaper resource")
+			return fmt.Errorf("failed to update status of landscaper resource %s/%s: %w", ls.Namespace, ls.Name, err)
+		}
 	}
 	return nil
 }
@@ -288,22 +292,41 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 		providerConfigName = providerConfigList.Items[0].Name
 	}
 
-	// update the provider config reference in the landscaper status if it is not already set and equal to the one in the spec
-	if ls.Status.ProviderConfigRef == nil || ls.Status.ProviderConfigRef.Name != providerConfigName {
-		ls.Status.ProviderConfigRef = &core.LocalObjectReference{
-			Name: providerConfigName,
-		}
-		if err := r.OnboardingCluster.Client().Status().Update(ctx, ls); err != nil {
-			return nil, fmt.Errorf("failed to update provider config reference in landscaper status: %w", err)
-		}
-	}
-
 	providerConfig := &v1alpha1.ProviderConfig{}
 	if err := platformCluster.Client().Get(ctx, client.ObjectKey{Namespace: ls.Namespace, Name: providerConfigName}, providerConfig); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, fmt.Errorf("provider config %s not found", providerConfigName)
 		}
 		return nil, fmt.Errorf("failed to get provider config %s: %w", providerConfigName, err)
+	}
+
+	oldStatus := ls.Status.DeepCopy()
+
+	ls.Status.ProviderConfigRef = &core.LocalObjectReference{
+		Name: providerConfigName,
+	}
+
+	ls.Status.LandscaperComponents = []v1alpha1.LandscaperComponent{
+		{
+			Name:    v1alpha1.GetControllerName(),
+			Version: providerConfig.GetControllerVersion(),
+		},
+		{
+			Name:    v1alpha1.GetWebhooksServerName(),
+			Version: providerConfig.GetWebhooksServerVersion(),
+		},
+		{
+			Name:    v1alpha1.GetManifestDeployerName(),
+			Version: providerConfig.GetManifestDeployerVersion(),
+		},
+		{
+			Name:    v1alpha1.GetHelmDeployerName(),
+			Version: providerConfig.GetHelmDeployerVersion(),
+		},
+	}
+
+	if err := r.updateStatus(ctx, ls, oldStatus); err != nil {
+		return nil, err
 	}
 
 	return providerConfig, nil
