@@ -48,8 +48,8 @@ func (s *reconcileStatus) setInstallWaitForClusterAccessReady() {
 }
 
 func (s *reconcileStatus) setUninstallWaitForClusterAccessReady() {
-	s.InstallCondition = &meta.Condition{
-		Type:               typeInstalled,
+	s.UninstallCondition = &meta.Condition{
+		Type:               typeUninstalled,
 		Status:             meta.ConditionFalse,
 		ObservedGeneration: s.ObservedGeneration,
 		Reason:             reasonInstallationPending,
