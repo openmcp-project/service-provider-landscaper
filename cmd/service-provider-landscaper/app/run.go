@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	openmcpconstv1alpha1 "github.com/openmcp-project/openmcp-operator/api/constants"
+
 	"github.com/openmcp-project/openmcp-operator/lib/clusteraccess"
 
 	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
@@ -97,7 +99,12 @@ func (o *RunOptions) Run(ctx context.Context) error {
 		return err
 	}
 
-	clusterAccessManager := clusteraccess.NewClusterAccessManager(o.Clusters.Platform.Client(), v1alpha1.LandscaperProviderName)
+	providerSystemNamespace := os.Getenv(openmcpconstv1alpha1.EnvVariablePlatformClusterNamespace)
+	if providerSystemNamespace == "" {
+		return fmt.Errorf("environment variable %s is not set", openmcpconstv1alpha1.EnvVariablePlatformClusterNamespace)
+	}
+
+	clusterAccessManager := clusteraccess.NewClusterAccessManager(o.Clusters.Platform.Client(), v1alpha1.LandscaperProviderName, providerSystemNamespace)
 	clusterAccessManager.WithLogger(&o.Log).
 		WithInterval(10 * time.Second).
 		WithTimeout(30 * time.Minute)

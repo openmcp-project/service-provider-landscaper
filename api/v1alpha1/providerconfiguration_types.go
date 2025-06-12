@@ -17,7 +17,14 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	latestVersion  = "latest"
+	unknownVersion = "unknown"
 )
 
 type ProviderConfigSpec struct {
@@ -63,6 +70,62 @@ type ProviderConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ProviderConfig `json:"items"`
+}
+
+func getVersion(image string) string {
+	if image == "" {
+		return latestVersion
+	}
+	// Assuming the image follows the format "image:version"
+	parts := strings.Split(image, ":")
+	if len(parts) > 1 {
+		return parts[1]
+	}
+	return unknownVersion
+}
+
+func GetHelmDeployerName() string {
+	return "helm-deployer"
+}
+
+func GetManifestDeployerName() string {
+	return "manifest-deployer"
+}
+
+func GetControllerName() string {
+	return "landscaper-controller"
+}
+
+func GetWebhooksServerName() string {
+	return "landscaper-webhooks-server"
+}
+
+func (pc *ProviderConfig) GetHelmDeployerVersion() string {
+	if pc.Spec.Deployment.HelmDeployer.Image == "" {
+		return latestVersion
+	}
+	return getVersion(pc.Spec.Deployment.HelmDeployer.Image)
+}
+
+func (pc *ProviderConfig) GetManifestDeployerVersion() string {
+	if pc.Spec.Deployment.ManifestDeployer.Image == "" {
+		return latestVersion
+	}
+	return getVersion(pc.Spec.Deployment.ManifestDeployer.Image)
+}
+
+func (pc *ProviderConfig) GetControllerVersion() string {
+	if pc.Spec.Deployment.LandscaperController.Image == "" {
+		return latestVersion
+	}
+	return getVersion(pc.Spec.Deployment.LandscaperController.Image)
+}
+
+func (pc *ProviderConfig) GetWebhooksServerVersion() string {
+	if pc.Spec.Deployment.LandscaperWebhooksServer.Image == "" {
+		return latestVersion
+	}
+	return getVersion(pc.Spec.Deployment.LandscaperWebhooksServer.Image)
 }
 
 func init() {
