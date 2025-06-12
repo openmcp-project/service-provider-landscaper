@@ -62,7 +62,11 @@ spec:
             description: LandscaperStatus defines the observed state of Landscaper.
             properties:
               LandscaperComponents:
+                description: LandscaperComponents is a list of components that are
+                  part of the Landscaper instance.
                 items:
+                  description: LandscaperComponent represents a component of the Landscaper
+                    instance.
                   properties:
                     name:
                       description: Name is the name of the component.
@@ -136,9 +140,8 @@ spec:
                 description: The current phase of the Landscaper instance deployment.
                 type: string
               providerConfigRef:
-                description: |-
-                  LocalObjectReference contains enough information to let you locate the
-                  referenced object inside the same namespace.
+                description: ProviderConfigRef is a reference to the ProviderConfig
+                  that this Landscaper instance uses.
                 properties:
                   name:
                     default: ""

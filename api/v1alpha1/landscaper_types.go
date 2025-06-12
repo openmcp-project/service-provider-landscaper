@@ -29,6 +29,7 @@ const (
 	Ready       LandscaperPhase = "Ready"
 )
 
+// LandscaperComponent represents a component of the Landscaper instance.
 type LandscaperComponent struct {
 	// Name is the name of the component.
 	// +optional
@@ -46,6 +47,7 @@ type LandscaperSpec struct {
 
 // LandscaperStatus defines the observed state of Landscaper.
 type LandscaperStatus struct {
+	// ProviderConfigRef is a reference to the ProviderConfig that this Landscaper instance uses.
 	// +optional
 	ProviderConfigRef *corev1.LocalObjectReference `json:"providerConfigRef,omitempty"`
 
@@ -58,6 +60,7 @@ type LandscaperStatus struct {
 	// The current phase of the Landscaper instance deployment.
 	Phase LandscaperPhase `json:"phase,omitempty"`
 
+	// LandscaperComponents is a list of components that are part of the Landscaper instance.
 	// +optional
 	LandscaperComponents []LandscaperComponent `json:"LandscaperComponents,omitempty"`
 }
