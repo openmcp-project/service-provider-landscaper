@@ -24,9 +24,26 @@ import (
 type LandscaperPhase string
 
 const (
-	Progressing LandscaperPhase = "Progressing"
-	Terminating LandscaperPhase = "Terminating"
-	Ready       LandscaperPhase = "Ready"
+	PhaseProgressing LandscaperPhase = "PhaseProgressing"
+	PhaseTerminating LandscaperPhase = "PhaseTerminating"
+	PhaseReady       LandscaperPhase = "PhaseReady"
+
+	ConditionTypeInstalled   = "Installed"
+	ConditionTypeUninstalled = "Uninstalled"
+	ConditionTypeReady       = "Ready"
+
+	ConditionReasonInstallationPending    = "InstallationPending"
+	ConditionReasonReadinessCheckPending  = "ReadinessCheckPending"
+	ConditionReasonWaitForLandscaperReady = "WaitForLandscaperReady"
+	ConditionReasonUninstallationPending  = "UninstallationPending"
+
+	ConditionReasonLandscaperInstalled = "LandscaperInstalled"
+	ConditionReasonLandscaperReady     = "LandscaperReady"
+
+	ConditionReasonInstallFailed       = "InstallFailed"
+	ConditionReasonClusterAccessError  = "ClusterAccessError"
+	ConditionReasonProviderConfigError = "ProviderConfigError"
+	ConditionReasonConfigurationError  = "ConfigurationError"
 )
 
 // LandscaperComponent represents a component of the Landscaper instance.

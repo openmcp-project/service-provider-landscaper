@@ -131,7 +131,7 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return ctrl.Result{RequeueAfter: 40 * time.Second}, status, nil
 	}
 
-	ls.Status.Phase = v1alpha1.Ready
+	ls.Status.Phase = v1alpha1.PhaseReady
 	log.Debug("landscaper instance has become ready")
 	status.setReady()
 
@@ -293,7 +293,7 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 	}
 
 	providerConfig := &v1alpha1.ProviderConfig{}
-	if err := platformCluster.Client().Get(ctx, client.ObjectKey{Namespace: ls.Namespace, Name: providerConfigName}, providerConfig); err != nil {
+	if err := platformCluster.Client().Get(ctx, client.ObjectKey{Name: providerConfigName}, providerConfig); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, fmt.Errorf("provider config %s not found", providerConfigName)
 		}

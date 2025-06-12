@@ -1,0 +1,8 @@
+apiVersion: landscaper.services.openmcp.cloud/v1alpha1
+kind: Landscaper
+metadata:
+  name: test
+  namespace: default
+spec:
+  providerConfigRef:
+    name: test
