@@ -1,7 +1,14 @@
 package controller_test
 
 import (
+	"context"
 	"time"
+
+	libutils "github.com/openmcp-project/openmcp-operator/lib/utils"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 
 	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
@@ -28,6 +35,36 @@ import (
 const (
 	controllerName = "test-controller"
 )
+
+func setDeploymentReady(ctx context.Context, deployment *appsv1.Deployment, c client.Client) {
+	deployment.Status.Conditions = []appsv1.DeploymentCondition{
+		{
+			Type:   appsv1.DeploymentAvailable,
+			Status: corev1.ConditionTrue,
+		},
+	}
+
+	deployment.Status.Replicas = *deployment.Spec.Replicas
+	deployment.Status.ReadyReplicas = *deployment.Spec.Replicas
+	deployment.Status.AvailableReplicas = *deployment.Spec.Replicas
+	deployment.Status.UpdatedReplicas = *deployment.Spec.Replicas
+	deployment.Status.ObservedGeneration = deployment.Generation
+
+	Expect(c.Status().Update(ctx, deployment)).To(Succeed())
+}
+
+type testInstanceClusterAccess struct {
+	mcpCluster      *clusters.Cluster
+	workloadCluster *clusters.Cluster
+}
+
+func (t *testInstanceClusterAccess) MCPCluster(ctx context.Context, req reconcile.Request) (*clusters.Cluster, error) {
+	return t.mcpCluster, nil
+}
+
+func (t *testInstanceClusterAccess) WorkloadCluster(ctx context.Context, req reconcile.Request) (*clusters.Cluster, error) {
+	return t.workloadCluster, nil
+}
 
 func buildTestEnvironmentReconcile(testdataDir string, objectsWithStatus ...client.Object) *testutils.Environment {
 	scheme := runtime.NewScheme()
@@ -67,6 +104,10 @@ func buildTestEnvironmentReconcile(testdataDir string, objectsWithStatus ...clie
 				ClusterAccessReconciler: car,
 				PlatformCluster:         platformCluster,
 				OnboardingCluster:       onboardingCluster,
+				InstanceClusterAccess: &testInstanceClusterAccess{
+					mcpCluster:      clusters.NewTestClusterFromClient("mcp", c),
+					workloadCluster: clusters.NewTestClusterFromClient("workload", c),
+				},
 			}
 
 			return r
@@ -128,6 +169,189 @@ var _ = Describe("Landscaper Controller", func() {
 
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(ls), ls)).To(Succeed())
 			Expect(ls.Status.ProviderConfigRef.Name).To(Equal("test"))
+		})
+
+		It("should install/uninstall a landscaper instance", func() {
+			onboardingNamespace := "ob-default"
+			req := reconcile.Request{
+				NamespacedName: client.ObjectKey{
+					Name:      "test",
+					Namespace: "default",
+				},
+			}
+
+			requestNameMCP := libutils.StableRequestNameMCP(req.Name, controllerName)
+			requestNameWorkload := libutils.StableRequestNameWorkload(req.Name, controllerName)
+
+			accessRequestMCP := &clustersv1alpha1.AccessRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      requestNameMCP,
+					Namespace: onboardingNamespace,
+				},
+			}
+
+			workloadClusterRequest := &clustersv1alpha1.ClusterRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      requestNameWorkload,
+					Namespace: onboardingNamespace,
+				},
+			}
+
+			workloadAccessRequest := &clustersv1alpha1.AccessRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      requestNameWorkload,
+					Namespace: onboardingNamespace,
+				},
+			}
+
+			ls := &lsv1alpha1.Landscaper{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      req.Name,
+					Namespace: req.Namespace,
+				},
+			}
+
+			identity.SetInstanceID(ls, identity.ComputeInstanceID(ls))
+
+			instance := identity.Instance(identity.GetInstanceID(ls))
+			installationNamespace := instance.Namespace()
+
+			lsControllerDeployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "landscaper-controller",
+					Namespace: installationNamespace,
+				},
+			}
+
+			lsMainDeployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "landscaper-controller-main",
+					Namespace: installationNamespace,
+				},
+			}
+
+			lsWebhooksServerDeployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "landscaper-webhooks-server",
+					Namespace: installationNamespace,
+				},
+			}
+
+			manifestDeployerDeployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "manifest-deployer",
+					Namespace: installationNamespace,
+				},
+			}
+
+			helmDeployerDeployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "helm-deployer",
+					Namespace: installationNamespace,
+				},
+			}
+
+			env := buildTestEnvironmentReconcile("test-03",
+				accessRequestMCP,
+				workloadClusterRequest,
+				workloadAccessRequest,
+				lsControllerDeployment,
+				lsMainDeployment,
+				lsWebhooksServerDeployment,
+				manifestDeployerDeployment,
+				helmDeployerDeployment)
+
+			reconcileResult := env.ShouldReconcile(req, "reconcile should return a requeue time")
+			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
+
+			// create the request namespace, "ob-default"
+			ns := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ob-default",
+				},
+			}
+
+			Expect(env.Client().Create(env.Ctx, ns)).To(Succeed())
+
+			// now waiting for the MCP access request to be granted
+			reconcileResult = env.ShouldReconcile(req, "reconcile should return a requeue time")
+			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
+
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(accessRequestMCP), accessRequestMCP)).To(Succeed())
+
+			accessRequestMCP.Status.Phase = clustersv1alpha1.REQUEST_GRANTED
+			accessRequestMCP.Status.SecretRef = &clustersv1alpha1.NamespacedObjectReference{
+				ObjectReference: clustersv1alpha1.ObjectReference{
+					Name: "access",
+				},
+				Namespace: onboardingNamespace,
+			}
+
+			Expect(env.Client().Status().Update(env.Ctx, accessRequestMCP)).To(Succeed())
+
+			// now wait for the workload cluster request to be granted
+			reconcileResult = env.ShouldReconcile(req, "reconcile should return a requeue time")
+			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
+
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadClusterRequest), workloadClusterRequest)).To(Succeed())
+
+			workloadClusterRequest.Status.Phase = clustersv1alpha1.REQUEST_GRANTED
+
+			Expect(env.Client().Status().Update(env.Ctx, workloadClusterRequest)).To(Succeed())
+			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
+
+			// now wait for the workload access request to be granted
+			reconcileResult = env.ShouldReconcile(req, "reconcile should return a requeue time")
+			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
+
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadAccessRequest), workloadAccessRequest)).To(Succeed())
+
+			workloadAccessRequest.Status.Phase = clustersv1alpha1.REQUEST_GRANTED
+			workloadAccessRequest.Status.SecretRef = &clustersv1alpha1.NamespacedObjectReference{
+				ObjectReference: clustersv1alpha1.ObjectReference{
+					Name: "access",
+				},
+				Namespace: onboardingNamespace,
+			}
+
+			Expect(env.Client().Status().Update(env.Ctx, workloadAccessRequest)).To(Succeed())
+
+			// now the landscaper should be installed and wait for readiness check
+			reconcileResult = env.ShouldReconcile(req, "reconcile should not return a requeue time")
+			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
+
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(ls), ls)).To(Succeed())
+			Expect(ls.Status.Conditions).To(HaveLen(2))
+			Expect(ls.Status.Conditions[0].Type).To(Equal(lsv1alpha1.ConditionTypeInstalled))
+			Expect(ls.Status.Conditions[0].Status).To(Equal(metav1.ConditionTrue))
+			Expect(ls.Status.Conditions[1].Type).To(Equal(lsv1alpha1.ConditionTypeReady))
+			Expect(ls.Status.Conditions[1].Status).To(Equal(metav1.ConditionFalse))
+
+			installationNs := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: installationNamespace,
+				},
+			}
+
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(installationNs), installationNs)).To(Succeed())
+
+			// set deployments to ready
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsControllerDeployment), lsControllerDeployment)).To(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsMainDeployment), lsMainDeployment)).To(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsWebhooksServerDeployment), lsWebhooksServerDeployment)).To(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(manifestDeployerDeployment), manifestDeployerDeployment)).To(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(helmDeployerDeployment), helmDeployerDeployment)).To(Succeed())
+
+			setDeploymentReady(env.Ctx, lsControllerDeployment, env.Client())
+			setDeploymentReady(env.Ctx, lsMainDeployment, env.Client())
+			setDeploymentReady(env.Ctx, lsWebhooksServerDeployment, env.Client())
+			setDeploymentReady(env.Ctx, manifestDeployerDeployment, env.Client())
+			setDeploymentReady(env.Ctx, helmDeployerDeployment, env.Client())
+
+			// now the landscaper should be ready
+			reconcileResult = env.ShouldReconcile(req, "reconcile should not return a requeue time")
+			Expect(reconcileResult.RequeueAfter).To(BeZero())
+
 		})
 	})
 })

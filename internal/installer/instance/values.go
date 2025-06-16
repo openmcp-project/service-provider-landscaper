@@ -79,7 +79,7 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 				Kubeconfig: string(kubeconfigs.ControllerKubeconfig),
 			},
 			Image:         c.Landscaper.Controller.Image,
-			ReplicaCount:  nil,
+			ReplicaCount:  ptr.To[int32](1),
 			Resources:     c.Landscaper.Controller.Resources,
 			ResourcesMain: c.Landscaper.Controller.ResourcesMain,
 			Metrics:       nil,

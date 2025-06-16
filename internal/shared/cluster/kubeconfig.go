@@ -59,6 +59,28 @@ func CreateKubeconfig(ctx context.Context, cluster *clusters.Cluster, serviceAcc
 
 	contextName := fmt.Sprintf("%s-%s", serviceAccount.Namespace, serviceAccount.Name)
 
+	var kubeconfigCluster NamedCluster
+
+	if cluster.RESTConfig() == nil {
+		// create a fake kubeconfig for testing
+		kubeconfigCluster = NamedCluster{
+			Name: contextName,
+			Cluster: KubeConfigCluster{
+				Server:                   "https://fake-server",
+				CertificateAuthorityData: []byte("fake-ca-data"),
+			},
+		}
+	} else {
+		// use the actual cluster's REST config
+		kubeconfigCluster = NamedCluster{
+			Name: contextName,
+			Cluster: KubeConfigCluster{
+				Server:                   cluster.RESTConfig().Host,
+				CertificateAuthorityData: cluster.RESTConfig().CAData,
+			},
+		}
+	}
+
 	kubeConfig := KubeConfig{
 		APIVersion:     "v1",
 		Kind:           "Config",
@@ -73,13 +95,7 @@ func CreateKubeconfig(ctx context.Context, cluster *clusters.Cluster, serviceAcc
 			},
 		},
 		Clusters: []NamedCluster{
-			{
-				Name: contextName,
-				Cluster: KubeConfigCluster{
-					Server:                   cluster.RESTConfig().Host,
-					CertificateAuthorityData: cluster.RESTConfig().CAData,
-				},
-			},
+			kubeconfigCluster,
 		},
 		Users: []NamedUser{
 			{

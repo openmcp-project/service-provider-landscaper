@@ -96,14 +96,14 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return res, status, nil
 	}
 
-	mcpCluster, err := r.ClusterAccessReconciler.MCPCluster(ctx, req)
+	mcpCluster, err := r.InstanceClusterAccess.MCPCluster(ctx, req)
 	if err != nil {
 		log.Error(err, "failed to get MCP cluster for landscaper instance")
 		status.setInstallClusterAccessError(err)
 		return reconcile.Result{}, status, err
 	}
 
-	workloadCluster, err := r.ClusterAccessReconciler.WorkloadCluster(ctx, req)
+	workloadCluster, err := r.InstanceClusterAccess.WorkloadCluster(ctx, req)
 	if err != nil {
 		log.Error(err, "failed to get Workload cluster for landscaper instance")
 		status.setInstallClusterAccessError(err)

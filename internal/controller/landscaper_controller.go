@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
 	rbac "k8s.io/api/rbac/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -38,6 +40,27 @@ type LandscaperReconciler struct {
 	OnboardingCluster       *clusters.Cluster
 	ClusterAccessReconciler clusteraccess.Reconciler
 	Scheme                  *runtime.Scheme
+
+	InstanceClusterAccess InstanceClusterAccess
+}
+
+// The InstanceClusterAccess interface provides access to the MCP and Workload clusters for the Landscaper provider.
+// This indirection is needed for injecting fake clusters in tests.
+type InstanceClusterAccess interface {
+	MCPCluster(ctx context.Context, req reconcile.Request) (*clusters.Cluster, error)
+	WorkloadCluster(ctx context.Context, req reconcile.Request) (*clusters.Cluster, error)
+}
+
+type defaultInstanceClusterAccess struct {
+	clusterAccessReconciler clusteraccess.Reconciler
+}
+
+func (d *defaultInstanceClusterAccess) MCPCluster(ctx context.Context, req reconcile.Request) (*clusters.Cluster, error) {
+	return d.clusterAccessReconciler.MCPCluster(ctx, req)
+}
+
+func (d *defaultInstanceClusterAccess) WorkloadCluster(ctx context.Context, req reconcile.Request) (*clusters.Cluster, error) {
+	return d.clusterAccessReconciler.WorkloadCluster(ctx, req)
 }
 
 //nolint:lll
@@ -91,6 +114,8 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				},
 			},
 		})
+
+	r.InstanceClusterAccess = &defaultInstanceClusterAccess{}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Landscaper{}).
