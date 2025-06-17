@@ -2,6 +2,7 @@ package landscaper
 
 import (
 	"fmt"
+	"k8s.io/utils/ptr"
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -23,14 +24,14 @@ func newMainDeploymentMutator(h *valuesHelper) resources.Mutator[*appsv1.Deploym
 }
 
 func (m *mainDeploymentMutator) String() string {
-	return fmt.Sprintf("deployment %s/%s", m.hostNamespace(), m.landscaperMainFullName())
+	return fmt.Sprintf("deployment %s/%s", m.workloadNamespace(), m.landscaperMainFullName())
 }
 
 func (m *mainDeploymentMutator) Empty() *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperMainFullName(),
-			Namespace: m.hostNamespace(),
+			Namespace: m.workloadNamespace(),
 		},
 	}
 }
@@ -51,12 +52,13 @@ func (m *mainDeploymentMutator) Mutate(r *appsv1.Deployment) error {
 				Annotations: m.templateAnnotations(),
 			},
 			Spec: corev1.PodSpec{
-				Volumes:                   m.volumes(),
-				Containers:                m.containers(),
-				ServiceAccountName:        m.landscaperFullName(),
-				SecurityContext:           m.values.PodSecurityContext,
-				ImagePullSecrets:          m.values.ImagePullSecrets,
-				TopologySpreadConstraints: m.controllerMainComponent.TopologySpreadConstraints(),
+				AutomountServiceAccountToken: ptr.To(false),
+				Volumes:                      m.volumes(),
+				Containers:                   m.containers(),
+				ServiceAccountName:           m.landscaperFullName(),
+				SecurityContext:              m.values.PodSecurityContext,
+				ImagePullSecrets:             m.values.ImagePullSecrets,
+				TopologySpreadConstraints:    m.controllerMainComponent.TopologySpreadConstraints(),
 			},
 		},
 	}
@@ -108,26 +110,22 @@ func (m *mainDeploymentMutator) volumes() []corev1.Volume {
 				},
 			},
 		},
-	}
-
-	if k := m.values.Controller.MCPKubeconfig; k != nil {
-		secretName := ""
-		if k.Kubeconfig != "" {
-			secretName = m.controllerKubeconfigSecretName()
-		} else {
-			secretName = k.SecretRef
-		}
-
-		kubeconfigVolume := corev1.Volume{
-			Name: "landscaper-cluster-kubeconfig",
+		{
+			Name: m.controllerMCPKubeconfigSecretName(),
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
+					SecretName: m.controllerMCPKubeconfigSecretName(),
 				},
 			},
-		}
-
-		volumes = append(volumes, kubeconfigVolume)
+		},
+		{
+			Name: m.controllerWorkloadKubeconfigSecretName(),
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: m.controllerWorkloadKubeconfigSecretName(),
+				},
+			},
+		},
 	}
 
 	return volumes
@@ -143,22 +141,23 @@ func (m *mainDeploymentMutator) volumeMounts() []corev1.VolumeMount {
 			Name:      "config",
 			MountPath: "/app/ls/config",
 		},
+		{
+			Name:      m.controllerMCPKubeconfigSecretName(),
+			MountPath: fmt.Sprint("/app/ls/", m.controllerMCPKubeconfigSecretName()),
+		},
+		{
+			Name:      m.controllerWorkloadKubeconfigSecretName(),
+			MountPath: fmt.Sprint("/app/ls/", m.controllerWorkloadKubeconfigSecretName()),
+		},
 	}
-	if m.values.Controller.MCPKubeconfig != nil {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "landscaper-cluster-kubeconfig",
-			MountPath: "/app/ls/landscaper-cluster-kubeconfig",
-		})
-	}
+
 	return volumeMounts
 }
 
 func (m *mainDeploymentMutator) args() []string {
 	a := []string{
 		"--config=/app/ls/config/config.yaml",
-	}
-	if m.values.Controller.MCPKubeconfig != nil {
-		a = append(a, "--landscaper-kubeconfig=/app/ls/landscaper-cluster-kubeconfig/kubeconfig")
+		fmt.Sprint("--landscaper-kubeconfig=/app/ls/", m.controllerMCPKubeconfigSecretName(), "/kubeconfig"),
 	}
 	if m.values.VerbosityLevel != "" {
 		a = append(a, fmt.Sprintf("-v=%s", m.values.VerbosityLevel))
@@ -168,6 +167,10 @@ func (m *mainDeploymentMutator) args() []string {
 
 func (m *mainDeploymentMutator) env() []corev1.EnvVar {
 	return []corev1.EnvVar{
+		{
+			Name:  "KUBECONFIG",
+			Value: fmt.Sprint("/app/ls/", m.controllerWorkloadKubeconfigSecretName(), "/kubeconfig"),
+		},
 		{
 			Name: "MY_POD_NAME",
 			ValueFrom: &corev1.EnvVarSource{

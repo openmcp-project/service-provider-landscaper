@@ -7,10 +7,10 @@ import (
 )
 
 type Values struct {
-	Instance       identity.Instance `json:"instance,omitempty"`
-	Version        string            `json:"version,omitempty"`
-	MCPCluster     *clusters.Cluster
-	ServiceAccount *ServiceAccountValues `json:"serviceAccount,omitempty"`
+	Instance        identity.Instance `json:"instance,omitempty"`
+	Version         string            `json:"version,omitempty"`
+	MCPCluster      *clusters.Cluster
+	WorkloadCluster *clusters.Cluster `json:"workloadCluster,omitempty"`
 }
 
 type ServiceAccountValues struct {

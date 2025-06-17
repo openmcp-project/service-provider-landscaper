@@ -4,7 +4,6 @@ import (
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -51,31 +50,24 @@ var _ = Describe("Landscaper Controller Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		sa := &corev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "landscaper",
-				Namespace: "landscaper-system",
-			},
-		}
-		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
+		kubeconfigMCP, err := cluster.CreateKubeconfig(mcpCluster)
+		Expect(err).ToNot(HaveOccurred())
 
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
+		kubeconfigWorkload, err := cluster.CreateKubeconfig(mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 		values := &Values{
-			Instance:       instanceID,
-			Version:        "v0.127.0",
-			HostCluster:    workloadCluster,
-			VerbosityLevel: "INFO",
-			Configuration:  v1alpha1.LandscaperConfiguration{},
-			ServiceAccount: &ServiceAccountValues{Create: true},
+			Instance:        instanceID,
+			Version:         "v0.127.0",
+			WorkloadCluster: workloadCluster,
+			VerbosityLevel:  "INFO",
+			Configuration:   v1alpha1.LandscaperConfiguration{},
 			Controller: ControllerValues{
-				MCPKubeconfig: &KubeconfigValues{
-					Kubeconfig: string(kubeconfig),
-				},
+				MCPKubeconfig:      string(kubeconfigMCP),
+				WorkloadKubeconfig: string(kubeconfigWorkload),
 				Image: lsv1alpha1.ImageConfiguration{
 					Image: providerConfig.Spec.Deployment.LandscaperController.Image,
 				},
@@ -86,9 +78,7 @@ var _ = Describe("Landscaper Controller Installer", func() {
 			},
 			WebhooksServer: WebhooksServerValues{
 				DisableWebhooks: nil,
-				MCPKubeconfig: &KubeconfigValues{
-					Kubeconfig: string(kubeconfig),
-				},
+				MCPKubeconfig:   string(kubeconfigMCP),
 				Image: lsv1alpha1.ImageConfiguration{
 					Image: providerConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
 				},
@@ -110,32 +100,24 @@ var _ = Describe("Landscaper Controller Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		sa := &corev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "helm-deployer",
-				Namespace: "landscaper-system",
-			},
-		}
-		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
+		kubeconfigMCP, err := cluster.CreateKubeconfig(mcpCluster)
+		Expect(err).ToNot(HaveOccurred())
 
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
+		kubeconfigWorkload, err := cluster.CreateKubeconfig(mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 		values := &Values{
-			Instance:    instanceID,
-			HostCluster: workloadCluster,
+			Instance:        instanceID,
+			WorkloadCluster: workloadCluster,
 			WebhooksServer: WebhooksServerValues{
-				MCPKubeconfig: &KubeconfigValues{
-					Kubeconfig: string(kubeconfig),
-				},
+				MCPKubeconfig: string(kubeconfigMCP),
 			},
 			Controller: ControllerValues{
-				MCPKubeconfig: &KubeconfigValues{
-					Kubeconfig: string(kubeconfig),
-				},
+				WorkloadKubeconfig: string(kubeconfigWorkload),
+				MCPKubeconfig:      string(kubeconfigWorkload),
 			},
 		}
 

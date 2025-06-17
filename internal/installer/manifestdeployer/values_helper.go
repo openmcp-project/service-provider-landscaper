@@ -61,14 +61,14 @@ func newValuesHelperForDelete(values *Values) (*valuesHelper, error) {
 	}, nil
 }
 
-func (h *valuesHelper) hostNamespace() string {
+func (h *valuesHelper) workloadNamespace() string {
 	return h.values.Instance.Namespace()
 }
 
-func (h *valuesHelper) landscaperClusterKubeconfig() []byte {
-	return []byte(h.values.MCPClusterKubeconfig.Kubeconfig)
+func (h *valuesHelper) mcpKubeconfigSecretName() string {
+	return h.manifestDeployerComponent.NamespacedResourceName("mcp-kubeconfig")
 }
 
-func (h *valuesHelper) isCreateServiceAccount() bool {
-	return h.values.ServiceAccount != nil && h.values.ServiceAccount.Create
+func (h *valuesHelper) mcpClusterKubeconfig() []byte {
+	return []byte(h.values.MCPClusterKubeconfig)
 }

@@ -22,14 +22,14 @@ func newWebhooksHPAMutator(b *valuesHelper) resources.Mutator[*v2.HorizontalPodA
 }
 
 func (m *webhooksHPAMutator) String() string {
-	return fmt.Sprintf("hpa %s/%s", m.hostNamespace(), m.landscaperWebhooksFullName())
+	return fmt.Sprintf("hpa %s/%s", m.workloadNamespace(), m.landscaperWebhooksFullName())
 }
 
 func (m *webhooksHPAMutator) Empty() *v2.HorizontalPodAutoscaler {
 	return &v2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperWebhooksFullName(),
-			Namespace: m.hostNamespace(),
+			Namespace: m.workloadNamespace(),
 		},
 	}
 }

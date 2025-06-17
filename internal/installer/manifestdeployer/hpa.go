@@ -22,14 +22,14 @@ func newHPAMutator(b *valuesHelper) resources.Mutator[*v2.HorizontalPodAutoscale
 }
 
 func (d *hpaMutator) String() string {
-	return fmt.Sprintf("hpa %s/%s", d.hostNamespace(), d.manifestDeployerComponent.NamespacedDefaultResourceName())
+	return fmt.Sprintf("hpa %s/%s", d.workloadNamespace(), d.manifestDeployerComponent.NamespacedDefaultResourceName())
 }
 
 func (d *hpaMutator) Empty() *v2.HorizontalPodAutoscaler {
 	return &v2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      d.manifestDeployerComponent.NamespacedDefaultResourceName(),
-			Namespace: d.hostNamespace(),
+			Namespace: d.workloadNamespace(),
 		},
 	}
 }

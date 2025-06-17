@@ -29,7 +29,3 @@ func newValuesHelper(values *Values) (*valuesHelper, error) {
 func (h *valuesHelper) resourceNamespace() string {
 	return h.values.Instance.Namespace()
 }
-
-func (h *valuesHelper) isCreateServiceAccount() bool {
-	return h.values.ServiceAccount != nil && h.values.ServiceAccount.Create
-}

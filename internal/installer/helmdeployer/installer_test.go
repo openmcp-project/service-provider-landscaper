@@ -6,8 +6,6 @@ import (
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -49,34 +47,23 @@ var _ = Describe("Helm Deployer Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		sa := &corev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "helm-deployer",
-				Namespace: "landscaper-system",
-			},
-		}
-		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
-
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
+		kubeconfig, err := cluster.CreateKubeconfig(mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 		values := &Values{
-			Instance:        instanceID,
-			Version:         "v0.127.0",
-			WorkloadCluster: workloadCluster,
-			MCPClusterKubeconfig: &KubeconfigValues{
-				Kubeconfig: string(kubeconfig),
-			},
+			Instance:             instanceID,
+			Version:              "v0.127.0",
+			WorkloadCluster:      workloadCluster,
+			MCPClusterKubeconfig: string(kubeconfig),
 			Image: lsv1alpha1.ImageConfiguration{
 				Image: providerConfig.Spec.Deployment.HelmDeployer.Image,
 			},
 			ImagePullSecrets:       nil,
 			PodSecurityContext:     nil,
 			SecurityContext:        nil,
-			ServiceAccount:         &ServiceAccountValues{Create: true},
 			WorkloadClientSettings: nil,
 			MCPClientSettings:      nil,
 		}
@@ -91,23 +78,13 @@ var _ = Describe("Helm Deployer Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		sa := &corev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "helm-deployer",
-				Namespace: "landscaper-system",
-			},
-		}
-		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
-
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
+		kubeconfig, err := cluster.CreateKubeconfig(mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{
-			Instance:        instanceID,
-			WorkloadCluster: workloadCluster,
-			MCPClusterKubeconfig: &KubeconfigValues{
-				Kubeconfig: string(kubeconfig),
-			},
+			Instance:             instanceID,
+			WorkloadCluster:      workloadCluster,
+			MCPClusterKubeconfig: string(kubeconfig),
 		}
 
 		Expect(UninstallHelmDeployer(env.Ctx, values)).ToNot(HaveOccurred())
