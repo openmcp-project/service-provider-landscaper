@@ -2,8 +2,9 @@ package manifestdeployer
 
 import (
 	"fmt"
-	"k8s.io/utils/ptr"
 	"strconv"
+
+	"k8s.io/utils/ptr"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -103,10 +104,10 @@ func (d *deploymentMutator) volumes() []corev1.Volume {
 			},
 		},
 		{
-			Name: d.valuesHelper.mcpKubeconfigSecretName(),
+			Name: d.mcpKubeconfigSecretName(),
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: d.valuesHelper.mcpKubeconfigSecretName(),
+					SecretName: d.mcpKubeconfigSecretName(),
 				},
 			},
 		},
@@ -122,8 +123,8 @@ func (d *deploymentMutator) volumeMounts() []corev1.VolumeMount {
 			MountPath: "/app/ls/config",
 		},
 		{
-			Name:      d.valuesHelper.mcpKubeconfigSecretName(),
-			MountPath: fmt.Sprint("/app/ls/", d.valuesHelper.mcpKubeconfigSecretName()),
+			Name:      d.mcpKubeconfigSecretName(),
+			MountPath: fmt.Sprint("/app/ls/", d.mcpKubeconfigSecretName()),
 		},
 	}
 
@@ -144,7 +145,7 @@ func (d *deploymentMutator) env() []corev1.EnvVar {
 	return []corev1.EnvVar{
 		{
 			Name:  "KUBECONFIG",
-			Value: fmt.Sprintf("/app/ls/%s/kubeconfig", d.valuesHelper.mcpKubeconfigSecretName()),
+			Value: fmt.Sprintf("/app/ls/%s/kubeconfig", d.mcpKubeconfigSecretName()),
 		},
 		{
 			Name: "MY_POD_NAME",

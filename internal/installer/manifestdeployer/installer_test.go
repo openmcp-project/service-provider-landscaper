@@ -54,12 +54,10 @@ var _ = Describe("Manifest Deployer Installer", func() {
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 		values := &Values{
-			Instance:        instanceID,
-			Version:         "v0.127.0",
-			WorkloadCluster: workloadCluster,
-			MCPClusterKubeconfig: &KubeconfigValues{
-				Kubeconfig: string(kubeconfig),
-			},
+			Instance:             instanceID,
+			Version:              "v0.127.0",
+			WorkloadCluster:      workloadCluster,
+			MCPClusterKubeconfig: string(kubeconfig),
 			Image: lsv1alpha1.ImageConfiguration{
 				Image: providerConfig.Spec.Deployment.HelmDeployer.Image,
 			},
@@ -84,11 +82,9 @@ var _ = Describe("Manifest Deployer Installer", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{
-			Instance:        instanceID,
-			WorkloadCluster: workloadCluster,
-			MCPClusterKubeconfig: &KubeconfigValues{
-				Kubeconfig: string(kubeconfig),
-			},
+			Instance:             instanceID,
+			WorkloadCluster:      workloadCluster,
+			MCPClusterKubeconfig: string(kubeconfig),
 		}
 
 		Expect(UninstallManifestDeployer(env.Ctx, values)).ToNot(HaveOccurred())

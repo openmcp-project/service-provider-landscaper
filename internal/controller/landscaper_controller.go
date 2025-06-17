@@ -141,8 +141,7 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func getMCPPermissions() []clustersv1alpha1.PermissionsRequest {
-	//readVerbs := []string{"get", "list", "watch"}
-	writeVerbs := []string{"get", "list", "watch", "create", "update", "patch", "delete"}
+	defaultVerbs := []string{"get", "list", "watch", "create", "update", "patch", "delete"}
 
 	return []clustersv1alpha1.PermissionsRequest{
 		{
@@ -150,22 +149,22 @@ func getMCPPermissions() []clustersv1alpha1.PermissionsRequest {
 				{
 					APIGroups: []string{"apiextensions.k8s.io"},
 					Resources: []string{"customresourcedefinitions"},
-					Verbs:     writeVerbs,
+					Verbs:     defaultVerbs,
 				},
 				{
 					APIGroups: []string{"landscaper.gardener.cloud"},
 					Resources: []string{"*"},
-					Verbs:     writeVerbs,
+					Verbs:     defaultVerbs,
 				},
 				{
 					APIGroups: []string{""},
 					Resources: []string{"secrets", "configmaps"},
-					Verbs:     writeVerbs,
+					Verbs:     defaultVerbs,
 				},
 				{
 					APIGroups: []string{""},
 					Resources: []string{"serviceaccounts"},
-					Verbs:     writeVerbs,
+					Verbs:     defaultVerbs,
 				},
 				{
 					APIGroups: []string{""},
@@ -175,22 +174,22 @@ func getMCPPermissions() []clustersv1alpha1.PermissionsRequest {
 				{
 					APIGroups: []string{""},
 					Resources: []string{"namespaces"},
-					Verbs:     writeVerbs,
+					Verbs:     defaultVerbs,
 				},
 				{
 					APIGroups: []string{"rbac.authorization.k8s.io"},
 					Resources: []string{"clusterroles", "clusterrolebindings"},
-					Verbs:     writeVerbs,
+					Verbs:     defaultVerbs,
 				},
 				{
 					APIGroups: []string{""},
 					Resources: []string{"events"},
-					Verbs:     writeVerbs,
+					Verbs:     defaultVerbs,
 				},
 				{
 					APIGroups: []string{"admissionregistration.k8s.io"},
 					Resources: []string{"validatingwebhookconfigurations"},
-					Verbs:     writeVerbs,
+					Verbs:     defaultVerbs,
 				},
 			},
 		},

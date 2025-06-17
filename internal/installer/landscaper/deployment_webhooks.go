@@ -2,8 +2,9 @@ package landscaper
 
 import (
 	"fmt"
-	"k8s.io/utils/ptr"
 	"strings"
+
+	"k8s.io/utils/ptr"
 
 	"github.com/openmcp-project/controller-utils/pkg/resources"
 	appsv1 "k8s.io/api/apps/v1"

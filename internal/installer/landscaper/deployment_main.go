@@ -2,8 +2,9 @@ package landscaper
 
 import (
 	"fmt"
-	"k8s.io/utils/ptr"
 	"strconv"
+
+	"k8s.io/utils/ptr"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
