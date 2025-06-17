@@ -25,17 +25,17 @@ func rbacValues(c *Configuration) *rbac.Values {
 // manifestDeployerValues determines the import values for the installation of the manifest deployer
 func manifestDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *manifestdeployer.Values {
 	v := &manifestdeployer.Values{
-		Instance:       c.Instance,
-		Version:        c.Version,
-		HostCluster:    c.HostCluster,
-		Image:          c.ManifestDeployer.Image,
-		ServiceAccount: &manifestdeployer.ServiceAccountValues{Create: true},
-		Resources:      c.ManifestDeployer.Resources,
-		HPA:            c.ManifestDeployer.HPA,
+		Instance:        c.Instance,
+		Version:         c.Version,
+		WorkloadCluster: c.HostCluster,
+		Image:           c.ManifestDeployer.Image,
+		ServiceAccount:  &manifestdeployer.ServiceAccountValues{Create: true},
+		Resources:       c.ManifestDeployer.Resources,
+		HPA:             c.ManifestDeployer.HPA,
 	}
 
 	if kubeconfigs != nil {
-		v.LandscaperClusterKubeconfig = &manifestdeployer.KubeconfigValues{
+		v.MCPClusterKubeconfig = &manifestdeployer.KubeconfigValues{
 			Kubeconfig: string(kubeconfigs.ControllerKubeconfig),
 		}
 	}

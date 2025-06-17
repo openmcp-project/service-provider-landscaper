@@ -64,10 +64,10 @@ var _ = Describe("Manifest Deployer Installer", func() {
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 		values := &Values{
-			Instance:    instanceID,
-			Version:     "v0.127.0",
-			HostCluster: hostCluster,
-			LandscaperClusterKubeconfig: &KubeconfigValues{
+			Instance:        instanceID,
+			Version:         "v0.127.0",
+			WorkloadCluster: hostCluster,
+			MCPClusterKubeconfig: &KubeconfigValues{
 				Kubeconfig: string(kubeconfig),
 			},
 			Image: lsv1alpha1.ImageConfiguration{
@@ -77,8 +77,8 @@ var _ = Describe("Manifest Deployer Installer", func() {
 			PodSecurityContext:     nil,
 			SecurityContext:        nil,
 			ServiceAccount:         &ServiceAccountValues{Create: true},
-			HostClientSettings:     nil,
-			ResourceClientSettings: nil,
+			WorkloadClientSettings: nil,
+			MCPClientSettings:      nil,
 		}
 
 		_, err = InstallManifestDeployer(env.Ctx, values)
@@ -103,9 +103,9 @@ var _ = Describe("Manifest Deployer Installer", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{
-			Instance:    instanceID,
-			HostCluster: hostCluster,
-			LandscaperClusterKubeconfig: &KubeconfigValues{
+			Instance:        instanceID,
+			WorkloadCluster: hostCluster,
+			MCPClusterKubeconfig: &KubeconfigValues{
 				Kubeconfig: string(kubeconfig),
 			},
 		}
