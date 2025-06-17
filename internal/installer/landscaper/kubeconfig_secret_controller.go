@@ -10,7 +10,7 @@ func newControllerKubeconfigSecretMutator(b *valuesHelper) resources.Mutator[*v1
 		b.controllerKubeconfigSecretName(),
 		b.hostNamespace(),
 		map[string][]byte{
-			"kubeconfig": []byte(b.values.Controller.LandscaperKubeconfig.Kubeconfig),
+			"kubeconfig": []byte(b.values.Controller.MCPKubeconfig.Kubeconfig),
 		},
 		v1.SecretTypeOpaque)
 	m.MetadataMutator().WithLabels(b.controllerComponent.Labels())

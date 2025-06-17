@@ -1,11 +1,14 @@
 package instance
 
 import (
-	"context"
-	"os"
 	"testing"
 
-	"github.com/openmcp-project/service-provider-landscaper/test/utils"
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
+	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
+	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -13,8 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/providerconfig"
+	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
 
@@ -23,58 +25,66 @@ func TestConfig(t *testing.T) {
 	RunSpecs(t, "Landscaper Instance Installer Test Suite")
 }
 
-var _ = XDescribe("Landscaper Instance Installer", func() {
+func buildTestEnvironment(testdataDir string, objectsWithStatus ...client.Object) *testutils.Environment {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(clustersv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(lsv1alpha1.AddToScheme(scheme))
+
+	return testutils.NewEnvironmentBuilder().
+		WithFakeClient(scheme).
+		WithInitObjectPath("testdata", testdataDir).
+		WithInitObjects(objectsWithStatus...).
+		Build()
+}
+
+func createConfiguration(env *testutils.Environment) *Configuration {
+	providerConfig := lsv1alpha1.ProviderConfig{}
+	Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
+
+	return &Configuration{
+		Version: "v0.127.0",
+		Landscaper: LandscaperConfig{
+			Controller: ControllerConfig{
+				Image: lsv1alpha1.ImageConfiguration{
+					Image: providerConfig.Spec.Deployment.LandscaperController.Image,
+				},
+			},
+			WebhooksServer: WebhooksServerConfig{
+				Image: lsv1alpha1.ImageConfiguration{
+					Image: providerConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
+				},
+			},
+		},
+		ManifestDeployer: ManifestDeployerConfig{
+			Image: lsv1alpha1.ImageConfiguration{
+				Image: providerConfig.Spec.Deployment.ManifestDeployer.Image,
+			},
+		},
+		HelmDeployer: HelmDeployerConfig{
+			Image: lsv1alpha1.ImageConfiguration{
+				Image: providerConfig.Spec.Deployment.HelmDeployer.Image,
+			},
+		},
+	}
+}
+
+var _ = Describe("Landscaper Instance Installer", func() {
 
 	const instanceID = "test2501"
 
-	// newConfiguration creates a  Configuration which is partially filled, namely with the instance independent values.
-	newConfiguration := func() (*Configuration, error) {
-		serviceProviderConfig, err := providerconfig.ReadProviderConfig(os.Getenv("SERVICE_PROVIDER_RESOURCE_PATH"))
-		if err != nil {
-			return nil, err
-		}
-
-		return &Configuration{
-			Version: "v0.127.0",
-			Landscaper: LandscaperConfig{
-				Controller: ControllerConfig{
-					Image: api.ImageConfiguration{
-						Image: serviceProviderConfig.Spec.Deployment.LandscaperController.Image,
-					},
-				},
-				WebhooksServer: WebhooksServerConfig{
-					Image: api.ImageConfiguration{
-						Image: serviceProviderConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
-					},
-				},
-			},
-			ManifestDeployer: ManifestDeployerConfig{
-				Image: api.ImageConfiguration{
-					Image: serviceProviderConfig.Spec.Deployment.ManifestDeployer.Image,
-				},
-			},
-			HelmDeployer: HelmDeployerConfig{
-				Image: api.ImageConfiguration{
-					Image: serviceProviderConfig.Spec.Deployment.HelmDeployer.Image,
-				},
-			},
-		}, nil
-	}
-
 	It("should install the landscaper instance", func() {
 		var err error
-		ctx := context.Background()
+
+		env := buildTestEnvironment("test-01")
+		config := createConfiguration(env)
 
 		// Create configuration with instance independent values
-		config, err := newConfiguration()
-		Expect(err).NotTo(HaveOccurred())
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.HostCluster, err = utils.ClusterFromEnv("WORKLOAD_KUBECONFIG_PATH")
-		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = utils.ClusterFromKey(ctx, client.ObjectKey{}, nil, "mcp")
-		Expect(err).NotTo(HaveOccurred())
+		config.WorkloadCluster = clusters.NewTestClusterFromClient("workload", env.Client())
+		config.MCPCluster = clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		// Add optional values
 		config.HelmDeployer.HPA = types.HPAValues{
@@ -98,26 +108,23 @@ var _ = XDescribe("Landscaper Instance Installer", func() {
 			},
 		}
 
-		err = InstallLandscaperInstance(ctx, config)
+		err = InstallLandscaperInstance(env.Ctx, config)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	XIt("should uninstall the landscaper instance", func() {
+	It("should uninstall the landscaper instance", func() {
 		var err error
-		ctx := context.Background()
 
 		// Create configuration with instance independent values
-		config, err := newConfiguration()
-		Expect(err).NotTo(HaveOccurred())
+		env := buildTestEnvironment("test-01")
+		config := createConfiguration(env)
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.HostCluster, err = utils.ClusterFromEnv("WORKLOAD_KUBECONFIG_PATH")
-		Expect(err).NotTo(HaveOccurred())
-		config.ResourceCluster, err = utils.ClusterFromKey(ctx, client.ObjectKey{}, nil, "mcp")
-		Expect(err).NotTo(HaveOccurred())
+		config.WorkloadCluster = clusters.NewTestClusterFromClient("workload", env.Client())
+		config.MCPCluster = clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		err = UninstallLandscaperInstance(ctx, config)
+		err = UninstallLandscaperInstance(env.Ctx, config)
 		Expect(err).NotTo(HaveOccurred())
 	})
 

@@ -14,9 +14,9 @@ type Configuration struct {
 	Instance identity.Instance
 	Version  string
 
-	ResourceCluster   *clusters.Cluster
-	HostCluster       *clusters.Cluster
-	HostClusterDomain string
+	MCPCluster            *clusters.Cluster
+	WorkloadCluster       *clusters.Cluster
+	WorkloadClusterDomain string
 
 	Landscaper LandscaperConfig
 

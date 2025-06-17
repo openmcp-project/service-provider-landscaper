@@ -96,14 +96,14 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return res, status, nil
 	}
 
-	mcpCluster, err := r.ClusterAccessReconciler.MCPCluster(ctx, req)
+	mcpCluster, err := r.InstanceClusterAccess.MCPCluster(ctx, req)
 	if err != nil {
 		log.Error(err, "failed to get MCP cluster for landscaper instance")
 		status.setInstallClusterAccessError(err)
 		return reconcile.Result{}, status, err
 	}
 
-	workloadCluster, err := r.ClusterAccessReconciler.WorkloadCluster(ctx, req)
+	workloadCluster, err := r.InstanceClusterAccess.WorkloadCluster(ctx, req)
 	if err != nil {
 		log.Error(err, "failed to get Workload cluster for landscaper instance")
 		status.setInstallClusterAccessError(err)
@@ -131,7 +131,7 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return ctrl.Result{RequeueAfter: 40 * time.Second}, status, nil
 	}
 
-	ls.Status.Phase = v1alpha1.Ready
+	ls.Status.Phase = v1alpha1.PhaseReady
 	log.Debug("landscaper instance has become ready")
 	status.setReady()
 
@@ -142,6 +142,13 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 	log := logging.FromContextOrPanic(ctx)
 
 	status := newDeleteStatus(ls.GetGeneration())
+
+	providerConfig, err := r.getProviderConfigForLandscaper(ctx, ls, r.PlatformCluster)
+	if err != nil {
+		log.Error(err, "failed to get provider config for landscaper instance")
+		status.setUninstallProviderConfigError(err)
+		return reconcile.Result{}, status, err
+	}
 
 	req := reconcile.Request{NamespacedName: client.ObjectKeyFromObject(ls)}
 	res, err := r.ClusterAccessReconciler.Reconcile(ctx, req)
@@ -156,24 +163,17 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 		return res, status, nil
 	}
 
-	mcpCluster, err := r.ClusterAccessReconciler.MCPCluster(ctx, req)
+	mcpCluster, err := r.InstanceClusterAccess.MCPCluster(ctx, req)
 	if err != nil {
 		log.Error(err, "failed to get MCP cluster for landscaper instance")
 		status.setUninstallClusterAccessError(err)
 		return reconcile.Result{}, status, err
 	}
 
-	workloadCluster, err := r.ClusterAccessReconciler.WorkloadCluster(ctx, req)
+	workloadCluster, err := r.InstanceClusterAccess.WorkloadCluster(ctx, req)
 	if err != nil {
 		log.Error(err, "failed to get Workload cluster for landscaper instance")
 		status.setUninstallClusterAccessError(err)
-		return reconcile.Result{}, status, err
-	}
-
-	providerConfig, err := r.getProviderConfigForLandscaper(ctx, ls, r.PlatformCluster)
-	if err != nil {
-		log.Error(err, "failed to get provider config for landscaper instance")
-		status.setUninstallProviderConfigError(err)
 		return reconcile.Result{}, status, err
 	}
 
@@ -214,8 +214,10 @@ func (r *LandscaperReconciler) updateStatus(ctx context.Context, ls *v1alpha1.La
 	log := logging.FromContextOrPanic(ctx)
 	if !reflect.DeepEqual(oldStatus, &ls.Status) {
 		if err := r.OnboardingCluster.Client().Status().Update(ctx, ls); err != nil {
-			log.Error(err, "failed to update status of landscaper resource")
-			return fmt.Errorf("failed to update status of landscaper resource %s/%s: %w", ls.Namespace, ls.Name, err)
+			if !apierrors.IsNotFound(err) {
+				log.Error(err, "failed to update status of landscaper resource")
+				return fmt.Errorf("failed to update status of landscaper resource %s/%s: %w", ls.Namespace, ls.Name, err)
+			}
 		}
 	}
 	return nil
@@ -293,7 +295,7 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 	}
 
 	providerConfig := &v1alpha1.ProviderConfig{}
-	if err := platformCluster.Client().Get(ctx, client.ObjectKey{Namespace: ls.Namespace, Name: providerConfigName}, providerConfig); err != nil {
+	if err := platformCluster.Client().Get(ctx, client.ObjectKey{Name: providerConfigName}, providerConfig); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, fmt.Errorf("provider config %s not found", providerConfigName)
 		}
@@ -350,11 +352,11 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, mcpCluster,
 		},
 	}
 	conf := &instance.Configuration{
-		Instance:          inst,
-		Version:           "v0.127.0",
-		ResourceCluster:   mcpCluster,
-		HostCluster:       workloadCluster,
-		HostClusterDomain: providerConfig.Spec.WorkloadClusterDomain,
+		Instance:              inst,
+		Version:               "v0.127.0",
+		MCPCluster:            mcpCluster,
+		WorkloadCluster:       workloadCluster,
+		WorkloadClusterDomain: providerConfig.Spec.WorkloadClusterDomain,
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
 				Image: v1alpha1.ImageConfiguration{

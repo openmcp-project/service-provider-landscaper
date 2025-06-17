@@ -10,7 +10,7 @@ func newWebhooksKubeconfigSecretMutator(b *valuesHelper) resources.Mutator[*v1.S
 		b.webhooksKubeconfigSecretName(),
 		b.hostNamespace(),
 		map[string][]byte{
-			"kubeconfig": []byte(b.values.WebhooksServer.LandscaperKubeconfig.Kubeconfig),
+			"kubeconfig": []byte(b.values.WebhooksServer.MCPKubeconfig.Kubeconfig),
 		},
 		v1.SecretTypeOpaque)
 	m.MetadataMutator().WithLabels(b.webhooksComponent.Labels())

@@ -16,22 +16,22 @@ import (
 )
 
 type Values struct {
-	Instance                    identity.Instance `json:"instance,omitempty"`
-	Version                     string            `json:"version,omitempty"`
-	HostCluster                 *clusters.Cluster
-	VerbosityLevel              string                      `json:"verbosityLevel,omitempty"`
-	LandscaperClusterKubeconfig *KubeconfigValues           `json:"landscaperClusterKubeconfig,omitempty"`
-	Image                       api.ImageConfiguration      `json:"image,omitempty"`
-	ImagePullSecrets            []core.LocalObjectReference `json:"imagePullSecrets,omitempty"`
-	ReplicaCount                *int32                      `json:"replicaCount,omitempty"`
-	Resources                   core.ResourceRequirements   `json:"resources,omitempty"`
-	PodSecurityContext          *core.PodSecurityContext    `json:"podSecurityContext,omitempty"`
-	SecurityContext             *core.SecurityContext       `json:"securityContext,omitempty"`
-	ServiceAccount              *ServiceAccountValues       `json:"serviceAccount,omitempty"`
-	Configuration               v1alpha2.Configuration      `json:"configuration,omitempty"`
-	HostClientSettings          *ClientSettings             `json:"hostClientSettings,omitempty"`
-	ResourceClientSettings      *ClientSettings             `json:"resourceClientSettings,omitempty"`
-	HPA                         types.HPAValues             `json:"hpa,omitempty"`
+	Instance               identity.Instance `json:"instance,omitempty"`
+	Version                string            `json:"version,omitempty"`
+	WorkloadCluster        *clusters.Cluster
+	VerbosityLevel         string                      `json:"verbosityLevel,omitempty"`
+	MCPClusterKubeconfig   *KubeconfigValues           `json:"mcpClusterKubeconfig,omitempty"`
+	Image                  api.ImageConfiguration      `json:"image,omitempty"`
+	ImagePullSecrets       []core.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+	ReplicaCount           *int32                      `json:"replicaCount,omitempty"`
+	Resources              core.ResourceRequirements   `json:"resources,omitempty"`
+	PodSecurityContext     *core.PodSecurityContext    `json:"podSecurityContext,omitempty"`
+	SecurityContext        *core.SecurityContext       `json:"securityContext,omitempty"`
+	ServiceAccount         *ServiceAccountValues       `json:"serviceAccount,omitempty"`
+	Configuration          v1alpha2.Configuration      `json:"configuration,omitempty"`
+	WorkloadClientSettings *ClientSettings             `json:"workloadClientSettings,omitempty"`
+	MCPClientSettings      *ClientSettings             `json:"mcpClientSettings,omitempty"`
+	HPA                    types.HPAValues             `json:"hpa,omitempty"`
 }
 
 type ReleaseValues struct {
@@ -69,23 +69,23 @@ func (v *Values) Default() error {
 		// TODO
 		v.Configuration.Identity = fmt.Sprintf("manifest-deployer-%s", v.Instance)
 	}
-	if v.HostClientSettings == nil {
-		v.HostClientSettings = &ClientSettings{}
+	if v.WorkloadClientSettings == nil {
+		v.WorkloadClientSettings = &ClientSettings{}
 	}
-	if v.HostClientSettings.Burst == 0 {
-		v.HostClientSettings.Burst = 30
+	if v.WorkloadClientSettings.Burst == 0 {
+		v.WorkloadClientSettings.Burst = 30
 	}
-	if v.HostClientSettings.QPS == 0 {
-		v.HostClientSettings.QPS = 20
+	if v.WorkloadClientSettings.QPS == 0 {
+		v.WorkloadClientSettings.QPS = 20
 	}
-	if v.ResourceClientSettings == nil {
-		v.ResourceClientSettings = &ClientSettings{}
+	if v.MCPClientSettings == nil {
+		v.MCPClientSettings = &ClientSettings{}
 	}
-	if v.ResourceClientSettings.Burst == 0 {
-		v.ResourceClientSettings.Burst = 60
+	if v.MCPClientSettings.Burst == 0 {
+		v.MCPClientSettings.Burst = 60
 	}
-	if v.ResourceClientSettings.QPS == 0 {
-		v.ResourceClientSettings.QPS = 40
+	if v.MCPClientSettings.QPS == 0 {
+		v.MCPClientSettings.QPS = 40
 	}
 	if v.Resources.Requests == nil {
 		cpu, err := resource.ParseQuantity("100m")

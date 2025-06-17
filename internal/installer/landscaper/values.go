@@ -45,16 +45,16 @@ type ControllerValues struct {
 	DeployItems   v1alpha1.DeployItemsController   `json:"deployItems,omitempty"`   // optional, has default value
 	Contexts      v1alpha1.ContextsController      `json:"contexts,omitempty"`      // optional, has default value
 
-	// LandscaperKubeconfig contains the kubeconfig for the resource cluster (= landscaper cluster).
-	LandscaperKubeconfig   *KubeconfigValues         `json:"landscaperKubeconfig,omitempty"`
+	// MCPKubeconfig contains the kubeconfig for the mcp cluster.
+	MCPKubeconfig          *KubeconfigValues         `json:"mcpKubeconfig,omitempty"`
 	Service                *ServiceValues            `json:"service,omitempty"` // optional, has default values
 	Image                  api.ImageConfiguration    `json:"image,omitempty"`
 	ReplicaCount           *int32                    `json:"replicaCount,omitempty"`
 	Resources              core.ResourceRequirements `json:"resources,omitempty"`
 	ResourcesMain          core.ResourceRequirements `json:"resourcesMain,omitempty"`
 	Metrics                *MetricsValues            `json:"metrics,omitempty"`
-	HostClientSettings     ClientSettings            `json:"hostClientSettings,omitempty"`     // optional, has default value
-	ResourceClientSettings ClientSettings            `json:"resourceClientSettings,omitempty"` // optional, has default value
+	WorkloadClientSettings ClientSettings            `json:"workloadClientSettings,omitempty"` // optional, has default value
+	MCPClientSettings      ClientSettings            `json:"mcpClientSettings,omitempty"`      // optional, has default value
 	// HPAMain contains the values for the HPA of the main deployment.
 	// (There is no configuration for HPACentral, because its values are fix.)
 	HPAMain            types.HPAValues                 `json:"hpaMain,omitempty"`            // optional, has default value
@@ -71,15 +71,15 @@ const (
 
 type WebhooksServerValues struct {
 	DisableWebhooks []string `json:"disableWebhooks,omitempty"`
-	// LandscaperKubeconfig contains the kubeconfig for the resource cluster (= landscaper cluster).
-	LandscaperKubeconfig *KubeconfigValues         `json:"landscaperKubeconfig,omitempty"`
-	Service              *ServiceValues            `json:"service,omitempty"` // optional, has default value
-	Image                api.ImageConfiguration    `json:"image,omitempty"`
-	ServicePort          int32                     `json:"servicePort,omitempty"`  // required unless DisableWebhooks contains "all"
-	ReplicaCount         *int32                    `json:"replicaCount,omitempty"` // optional - has default value
-	Ingress              *IngressValues            `json:"ingress,omitempty"`      // optional - if nil, no ingress will be created.
-	Resources            core.ResourceRequirements `json:"resources,omitempty"`    // optional - has default value
-	HPA                  types.HPAValues           `json:"hpa,omitempty"`          // optional - has default value
+	// MCPKubeconfig contains the kubeconfig for the mcp cluster.
+	MCPKubeconfig *KubeconfigValues         `json:"mcpKubeconfig,omitempty"`
+	Service       *ServiceValues            `json:"service,omitempty"` // optional, has default value
+	Image         api.ImageConfiguration    `json:"image,omitempty"`
+	ServicePort   int32                     `json:"servicePort,omitempty"`  // required unless DisableWebhooks contains "all"
+	ReplicaCount  *int32                    `json:"replicaCount,omitempty"` // optional - has default value
+	Ingress       *IngressValues            `json:"ingress,omitempty"`      // optional - if nil, no ingress will be created.
+	Resources     core.ResourceRequirements `json:"resources,omitempty"`    // optional - has default value
+	HPA           types.HPAValues           `json:"hpa,omitempty"`          // optional - has default value
 }
 
 type CommonControllerValues struct {
@@ -132,17 +132,17 @@ func (v *Values) Default() error {
 		v.Controller.Service.Port = 80
 	}
 
-	if v.Controller.HostClientSettings.Burst == 0 {
-		v.Controller.HostClientSettings.Burst = 30
+	if v.Controller.WorkloadClientSettings.Burst == 0 {
+		v.Controller.WorkloadClientSettings.Burst = 30
 	}
-	if v.Controller.HostClientSettings.QPS == 0 {
-		v.Controller.HostClientSettings.QPS = 20
+	if v.Controller.WorkloadClientSettings.QPS == 0 {
+		v.Controller.WorkloadClientSettings.QPS = 20
 	}
-	if v.Controller.ResourceClientSettings.Burst == 0 {
-		v.Controller.ResourceClientSettings.Burst = 60
+	if v.Controller.MCPClientSettings.Burst == 0 {
+		v.Controller.MCPClientSettings.Burst = 60
 	}
-	if v.Controller.ResourceClientSettings.QPS == 0 {
-		v.Controller.ResourceClientSettings.QPS = 40
+	if v.Controller.MCPClientSettings.QPS == 0 {
+		v.Controller.MCPClientSettings.QPS = 40
 	}
 	if v.Controller.Resources.Requests == nil {
 		cpu, err := resource.ParseQuantity("100m")

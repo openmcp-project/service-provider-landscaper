@@ -18,7 +18,7 @@ func InstallManifestDeployer(ctx context.Context, values *Values) (*Exports, err
 		return nil, err
 	}
 
-	hostClient := values.HostCluster.Client()
+	hostClient := values.WorkloadCluster.Client()
 
 	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.hostNamespace())); err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func UninstallManifestDeployer(ctx context.Context, values *Values) error {
 		return err
 	}
 
-	hostClient := values.HostCluster.Client()
+	hostClient := values.WorkloadCluster.Client()
 
 	if err := resources.DeleteResource(ctx, hostClient, newDeploymentMutator(valHelper)); err != nil {
 		return err
@@ -108,7 +108,7 @@ func CheckReadiness(ctx context.Context, values *Values) readiness.CheckResult {
 		return readiness.NewFailedResult(err)
 	}
 
-	hostClient := values.HostCluster.Client()
+	hostClient := values.WorkloadCluster.Client()
 	dp, err := resources.GetResource(ctx, hostClient, newDeploymentMutator(valHelper))
 	if err != nil {
 		return readiness.NewFailedResult(err)

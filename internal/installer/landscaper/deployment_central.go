@@ -101,7 +101,7 @@ func (m *centralDeploymentMutator) volumes() []corev1.Volume {
 		},
 	}
 
-	if k := m.values.Controller.LandscaperKubeconfig; k != nil {
+	if k := m.values.Controller.MCPKubeconfig; k != nil {
 		secretName := ""
 		if k.Kubeconfig != "" {
 			secretName = m.controllerKubeconfigSecretName()
@@ -135,7 +135,7 @@ func (m *centralDeploymentMutator) volumeMounts() []corev1.VolumeMount {
 			MountPath: "/app/ls/config",
 		},
 	}
-	if m.values.Controller.LandscaperKubeconfig != nil {
+	if m.values.Controller.MCPKubeconfig != nil {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "landscaper-cluster-kubeconfig",
 			MountPath: "/app/ls/landscaper-cluster-kubeconfig",
@@ -148,7 +148,7 @@ func (m *centralDeploymentMutator) args() []string {
 	a := []string{
 		"--config=/app/ls/config/config.yaml",
 	}
-	if m.values.Controller.LandscaperKubeconfig != nil {
+	if m.values.Controller.MCPKubeconfig != nil {
 		a = append(a, "--landscaper-kubeconfig=/app/ls/landscaper-cluster-kubeconfig/kubeconfig")
 	}
 	if m.values.VerbosityLevel != "" {
@@ -181,19 +181,19 @@ func (m *centralDeploymentMutator) env() []corev1.EnvVar {
 		},
 		{
 			Name:  "LS_HOST_CLIENT_BURST",
-			Value: strconv.FormatInt(int64(m.values.Controller.HostClientSettings.Burst), 10),
+			Value: strconv.FormatInt(int64(m.values.Controller.WorkloadClientSettings.Burst), 10),
 		},
 		{
 			Name:  "LS_HOST_CLIENT_QPS",
-			Value: strconv.FormatInt(int64(m.values.Controller.HostClientSettings.QPS), 10),
+			Value: strconv.FormatInt(int64(m.values.Controller.WorkloadClientSettings.QPS), 10),
 		},
 		{
 			Name:  "LS_RESOURCE_CLIENT_BURST",
-			Value: strconv.FormatInt(int64(m.values.Controller.ResourceClientSettings.Burst), 10),
+			Value: strconv.FormatInt(int64(m.values.Controller.MCPClientSettings.Burst), 10),
 		},
 		{
 			Name:  "LS_RESOURCE_CLIENT_QPS",
-			Value: strconv.FormatInt(int64(m.values.Controller.ResourceClientSettings.QPS), 10),
+			Value: strconv.FormatInt(int64(m.values.Controller.MCPClientSettings.QPS), 10),
 		},
 	}
 }

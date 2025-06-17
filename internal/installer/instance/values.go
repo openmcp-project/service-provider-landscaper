@@ -15,27 +15,27 @@ import (
 // rbacValues determines the import values for the installation of the rbac resources
 func rbacValues(c *Configuration) *rbac.Values {
 	return &rbac.Values{
-		Instance:        c.Instance,
-		Version:         c.Version,
-		ResourceCluster: c.ResourceCluster,
-		ServiceAccount:  &rbac.ServiceAccountValues{Create: true},
+		Instance:       c.Instance,
+		Version:        c.Version,
+		MCPCluster:     c.MCPCluster,
+		ServiceAccount: &rbac.ServiceAccountValues{Create: true},
 	}
 }
 
 // manifestDeployerValues determines the import values for the installation of the manifest deployer
 func manifestDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *manifestdeployer.Values {
 	v := &manifestdeployer.Values{
-		Instance:       c.Instance,
-		Version:        c.Version,
-		HostCluster:    c.HostCluster,
-		Image:          c.ManifestDeployer.Image,
-		ServiceAccount: &manifestdeployer.ServiceAccountValues{Create: true},
-		Resources:      c.ManifestDeployer.Resources,
-		HPA:            c.ManifestDeployer.HPA,
+		Instance:        c.Instance,
+		Version:         c.Version,
+		WorkloadCluster: c.WorkloadCluster,
+		Image:           c.ManifestDeployer.Image,
+		ServiceAccount:  &manifestdeployer.ServiceAccountValues{Create: true},
+		Resources:       c.ManifestDeployer.Resources,
+		HPA:             c.ManifestDeployer.HPA,
 	}
 
 	if kubeconfigs != nil {
-		v.LandscaperClusterKubeconfig = &manifestdeployer.KubeconfigValues{
+		v.MCPClusterKubeconfig = &manifestdeployer.KubeconfigValues{
 			Kubeconfig: string(kubeconfigs.ControllerKubeconfig),
 		}
 	}
@@ -47,17 +47,17 @@ func manifestDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *ma
 // helmDeployerValues determines the import values for the installation of the helm deployer
 func helmDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *helmdeployer.Values {
 	v := &helmdeployer.Values{
-		Instance:       c.Instance,
-		Version:        c.Version,
-		HostCluster:    c.HostCluster,
-		Image:          c.HelmDeployer.Image,
-		ServiceAccount: &helmdeployer.ServiceAccountValues{Create: true},
-		Resources:      c.HelmDeployer.Resources,
-		HPA:            c.HelmDeployer.HPA,
+		Instance:        c.Instance,
+		Version:         c.Version,
+		WorkloadCluster: c.WorkloadCluster,
+		Image:           c.HelmDeployer.Image,
+		ServiceAccount:  &helmdeployer.ServiceAccountValues{Create: true},
+		Resources:       c.HelmDeployer.Resources,
+		HPA:             c.HelmDeployer.HPA,
 	}
 
 	if kubeconfigs != nil {
-		v.LandscaperClusterKubeconfig = &helmdeployer.KubeconfigValues{
+		v.MCPClusterKubeconfig = &helmdeployer.KubeconfigValues{
 			Kubeconfig: string(kubeconfigs.ControllerKubeconfig),
 		}
 	}
@@ -70,16 +70,16 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 	v := &landscaper.Values{
 		Instance:       c.Instance,
 		Version:        c.Version,
-		HostCluster:    c.HostCluster,
+		HostCluster:    c.WorkloadCluster,
 		VerbosityLevel: "INFO",
 		Configuration:  v1alpha1.LandscaperConfiguration{},
 		ServiceAccount: &landscaper.ServiceAccountValues{Create: true},
 		Controller: landscaper.ControllerValues{
-			LandscaperKubeconfig: &landscaper.KubeconfigValues{
+			MCPKubeconfig: &landscaper.KubeconfigValues{
 				Kubeconfig: string(kubeconfigs.ControllerKubeconfig),
 			},
 			Image:         c.Landscaper.Controller.Image,
-			ReplicaCount:  nil,
+			ReplicaCount:  ptr.To[int32](1),
 			Resources:     c.Landscaper.Controller.Resources,
 			ResourcesMain: c.Landscaper.Controller.ResourcesMain,
 			Metrics:       nil,
@@ -87,13 +87,13 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 		},
 		WebhooksServer: landscaper.WebhooksServerValues{
 			DisableWebhooks: nil,
-			LandscaperKubeconfig: &landscaper.KubeconfigValues{
+			MCPKubeconfig: &landscaper.KubeconfigValues{
 				Kubeconfig: string(kubeconfigs.WebhooksKubeconfig),
 			},
 			Image:       c.Landscaper.WebhooksServer.Image,
 			ServicePort: 9443,
 			Ingress: &landscaper.IngressValues{
-				Host:      fmt.Sprintf("ls-system-%s.%s", c.Instance, c.HostClusterDomain),
+				Host:      fmt.Sprintf("ls-system-%s.%s", c.Instance, c.WorkloadClusterDomain),
 				DNSClass:  "garden",
 				ClassName: ptr.To("nginx"),
 			},

@@ -1,19 +1,26 @@
 package landscaper
 
 import (
-	"context"
-	"os"
-	"testing"
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
+	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
+	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/openmcp-project/service-provider-landscaper/test/utils"
+	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
+
+	"testing"
 
 	"github.com/gardener/landscaper/apis/config/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 
-	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/providerconfig"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 )
 
 func TestConfig(t *testing.T) {
@@ -21,35 +28,56 @@ func TestConfig(t *testing.T) {
 	RunSpecs(t, "Landscaper Controller Installer Test Suite")
 }
 
-var _ = XDescribe("Landscaper Controller Installer", func() {
+func buildTestEnvironment(testdataDir string, objectsWithStatus ...client.Object) *testutils.Environment {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(clustersv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(lsv1alpha1.AddToScheme(scheme))
+
+	return testutils.NewEnvironmentBuilder().
+		WithFakeClient(scheme).
+		WithInitObjectPath("testdata", testdataDir).
+		WithInitObjects(objectsWithStatus...).
+		Build()
+}
+
+var _ = Describe("Landscaper Controller Installer", func() {
 
 	const instanceID = "test-g23tp"
 
 	It("should install the landscaper controllers", func() {
-		ctx := context.Background()
+		env := buildTestEnvironment("test-01")
 
-		hostCluster, err := utils.ClusterFromEnv("WORKLOAD_KUBECONFIG_PATH")
+		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
+		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
+
+		sa := &corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "landscaper",
+				Namespace: "landscaper-system",
+			},
+		}
+		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
+
+		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
 		Expect(err).ToNot(HaveOccurred())
 
-		kubeconfig, err := os.ReadFile(os.Getenv("KUBECONFIG"))
-		Expect(err).ToNot(HaveOccurred())
-
-		serviceProviderConfig, err := providerconfig.ReadProviderConfig(os.Getenv("SERVICE_PROVIDER_RESOURCE_PATH"))
-		Expect(err).ToNot(HaveOccurred())
+		providerConfig := lsv1alpha1.ProviderConfig{}
+		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 		values := &Values{
 			Instance:       instanceID,
 			Version:        "v0.127.0",
-			HostCluster:    hostCluster,
+			HostCluster:    workloadCluster,
 			VerbosityLevel: "INFO",
 			Configuration:  v1alpha1.LandscaperConfiguration{},
 			ServiceAccount: &ServiceAccountValues{Create: true},
 			Controller: ControllerValues{
-				LandscaperKubeconfig: &KubeconfigValues{
+				MCPKubeconfig: &KubeconfigValues{
 					Kubeconfig: string(kubeconfig),
 				},
-				Image: api.ImageConfiguration{
-					Image: serviceProviderConfig.Spec.Deployment.LandscaperController.Image,
+				Image: lsv1alpha1.ImageConfiguration{
+					Image: providerConfig.Spec.Deployment.LandscaperController.Image,
 				},
 				ReplicaCount:  nil,
 				Resources:     corev1.ResourceRequirements{},
@@ -58,11 +86,11 @@ var _ = XDescribe("Landscaper Controller Installer", func() {
 			},
 			WebhooksServer: WebhooksServerValues{
 				DisableWebhooks: nil,
-				LandscaperKubeconfig: &KubeconfigValues{
+				MCPKubeconfig: &KubeconfigValues{
 					Kubeconfig: string(kubeconfig),
 				},
-				Image: api.ImageConfiguration{
-					Image: serviceProviderConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
+				Image: lsv1alpha1.ImageConfiguration{
+					Image: providerConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
 				},
 				ServicePort: 0,
 				Ingress:     nil,
@@ -72,23 +100,46 @@ var _ = XDescribe("Landscaper Controller Installer", func() {
 			SecurityContext:    nil,
 		}
 
-		err = InstallLandscaper(ctx, values)
+		err = InstallLandscaper(env.Ctx, values)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	XIt("should uninstall the landscaper controllers", func() {
-		ctx := context.Background()
+	It("should uninstall the landscaper controllers", func() {
+		env := buildTestEnvironment("test-01")
 
-		hostCluster, err := utils.ClusterFromEnv("WORKLOAD_KUBECONFIG_PATH")
+		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
+		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
+
+		sa := &corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "helm-deployer",
+				Namespace: "landscaper-system",
+			},
+		}
+		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
+
+		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
 		Expect(err).ToNot(HaveOccurred())
+
+		providerConfig := lsv1alpha1.ProviderConfig{}
+		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 		values := &Values{
 			Instance:    instanceID,
-			HostCluster: hostCluster,
+			HostCluster: workloadCluster,
+			WebhooksServer: WebhooksServerValues{
+				MCPKubeconfig: &KubeconfigValues{
+					Kubeconfig: string(kubeconfig),
+				},
+			},
+			Controller: ControllerValues{
+				MCPKubeconfig: &KubeconfigValues{
+					Kubeconfig: string(kubeconfig),
+				},
+			},
 		}
 
-		err = UninstallLandscaper(ctx, values)
-		Expect(err).ToNot(HaveOccurred())
+		Expect(UninstallLandscaper(env.Ctx, values)).ToNot(HaveOccurred())
 	})
 
 })

@@ -36,13 +36,13 @@ func InstallLandscaper(ctx context.Context, values *Values) error {
 		}
 	}
 
-	if len(valHelper.values.Controller.LandscaperKubeconfig.Kubeconfig) > 0 {
+	if len(valHelper.values.Controller.MCPKubeconfig.Kubeconfig) > 0 {
 		if err := resources.CreateOrUpdateResource(ctx, hostClient, newControllerKubeconfigSecretMutator(valHelper)); err != nil {
 			return err
 		}
 	}
 
-	if len(valHelper.values.WebhooksServer.LandscaperKubeconfig.Kubeconfig) > 0 {
+	if len(valHelper.values.WebhooksServer.MCPKubeconfig.Kubeconfig) > 0 {
 		if err := resources.CreateOrUpdateResource(ctx, hostClient, newWebhooksKubeconfigSecretMutator(valHelper)); err != nil {
 			return err
 		}
