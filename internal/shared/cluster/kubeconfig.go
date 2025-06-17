@@ -10,48 +10,11 @@ import (
 	core "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
+
+	clientapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-type KubeConfig struct {
-	APIVersion     string         `json:"apiVersion"`
-	Kind           string         `json:"kind"`
-	Clusters       []NamedCluster `json:"clusters"`
-	Contexts       []NamedContext `json:"contexts"`
-	CurrentContext string         `json:"current-context"`
-	Users          []NamedUser    `json:"users"`
-}
-
-type NamedCluster struct {
-	Name    string            `json:"name"`
-	Cluster KubeConfigCluster `json:"cluster"`
-}
-
-type KubeConfigCluster struct {
-	Server                   string `json:"server"`
-	CertificateAuthorityData []byte `json:"certificate-authority-data,omitempty"`
-}
-
-type NamedContext struct {
-	Name    string            `json:"name"`
-	Context KubeConfigContext `json:"context"`
-}
-
-type KubeConfigContext struct {
-	Cluster string `json:"cluster"`
-	User    string `json:"user"`
-}
-
-type NamedUser struct {
-	Name string `json:"name"`
-	User User   `json:"user"`
-}
-
-type User struct {
-	Token string `json:"token"`
-}
-
 func CreateKubeconfig(ctx context.Context, cluster *clusters.Cluster, serviceAccount *core.ServiceAccount) ([]byte, error) {
-
 	token, err := requestToken(ctx, cluster, serviceAccount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to request token for service account %s/%s: %w", serviceAccount.Namespace, serviceAccount.Name, err)
@@ -59,50 +22,36 @@ func CreateKubeconfig(ctx context.Context, cluster *clusters.Cluster, serviceAcc
 
 	contextName := fmt.Sprintf("%s-%s", serviceAccount.Namespace, serviceAccount.Name)
 
-	var kubeconfigCluster NamedCluster
+	var kubeconfigCluster *clientapi.Cluster
 
 	if cluster.RESTConfig() == nil {
 		// create a fake kubeconfig for testing
-		kubeconfigCluster = NamedCluster{
-			Name: contextName,
-			Cluster: KubeConfigCluster{
-				Server:                   "https://fake-server",
-				CertificateAuthorityData: []byte("fake-ca-data"),
-			},
+		kubeconfigCluster = &clientapi.Cluster{
+			Server:                   "https://fake-server",
+			CertificateAuthorityData: []byte("fake-ca-data"),
 		}
 	} else {
 		// use the actual cluster's REST config
-		kubeconfigCluster = NamedCluster{
-			Name: contextName,
-			Cluster: KubeConfigCluster{
-				Server:                   cluster.RESTConfig().Host,
-				CertificateAuthorityData: cluster.RESTConfig().CAData,
-			},
+		kubeconfigCluster = &clientapi.Cluster{
+			Server:                   cluster.RESTConfig().Host,
+			CertificateAuthorityData: cluster.RESTConfig().CAData,
 		}
 	}
 
-	kubeConfig := KubeConfig{
-		APIVersion:     "v1",
-		Kind:           "Config",
+	kubeConfig := clientapi.Config{
 		CurrentContext: contextName,
-		Contexts: []NamedContext{
-			{
-				Name: contextName,
-				Context: KubeConfigContext{
-					Cluster: contextName,
-					User:    contextName,
-				},
+		Contexts: map[string]*clientapi.Context{
+			contextName: {
+				AuthInfo: contextName,
+				Cluster:  contextName,
 			},
 		},
-		Clusters: []NamedCluster{
-			kubeconfigCluster,
+		Clusters: map[string]*clientapi.Cluster{
+			contextName: kubeconfigCluster,
 		},
-		Users: []NamedUser{
-			{
-				Name: contextName,
-				User: User{
-					Token: token,
-				},
+		AuthInfos: map[string]*clientapi.AuthInfo{
+			contextName: {
+				Token: token,
 			},
 		},
 	}
