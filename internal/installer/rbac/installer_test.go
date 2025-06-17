@@ -42,12 +42,12 @@ var _ = Describe("Landscaper RBAC Installer", func() {
 	It("should install the landscaper rbac resources", func() {
 		env := buildTestEnvironment("test-01")
 
-		resourceCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
+		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		values := &Values{
 			Instance:       instanceID,
 			Version:        "v0.127.0",
-			MCPCluster:     resourceCluster,
+			MCPCluster:     mcpCluster,
 			ServiceAccount: &ServiceAccountValues{Create: true},
 		}
 

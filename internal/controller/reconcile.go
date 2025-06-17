@@ -352,11 +352,11 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, mcpCluster,
 		},
 	}
 	conf := &instance.Configuration{
-		Instance:          inst,
-		Version:           "v0.127.0",
-		ResourceCluster:   mcpCluster,
-		HostCluster:       workloadCluster,
-		HostClusterDomain: providerConfig.Spec.WorkloadClusterDomain,
+		Instance:              inst,
+		Version:               "v0.127.0",
+		MCPCluster:            mcpCluster,
+		WorkloadCluster:       workloadCluster,
+		WorkloadClusterDomain: providerConfig.Spec.WorkloadClusterDomain,
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
 				Image: v1alpha1.ImageConfiguration{

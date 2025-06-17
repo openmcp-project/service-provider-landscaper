@@ -83,8 +83,8 @@ var _ = Describe("Landscaper Instance Installer", func() {
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.HostCluster = clusters.NewTestClusterFromClient("workload", env.Client())
-		config.ResourceCluster = clusters.NewTestClusterFromClient("mcp", env.Client())
+		config.WorkloadCluster = clusters.NewTestClusterFromClient("workload", env.Client())
+		config.MCPCluster = clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		// Add optional values
 		config.HelmDeployer.HPA = types.HPAValues{
@@ -121,8 +121,8 @@ var _ = Describe("Landscaper Instance Installer", func() {
 
 		// Add instance specific values
 		config.Instance = instanceID
-		config.HostCluster = clusters.NewTestClusterFromClient("workload", env.Client())
-		config.ResourceCluster = clusters.NewTestClusterFromClient("mcp", env.Client())
+		config.WorkloadCluster = clusters.NewTestClusterFromClient("workload", env.Client())
+		config.MCPCluster = clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		err = UninstallLandscaperInstance(env.Ctx, config)
 		Expect(err).NotTo(HaveOccurred())

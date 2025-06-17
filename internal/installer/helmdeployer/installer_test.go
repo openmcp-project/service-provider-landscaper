@@ -46,8 +46,8 @@ var _ = Describe("Helm Deployer Installer", func() {
 	It("should install the helm deployer", func() {
 		env := buildTestEnvironment("test-01")
 
-		hostCluster := clusters.NewTestClusterFromClient("workload", env.Client())
-		landscaperCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
+		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
+		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		sa := &corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
@@ -57,7 +57,7 @@ var _ = Describe("Helm Deployer Installer", func() {
 		}
 		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
 
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, landscaperCluster, sa)
+		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
@@ -66,7 +66,7 @@ var _ = Describe("Helm Deployer Installer", func() {
 		values := &Values{
 			Instance:        instanceID,
 			Version:         "v0.127.0",
-			WorkloadCluster: hostCluster,
+			WorkloadCluster: workloadCluster,
 			MCPClusterKubeconfig: &KubeconfigValues{
 				Kubeconfig: string(kubeconfig),
 			},
@@ -88,8 +88,8 @@ var _ = Describe("Helm Deployer Installer", func() {
 	It("should uninstall the helm deployer", func() {
 		env := buildTestEnvironment("test-01")
 
-		hostCluster := clusters.NewTestClusterFromClient("workload", env.Client())
-		landscaperCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
+		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
+		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		sa := &corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
@@ -99,12 +99,12 @@ var _ = Describe("Helm Deployer Installer", func() {
 		}
 		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
 
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, landscaperCluster, sa)
+		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{
 			Instance:        instanceID,
-			WorkloadCluster: hostCluster,
+			WorkloadCluster: workloadCluster,
 			MCPClusterKubeconfig: &KubeconfigValues{
 				Kubeconfig: string(kubeconfig),
 			},

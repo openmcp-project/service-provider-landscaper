@@ -17,7 +17,7 @@ func rbacValues(c *Configuration) *rbac.Values {
 	return &rbac.Values{
 		Instance:       c.Instance,
 		Version:        c.Version,
-		MCPCluster:     c.ResourceCluster,
+		MCPCluster:     c.MCPCluster,
 		ServiceAccount: &rbac.ServiceAccountValues{Create: true},
 	}
 }
@@ -27,7 +27,7 @@ func manifestDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *ma
 	v := &manifestdeployer.Values{
 		Instance:        c.Instance,
 		Version:         c.Version,
-		WorkloadCluster: c.HostCluster,
+		WorkloadCluster: c.WorkloadCluster,
 		Image:           c.ManifestDeployer.Image,
 		ServiceAccount:  &manifestdeployer.ServiceAccountValues{Create: true},
 		Resources:       c.ManifestDeployer.Resources,
@@ -49,7 +49,7 @@ func helmDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *helmde
 	v := &helmdeployer.Values{
 		Instance:        c.Instance,
 		Version:         c.Version,
-		WorkloadCluster: c.HostCluster,
+		WorkloadCluster: c.WorkloadCluster,
 		Image:           c.HelmDeployer.Image,
 		ServiceAccount:  &helmdeployer.ServiceAccountValues{Create: true},
 		Resources:       c.HelmDeployer.Resources,
@@ -70,7 +70,7 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 	v := &landscaper.Values{
 		Instance:       c.Instance,
 		Version:        c.Version,
-		HostCluster:    c.HostCluster,
+		HostCluster:    c.WorkloadCluster,
 		VerbosityLevel: "INFO",
 		Configuration:  v1alpha1.LandscaperConfiguration{},
 		ServiceAccount: &landscaper.ServiceAccountValues{Create: true},
@@ -93,7 +93,7 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 			Image:       c.Landscaper.WebhooksServer.Image,
 			ServicePort: 9443,
 			Ingress: &landscaper.IngressValues{
-				Host:      fmt.Sprintf("ls-system-%s.%s", c.Instance, c.HostClusterDomain),
+				Host:      fmt.Sprintf("ls-system-%s.%s", c.Instance, c.WorkloadClusterDomain),
 				DNSClass:  "garden",
 				ClassName: ptr.To("nginx"),
 			},
