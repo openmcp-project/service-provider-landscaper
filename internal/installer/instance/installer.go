@@ -13,9 +13,13 @@ import (
 )
 
 func InstallLandscaperInstance(ctx context.Context, config *Configuration) error {
+	kubeconfigs, err := rbac.GetKubeconfigs(ctx, rbacValues(config))
+	if err != nil {
+		return fmt.Errorf("failed to get kubeconfigs: %w", err)
+	}
 
 	// RBAC resources
-	kubeconfigs, err := rbac.InstallLandscaperRBACResources(ctx, rbacValues(config))
+	err = rbac.InstallLandscaperRBACResources(ctx, rbacValues(config))
 	if err != nil {
 		return fmt.Errorf("failed to install landscaper rbac resources: %v", err)
 	}
@@ -42,9 +46,12 @@ func InstallLandscaperInstance(ctx context.Context, config *Configuration) error
 }
 
 func UninstallLandscaperInstance(ctx context.Context, config *Configuration) error {
-	kubeconfigs := &rbac.Kubeconfigs{}
+	kubeconfigs, err := rbac.GetKubeconfigs(ctx, rbacValues(config))
+	if err != nil {
+		return fmt.Errorf("failed to get kubeconfigs: %w", err)
+	}
 
-	err := landscaper.UninstallLandscaper(ctx, landscaperValues(config, kubeconfigs, nil, nil))
+	err = landscaper.UninstallLandscaper(ctx, landscaperValues(config, kubeconfigs, nil, nil))
 	if err != nil {
 		return fmt.Errorf("failed to uninstall landscaper controllers: %w", err)
 	}

@@ -13,20 +13,9 @@ type Kubeconfigs struct {
 	WorkloadCluster []byte
 }
 
-func InstallLandscaperRBACResources(ctx context.Context, values *Values) (kubeconfigs *Kubeconfigs, err error) {
-	valHelper, err := newValuesHelper(values)
-	if err != nil {
-		return kubeconfigs, err
-	}
-
-	mcpClient := values.MCPCluster.Client()
-
-	if err := resources.CreateOrUpdateResource(ctx, mcpClient, resources.NewNamespaceMutator(valHelper.resourceNamespace())); err != nil {
-		return kubeconfigs, err
-	}
-
-	// Create kubeconfigs for the MCP cluster
-	kubeconfigs = &Kubeconfigs{}
+func GetKubeconfigs(ctx context.Context, values *Values) (*Kubeconfigs, error) {
+	var err error
+	kubeconfigs := &Kubeconfigs{}
 
 	kubeconfigs.MCPCluster, err = cluster.CreateKubeconfig(values.MCPCluster)
 	if err != nil {
@@ -41,8 +30,7 @@ func InstallLandscaperRBACResources(ctx context.Context, values *Values) (kubeco
 	return kubeconfigs, nil
 }
 
-func UninstallLandscaperRBACResources(ctx context.Context, values *Values) error {
-
+func InstallLandscaperRBACResources(ctx context.Context, values *Values) error {
 	valHelper, err := newValuesHelper(values)
 	if err != nil {
 		return err
@@ -50,7 +38,22 @@ func UninstallLandscaperRBACResources(ctx context.Context, values *Values) error
 
 	mcpClient := values.MCPCluster.Client()
 
-	if err := resources.DeleteResource(ctx, mcpClient, resources.NewNamespaceMutator(valHelper.resourceNamespace())); err != nil {
+	if err = resources.CreateOrUpdateResource(ctx, mcpClient, resources.NewNamespaceMutator(valHelper.resourceNamespace())); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UninstallLandscaperRBACResources(ctx context.Context, values *Values) error {
+	valHelper, err := newValuesHelper(values)
+	if err != nil {
+		return err
+	}
+
+	mcpClient := values.MCPCluster.Client()
+
+	if err = resources.DeleteResource(ctx, mcpClient, resources.NewNamespaceMutator(valHelper.resourceNamespace())); err != nil {
 		return err
 	}
 
