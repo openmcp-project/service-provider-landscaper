@@ -65,7 +65,7 @@ func (m *webhooksDeploymentMutator) Mutate(r *appsv1.Deployment) error {
 }
 
 func (m *webhooksDeploymentMutator) setServiceAccount(podSpec corev1.PodSpec) {
-	if m.values.WebhooksServer.LandscaperKubeconfig != nil {
+	if m.values.WebhooksServer.MCPKubeconfig != nil {
 		podSpec.AutomountServiceAccountToken = ptr.To(false)
 	} else {
 		podSpec.ServiceAccountName = rbac.WebhooksServiceAccountName
@@ -87,7 +87,7 @@ func (m *webhooksDeploymentMutator) containers() []corev1.Container {
 func (m *webhooksDeploymentMutator) volumes() []corev1.Volume {
 	volumes := []corev1.Volume{}
 
-	if k := m.values.WebhooksServer.LandscaperKubeconfig; k != nil {
+	if k := m.values.WebhooksServer.MCPKubeconfig; k != nil {
 		secretName := ""
 		if k.Kubeconfig != "" {
 			secretName = m.webhooksKubeconfigSecretName()
@@ -112,7 +112,7 @@ func (m *webhooksDeploymentMutator) volumes() []corev1.Volume {
 
 func (m *webhooksDeploymentMutator) volumeMounts() []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{}
-	if m.values.WebhooksServer.LandscaperKubeconfig != nil {
+	if m.values.WebhooksServer.MCPKubeconfig != nil {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "landscaper-cluster-kubeconfig",
 			MountPath: "/app/ls/landscaper-cluster-kubeconfig",
@@ -124,7 +124,7 @@ func (m *webhooksDeploymentMutator) volumeMounts() []corev1.VolumeMount {
 func (m *webhooksDeploymentMutator) args() []string {
 	a := []string{}
 
-	if k := m.values.WebhooksServer.LandscaperKubeconfig; k != nil {
+	if k := m.values.WebhooksServer.MCPKubeconfig; k != nil {
 		a = append(a, "--kubeconfig=/app/ls/landscaper-cluster-kubeconfig/kubeconfig")
 
 		if m.values.WebhooksServer.Ingress != nil {

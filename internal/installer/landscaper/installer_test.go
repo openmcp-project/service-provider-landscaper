@@ -48,8 +48,8 @@ var _ = Describe("Landscaper Controller Installer", func() {
 	It("should install the landscaper controllers", func() {
 		env := buildTestEnvironment("test-01")
 
-		hostCluster := clusters.NewTestClusterFromClient("workload", env.Client())
-		landscaperCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
+		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
+		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		sa := &corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
@@ -59,7 +59,7 @@ var _ = Describe("Landscaper Controller Installer", func() {
 		}
 		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
 
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, landscaperCluster, sa)
+		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
@@ -68,12 +68,12 @@ var _ = Describe("Landscaper Controller Installer", func() {
 		values := &Values{
 			Instance:       instanceID,
 			Version:        "v0.127.0",
-			HostCluster:    hostCluster,
+			HostCluster:    workloadCluster,
 			VerbosityLevel: "INFO",
 			Configuration:  v1alpha1.LandscaperConfiguration{},
 			ServiceAccount: &ServiceAccountValues{Create: true},
 			Controller: ControllerValues{
-				LandscaperKubeconfig: &KubeconfigValues{
+				MCPKubeconfig: &KubeconfigValues{
 					Kubeconfig: string(kubeconfig),
 				},
 				Image: lsv1alpha1.ImageConfiguration{
@@ -86,7 +86,7 @@ var _ = Describe("Landscaper Controller Installer", func() {
 			},
 			WebhooksServer: WebhooksServerValues{
 				DisableWebhooks: nil,
-				LandscaperKubeconfig: &KubeconfigValues{
+				MCPKubeconfig: &KubeconfigValues{
 					Kubeconfig: string(kubeconfig),
 				},
 				Image: lsv1alpha1.ImageConfiguration{
@@ -107,8 +107,8 @@ var _ = Describe("Landscaper Controller Installer", func() {
 	It("should uninstall the landscaper controllers", func() {
 		env := buildTestEnvironment("test-01")
 
-		hostCluster := clusters.NewTestClusterFromClient("workload", env.Client())
-		landscaperCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
+		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
+		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		sa := &corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
@@ -118,7 +118,7 @@ var _ = Describe("Landscaper Controller Installer", func() {
 		}
 		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
 
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, landscaperCluster, sa)
+		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
@@ -126,14 +126,14 @@ var _ = Describe("Landscaper Controller Installer", func() {
 
 		values := &Values{
 			Instance:    instanceID,
-			HostCluster: hostCluster,
+			HostCluster: workloadCluster,
 			WebhooksServer: WebhooksServerValues{
-				LandscaperKubeconfig: &KubeconfigValues{
+				MCPKubeconfig: &KubeconfigValues{
 					Kubeconfig: string(kubeconfig),
 				},
 			},
 			Controller: ControllerValues{
-				LandscaperKubeconfig: &KubeconfigValues{
+				MCPKubeconfig: &KubeconfigValues{
 					Kubeconfig: string(kubeconfig),
 				},
 			},

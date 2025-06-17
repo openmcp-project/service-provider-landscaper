@@ -75,7 +75,7 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 		Configuration:  v1alpha1.LandscaperConfiguration{},
 		ServiceAccount: &landscaper.ServiceAccountValues{Create: true},
 		Controller: landscaper.ControllerValues{
-			LandscaperKubeconfig: &landscaper.KubeconfigValues{
+			MCPKubeconfig: &landscaper.KubeconfigValues{
 				Kubeconfig: string(kubeconfigs.ControllerKubeconfig),
 			},
 			Image:         c.Landscaper.Controller.Image,
@@ -87,7 +87,7 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 		},
 		WebhooksServer: landscaper.WebhooksServerValues{
 			DisableWebhooks: nil,
-			LandscaperKubeconfig: &landscaper.KubeconfigValues{
+			MCPKubeconfig: &landscaper.KubeconfigValues{
 				Kubeconfig: string(kubeconfigs.WebhooksKubeconfig),
 			},
 			Image:       c.Landscaper.WebhooksServer.Image,
