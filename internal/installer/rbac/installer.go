@@ -130,5 +130,9 @@ func UninstallLandscaperRBACResources(ctx context.Context, values *Values) error
 		return err
 	}
 
+	if err := resources.DeleteResource(ctx, resourceClient, resources.NewNamespaceMutator(valHelper.resourceNamespace())); err != nil {
+		return err
+	}
+
 	return nil
 }

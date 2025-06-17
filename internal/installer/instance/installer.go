@@ -63,7 +63,6 @@ func UninstallLandscaperInstance(ctx context.Context, config *Configuration) err
 	if err != nil {
 		return fmt.Errorf("failed to uninstall landscaper rbac resources: %v", err)
 	}
-
 	return nil
 }
 

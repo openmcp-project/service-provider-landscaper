@@ -352,6 +352,28 @@ var _ = Describe("Landscaper Controller", func() {
 			reconcileResult = env.ShouldReconcile(req, "reconcile should not return a requeue time")
 			Expect(reconcileResult.RequeueAfter).To(BeZero())
 
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(ls), ls)).To(Succeed())
+			Expect(ls.Status.Conditions).To(HaveLen(2))
+			Expect(ls.Status.Conditions[0].Type).To(Equal(lsv1alpha1.ConditionTypeInstalled))
+			Expect(ls.Status.Conditions[0].Status).To(Equal(metav1.ConditionTrue))
+			Expect(ls.Status.Conditions[1].Type).To(Equal(lsv1alpha1.ConditionTypeReady))
+			Expect(ls.Status.Conditions[1].Status).To(Equal(metav1.ConditionTrue))
+			Expect(ls.Status.Phase).To(Equal(lsv1alpha1.PhaseReady))
+
+			// delete the landscaper instance
+			Expect(env.Client().Delete(env.Ctx, ls)).To(Succeed())
+			reconcileResult = env.ShouldReconcile(req, "reconcile should not return a requeue time")
+			Expect(reconcileResult.RequeueAfter).To(BeZero())
+
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsControllerDeployment), lsControllerDeployment)).ToNot(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsMainDeployment), lsMainDeployment)).ToNot(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsWebhooksServerDeployment), lsWebhooksServerDeployment)).ToNot(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(manifestDeployerDeployment), manifestDeployerDeployment)).ToNot(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(helmDeployerDeployment), helmDeployerDeployment)).ToNot(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(installationNs), installationNs)).ToNot(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(accessRequestMCP), accessRequestMCP)).ToNot(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadClusterRequest), accessRequestMCP)).ToNot(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadAccessRequest), accessRequestMCP)).ToNot(Succeed())
 		})
 	})
 })
