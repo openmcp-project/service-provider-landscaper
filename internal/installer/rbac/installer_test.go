@@ -45,10 +45,10 @@ var _ = Describe("Landscaper RBAC Installer", func() {
 		resourceCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		values := &Values{
-			Instance:        instanceID,
-			Version:         "v0.127.0",
-			ResourceCluster: resourceCluster,
-			ServiceAccount:  &ServiceAccountValues{Create: true},
+			Instance:       instanceID,
+			Version:        "v0.127.0",
+			MCPCluster:     resourceCluster,
+			ServiceAccount: &ServiceAccountValues{Create: true},
 		}
 
 		kubeconfigs, err := InstallLandscaperRBACResources(env.Ctx, values)
@@ -64,8 +64,8 @@ var _ = Describe("Landscaper RBAC Installer", func() {
 		resourceCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
 		values := &Values{
-			Instance:        instanceID,
-			ResourceCluster: resourceCluster,
+			Instance:   instanceID,
+			MCPCluster: resourceCluster,
 		}
 
 		Expect(UninstallLandscaperRBACResources(env.Ctx, values)).ToNot(HaveOccurred())

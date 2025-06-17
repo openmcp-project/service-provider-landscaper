@@ -15,10 +15,10 @@ import (
 // rbacValues determines the import values for the installation of the rbac resources
 func rbacValues(c *Configuration) *rbac.Values {
 	return &rbac.Values{
-		Instance:        c.Instance,
-		Version:         c.Version,
-		ResourceCluster: c.ResourceCluster,
-		ServiceAccount:  &rbac.ServiceAccountValues{Create: true},
+		Instance:       c.Instance,
+		Version:        c.Version,
+		MCPCluster:     c.ResourceCluster,
+		ServiceAccount: &rbac.ServiceAccountValues{Create: true},
 	}
 }
 
@@ -47,17 +47,17 @@ func manifestDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *ma
 // helmDeployerValues determines the import values for the installation of the helm deployer
 func helmDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *helmdeployer.Values {
 	v := &helmdeployer.Values{
-		Instance:       c.Instance,
-		Version:        c.Version,
-		HostCluster:    c.HostCluster,
-		Image:          c.HelmDeployer.Image,
-		ServiceAccount: &helmdeployer.ServiceAccountValues{Create: true},
-		Resources:      c.HelmDeployer.Resources,
-		HPA:            c.HelmDeployer.HPA,
+		Instance:        c.Instance,
+		Version:         c.Version,
+		WorkloadCluster: c.HostCluster,
+		Image:           c.HelmDeployer.Image,
+		ServiceAccount:  &helmdeployer.ServiceAccountValues{Create: true},
+		Resources:       c.HelmDeployer.Resources,
+		HPA:             c.HelmDeployer.HPA,
 	}
 
 	if kubeconfigs != nil {
-		v.LandscaperClusterKubeconfig = &helmdeployer.KubeconfigValues{
+		v.MCPClusterKubeconfig = &helmdeployer.KubeconfigValues{
 			Kubeconfig: string(kubeconfigs.ControllerKubeconfig),
 		}
 	}

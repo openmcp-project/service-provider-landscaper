@@ -89,7 +89,7 @@ func (h *valuesHelper) hostNamespace() string {
 }
 
 func (h *valuesHelper) landscaperClusterKubeconfig() []byte {
-	return []byte(h.values.LandscaperClusterKubeconfig.Kubeconfig)
+	return []byte(h.values.MCPClusterKubeconfig.Kubeconfig)
 }
 
 func (h *valuesHelper) isCreateServiceAccount() bool {

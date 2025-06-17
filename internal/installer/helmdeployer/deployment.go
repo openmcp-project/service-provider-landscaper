@@ -117,7 +117,7 @@ func (d *deploymentMutator) volumes() []corev1.Volume {
 		volumes = append(volumes, ociRegistryVolume)
 	}
 
-	if k := d.values.LandscaperClusterKubeconfig; k != nil {
+	if k := d.values.MCPClusterKubeconfig; k != nil {
 		secretName := ""
 		if k.Kubeconfig != "" {
 			secretName = fmt.Sprintf("%s-landscaper-cluster-kubeconfig", d.helmDeployerComponent.NamespacedDefaultResourceName())
@@ -155,7 +155,7 @@ func (d *deploymentMutator) volumeMounts() []corev1.VolumeMount {
 		})
 	}
 
-	if d.values.LandscaperClusterKubeconfig != nil {
+	if d.values.MCPClusterKubeconfig != nil {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "landscaper-cluster-kubeconfig",
 			MountPath: "/app/ls/landscaper-cluster-kubeconfig",
@@ -168,7 +168,7 @@ func (d *deploymentMutator) args() []string {
 	a := []string{
 		"--config=/app/ls/config/config.yaml",
 	}
-	if d.values.LandscaperClusterKubeconfig != nil {
+	if d.values.MCPClusterKubeconfig != nil {
 		a = append(a, "--landscaper-kubeconfig=/app/ls/landscaper-cluster-kubeconfig/kubeconfig")
 	}
 	if d.values.VerbosityLevel != "" {
@@ -197,19 +197,19 @@ func (d *deploymentMutator) env() []corev1.EnvVar {
 		},
 		{
 			Name:  "LS_HOST_CLIENT_BURST",
-			Value: strconv.FormatInt(int64(d.values.HostClientSettings.Burst), 10),
+			Value: strconv.FormatInt(int64(d.values.WorkloadClientSettings.Burst), 10),
 		},
 		{
 			Name:  "LS_HOST_CLIENT_QPS",
-			Value: strconv.FormatInt(int64(d.values.HostClientSettings.QPS), 10),
+			Value: strconv.FormatInt(int64(d.values.WorkloadClientSettings.QPS), 10),
 		},
 		{
 			Name:  "LS_RESOURCE_CLIENT_BURST",
-			Value: strconv.FormatInt(int64(d.values.ResourceClientSettings.Burst), 10),
+			Value: strconv.FormatInt(int64(d.values.MCPClientSettings.Burst), 10),
 		},
 		{
 			Name:  "LS_RESOURCE_CLIENT_QPS",
-			Value: strconv.FormatInt(int64(d.values.ResourceClientSettings.QPS), 10),
+			Value: strconv.FormatInt(int64(d.values.MCPClientSettings.QPS), 10),
 		},
 	}
 }
