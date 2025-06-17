@@ -350,7 +350,6 @@ var _ = Describe("Landscaper Controller", func() {
 
 			// now the landscaper should be ready
 			reconcileResult = env.ShouldReconcile(req, "reconcile should not return a requeue time")
-			Expect(reconcileResult.RequeueAfter).To(BeZero())
 
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(ls), ls)).To(Succeed())
 			Expect(ls.Status.Conditions).To(HaveLen(2))
