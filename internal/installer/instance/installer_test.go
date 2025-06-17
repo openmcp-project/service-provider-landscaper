@@ -38,7 +38,7 @@ func buildTestEnvironment(testdataDir string, objectsWithStatus ...client.Object
 		Build()
 }
 
-func createConfiguration(env *testutils.Environment, testdataDir string) *Configuration {
+func createConfiguration(env *testutils.Environment) *Configuration {
 	providerConfig := lsv1alpha1.ProviderConfig{}
 	Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
@@ -77,7 +77,7 @@ var _ = Describe("Landscaper Instance Installer", func() {
 		var err error
 
 		env := buildTestEnvironment("test-01")
-		config := createConfiguration(env, "test-01")
+		config := createConfiguration(env)
 
 		// Create configuration with instance independent values
 
@@ -117,7 +117,7 @@ var _ = Describe("Landscaper Instance Installer", func() {
 
 		// Create configuration with instance independent values
 		env := buildTestEnvironment("test-01")
-		config := createConfiguration(env, "test-01")
+		config := createConfiguration(env)
 
 		// Add instance specific values
 		config.Instance = instanceID
