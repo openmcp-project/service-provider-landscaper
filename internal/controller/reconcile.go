@@ -135,7 +135,11 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 	log.Debug("landscaper instance has become ready")
 	status.setReady()
 
-	return reconcile.Result{}, status, nil
+	return reconcile.Result{
+		// reconcile after 10 minutes to ensure that the landscaper instance is still healthy
+		// and to fetch new tokens for the access requests
+		RequeueAfter: 10 * time.Minute,
+	}, status, nil
 }
 
 func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1alpha1.Landscaper) (reconcile.Result, *reconcileStatus, error) {
