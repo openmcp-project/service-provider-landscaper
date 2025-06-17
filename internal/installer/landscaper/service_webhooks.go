@@ -22,7 +22,7 @@ func newWebhooksServiceMutator(b *valuesHelper) resources.Mutator[*core.Service]
 }
 
 func (m *webhooksServiceMutator) String() string {
-	return fmt.Sprintf("landscaper webhooks service %s/%s", m.hostNamespace(), m.landscaperWebhooksFullName())
+	return fmt.Sprintf("landscaper webhooks service %s/%s", m.workloadNamespace(), m.landscaperWebhooksFullName())
 }
 
 func (m *webhooksServiceMutator) MetadataMutator() resources.MetadataMutator {
@@ -37,7 +37,7 @@ func (m *webhooksServiceMutator) Empty() *core.Service {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperWebhooksFullName(),
-			Namespace: m.hostNamespace(),
+			Namespace: m.workloadNamespace(),
 		},
 	}
 }

@@ -20,29 +20,15 @@ func InstallHelmDeployer(ctx context.Context, values *Values) (*Exports, error) 
 
 	hostClient := values.WorkloadCluster.Client()
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.hostNamespace())); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.workloadNamespace())); err != nil {
 		return nil, err
-	}
-
-	if valHelper.isCreateServiceAccount() {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newClusterRoleMutator(valHelper)); err != nil {
-			return nil, err
-		}
-
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newServiceAccountMutator(valHelper)); err != nil {
-			return nil, err
-		}
-
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newClusterRoleBindingMutator(valHelper)); err != nil {
-			return nil, err
-		}
 	}
 
 	if err := resources.CreateOrUpdateResource(ctx, hostClient, newConfigSecretMutator(valHelper)); err != nil {
 		return nil, err
 	}
 
-	if len(valHelper.landscaperClusterKubeconfig()) > 0 {
+	if len(valHelper.mcpClusterKubeconfig()) > 0 {
 		if err := resources.CreateOrUpdateResource(ctx, hostClient, newKubeconfigSecretMutator(valHelper)); err != nil {
 			return nil, err
 		}
@@ -90,18 +76,6 @@ func UninstallHelmDeployer(ctx context.Context, values *Values) error {
 	}
 
 	if err := resources.DeleteResource(ctx, hostClient, newConfigSecretMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newClusterRoleBindingMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newServiceAccountMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newClusterRoleMutator(valHelper)); err != nil {
 		return err
 	}
 

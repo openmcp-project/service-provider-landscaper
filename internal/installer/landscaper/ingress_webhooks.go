@@ -22,14 +22,14 @@ func newIngressMutator(b *valuesHelper) resources.Mutator[*networking.Ingress] {
 }
 
 func (m *ingressMutator) String() string {
-	return fmt.Sprintf("landscaper webhooks ingress %s/%s", m.hostNamespace(), m.landscaperWebhooksFullName())
+	return fmt.Sprintf("landscaper webhooks ingress %s/%s", m.workloadNamespace(), m.landscaperWebhooksFullName())
 }
 
 func (m *ingressMutator) Empty() *networking.Ingress {
 	return &networking.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperWebhooksFullName(),
-			Namespace: m.hostNamespace(),
+			Namespace: m.workloadNamespace(),
 		},
 	}
 }

@@ -67,11 +67,11 @@ func newValuesHelperForDelete(values *Values) (*valuesHelper, error) {
 	}, nil
 }
 
-func (h *valuesHelper) hostNamespace() string {
+func (h *valuesHelper) workloadNamespace() string {
 	return h.values.Instance.Namespace()
 }
 
-func (h *valuesHelper) resourceNamespace() string {
+func (h *valuesHelper) mcpNamespace() string {
 	return h.values.Instance.Namespace()
 }
 
@@ -91,16 +91,16 @@ func (h *valuesHelper) configSecretName() string {
 	return h.controllerComponent.NamespacedResourceName("config")
 }
 
-func (h *valuesHelper) controllerKubeconfigSecretName() string {
-	return h.controllerComponent.NamespacedResourceName("controller-cluster-kubeconfig")
+func (h *valuesHelper) controllerMCPKubeconfigSecretName() string {
+	return h.controllerComponent.NamespacedResourceName("controller-mcp-kubeconfig")
+}
+
+func (h *valuesHelper) controllerWorkloadKubeconfigSecretName() string {
+	return h.controllerComponent.NamespacedResourceName("controller-workload-kubeconfig")
 }
 
 func (h *valuesHelper) webhooksKubeconfigSecretName() string {
-	return h.controllerComponent.NamespacedResourceName("webhooks-cluster-kubeconfig")
-}
-
-func (h *valuesHelper) isCreateServiceAccount() bool {
-	return h.values.ServiceAccount != nil && h.values.ServiceAccount.Create
+	return h.controllerComponent.NamespacedResourceName("webhooks-mcp-kubeconfig")
 }
 
 func (h *valuesHelper) areAllWebhooksDisabled() bool {
@@ -138,7 +138,7 @@ func (h *valuesHelper) computeConfiguration() (err error) {
 			LsController:          h.landscaperFullName(),
 			LsMainController:      h.landscaperMainFullName(),
 			WebHook:               h.landscaperWebhooksFullName(),
-			DeploymentsNamespace:  h.hostNamespace(),
+			DeploymentsNamespace:  h.workloadNamespace(),
 			LsHealthCheckName:     h.landscaperFullName(),
 			AdditionalDeployments: h.values.Controller.HealthChecks,
 		},

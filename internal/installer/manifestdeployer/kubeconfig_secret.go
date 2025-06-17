@@ -7,10 +7,10 @@ import (
 
 func newKubeconfigSecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
 	m := resources.NewSecretMutator(
-		b.manifestDeployerComponent.NamespacedResourceName("landscaper-cluster-kubeconfig"),
-		b.hostNamespace(),
+		b.mcpKubeconfigSecretName(),
+		b.workloadNamespace(),
 		map[string][]byte{
-			"kubeconfig": b.landscaperClusterKubeconfig(),
+			"kubeconfig": b.mcpClusterKubeconfig(),
 		},
 		v1.SecretTypeOpaque)
 	m.MetadataMutator().WithLabels(b.manifestDeployerComponent.Labels())

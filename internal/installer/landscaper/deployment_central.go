@@ -2,6 +2,7 @@ package landscaper
 
 import (
 	"fmt"
+	"k8s.io/utils/ptr"
 	"strconv"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -23,14 +24,14 @@ func newCentralDeploymentMutator(h *valuesHelper) resources.Mutator[*appsv1.Depl
 }
 
 func (m *centralDeploymentMutator) String() string {
-	return fmt.Sprintf("deployment %s/%s", m.hostNamespace(), m.landscaperFullName())
+	return fmt.Sprintf("deployment %s/%s", m.workloadNamespace(), m.landscaperFullName())
 }
 
 func (m *centralDeploymentMutator) Empty() *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperFullName(),
-			Namespace: m.hostNamespace(),
+			Namespace: m.workloadNamespace(),
 		},
 	}
 }
@@ -51,11 +52,11 @@ func (m *centralDeploymentMutator) Mutate(r *appsv1.Deployment) error {
 				Annotations: m.templateAnnotations(),
 			},
 			Spec: corev1.PodSpec{
-				Volumes:            m.volumes(),
-				Containers:         m.containers(),
-				ServiceAccountName: m.landscaperFullName(),
-				SecurityContext:    m.values.PodSecurityContext,
-				ImagePullSecrets:   m.values.ImagePullSecrets,
+				AutomountServiceAccountToken: ptr.To(false),
+				Volumes:                      m.volumes(),
+				Containers:                   m.containers(),
+				SecurityContext:              m.values.PodSecurityContext,
+				ImagePullSecrets:             m.values.ImagePullSecrets,
 			},
 		},
 	}
@@ -99,26 +100,22 @@ func (m *centralDeploymentMutator) volumes() []corev1.Volume {
 				},
 			},
 		},
-	}
-
-	if k := m.values.Controller.MCPKubeconfig; k != nil {
-		secretName := ""
-		if k.Kubeconfig != "" {
-			secretName = m.controllerKubeconfigSecretName()
-		} else {
-			secretName = k.SecretRef
-		}
-
-		kubeconfigVolume := corev1.Volume{
-			Name: "landscaper-cluster-kubeconfig",
+		{
+			Name: m.controllerMCPKubeconfigSecretName(),
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
+					SecretName: m.controllerMCPKubeconfigSecretName(),
 				},
 			},
-		}
-
-		volumes = append(volumes, kubeconfigVolume)
+		},
+		{
+			Name: m.controllerWorkloadKubeconfigSecretName(),
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: m.controllerWorkloadKubeconfigSecretName(),
+				},
+			},
+		},
 	}
 
 	return volumes
@@ -134,26 +131,29 @@ func (m *centralDeploymentMutator) volumeMounts() []corev1.VolumeMount {
 			Name:      "config",
 			MountPath: "/app/ls/config",
 		},
+		{
+			Name:      m.controllerMCPKubeconfigSecretName(),
+			MountPath: fmt.Sprint("/app/ls/", m.controllerMCPKubeconfigSecretName()),
+		},
+		{
+			Name:      m.controllerMCPKubeconfigSecretName(),
+			MountPath: fmt.Sprint("/app/ls/", m.controllerMCPKubeconfigSecretName()),
+		},
 	}
-	if m.values.Controller.MCPKubeconfig != nil {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "landscaper-cluster-kubeconfig",
-			MountPath: "/app/ls/landscaper-cluster-kubeconfig",
-		})
-	}
+
 	return volumeMounts
 }
 
 func (m *centralDeploymentMutator) args() []string {
 	a := []string{
 		"--config=/app/ls/config/config.yaml",
-	}
-	if m.values.Controller.MCPKubeconfig != nil {
-		a = append(a, "--landscaper-kubeconfig=/app/ls/landscaper-cluster-kubeconfig/kubeconfig")
+		fmt.Sprint("--landscaper-kubeconfig=/app/ls/", m.controllerMCPKubeconfigSecretName(), "/kubeconfig"),
+		fmt.Sprint("--kubeconfig=/app/ls/", m.controllerWorkloadKubeconfigSecretName(), "/kubeconfig"),
 	}
 	if m.values.VerbosityLevel != "" {
 		a = append(a, fmt.Sprintf("-v=%s", m.values.VerbosityLevel))
 	}
+
 	return a
 }
 

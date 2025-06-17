@@ -6,8 +6,6 @@ import (
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -49,15 +47,7 @@ var _ = Describe("Manifest Deployer Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		sa := &corev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "manifest-deployer",
-				Namespace: "landscaper-system",
-			},
-		}
-		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
-
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
+		kubeconfig, err := cluster.CreateKubeconfig(mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
@@ -76,7 +66,6 @@ var _ = Describe("Manifest Deployer Installer", func() {
 			ImagePullSecrets:       nil,
 			PodSecurityContext:     nil,
 			SecurityContext:        nil,
-			ServiceAccount:         &ServiceAccountValues{Create: true},
 			WorkloadClientSettings: nil,
 			MCPClientSettings:      nil,
 		}
@@ -91,15 +80,7 @@ var _ = Describe("Manifest Deployer Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		sa := &corev1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "manifest-deployer",
-				Namespace: "landscaper-system",
-			},
-		}
-		Expect(env.Client().Create(env.Ctx, sa)).To(Succeed())
-
-		kubeconfig, err := cluster.CreateKubeconfig(env.Ctx, mcpCluster, sa)
+		kubeconfig, err := cluster.CreateKubeconfig(mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
 		values := &Values{

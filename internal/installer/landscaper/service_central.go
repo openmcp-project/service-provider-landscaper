@@ -22,7 +22,7 @@ func newServiceMutator(b *valuesHelper) resources.Mutator[*core.Service] {
 }
 
 func (m *serviceMutator) String() string {
-	return fmt.Sprintf("landscaper service %s/%s", m.hostNamespace(), m.landscaperFullName())
+	return fmt.Sprintf("landscaper service %s/%s", m.workloadNamespace(), m.landscaperFullName())
 }
 
 func (m *serviceMutator) Empty() *core.Service {
@@ -33,7 +33,7 @@ func (m *serviceMutator) Empty() *core.Service {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperFullName(),
-			Namespace: m.hostNamespace(),
+			Namespace: m.workloadNamespace(),
 		},
 	}
 }

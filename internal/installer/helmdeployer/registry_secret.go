@@ -8,7 +8,7 @@ import (
 func newRegistrySecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
 	m := resources.NewSecretMutator(
 		b.helmDeployerComponent.NamespacedResourceName("registries"),
-		b.hostNamespace(),
+		b.workloadNamespace(),
 		b.registrySecretsData,
 		v1.SecretTypeOpaque)
 	m.MetadataMutator().WithLabels(b.helmDeployerComponent.Labels())

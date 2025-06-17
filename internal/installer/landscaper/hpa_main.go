@@ -22,14 +22,14 @@ func newMainHPAMutator(b *valuesHelper) resources.Mutator[*v2.HorizontalPodAutos
 }
 
 func (m *mainHPAMutator) String() string {
-	return fmt.Sprintf("hpa %s/%s", m.hostNamespace(), m.landscaperMainFullName())
+	return fmt.Sprintf("hpa %s/%s", m.workloadNamespace(), m.landscaperMainFullName())
 }
 
 func (m *mainHPAMutator) Empty() *v2.HorizontalPodAutoscaler {
 	return &v2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.landscaperMainFullName(),
-			Namespace: m.hostNamespace(),
+			Namespace: m.workloadNamespace(),
 		},
 	}
 }

@@ -16,36 +16,22 @@ func InstallLandscaper(ctx context.Context, values *Values) error {
 		return err
 	}
 
-	hostClient := values.HostCluster.Client()
+	hostClient := values.WorkloadCluster.Client()
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.hostNamespace())); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.workloadNamespace())); err != nil {
 		return err
 	}
 
-	if valHelper.isCreateServiceAccount() {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newClusterRoleMutator(valHelper)); err != nil {
-			return err
-		}
-
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newServiceAccountMutator(valHelper)); err != nil {
-			return err
-		}
-
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newClusterRoleBindingMutator(valHelper)); err != nil {
-			return err
-		}
+	if err := resources.CreateOrUpdateResource(ctx, hostClient, newControllerMCPKubeconfigSecretMutator(valHelper)); err != nil {
+		return err
 	}
 
-	if len(valHelper.values.Controller.MCPKubeconfig.Kubeconfig) > 0 {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newControllerKubeconfigSecretMutator(valHelper)); err != nil {
-			return err
-		}
+	if err := resources.CreateOrUpdateResource(ctx, hostClient, newControllerWorkloadKubeconfigSecretMutator(valHelper)); err != nil {
+		return err
 	}
 
-	if len(valHelper.values.WebhooksServer.MCPKubeconfig.Kubeconfig) > 0 {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newWebhooksKubeconfigSecretMutator(valHelper)); err != nil {
-			return err
-		}
+	if err := resources.CreateOrUpdateResource(ctx, hostClient, newWebhooksKubeconfigSecretMutator(valHelper)); err != nil {
+		return err
 	}
 
 	if err := resources.CreateOrUpdateResource(ctx, hostClient, newConfigSecretMutator(valHelper)); err != nil {
@@ -104,7 +90,7 @@ func UninstallLandscaper(ctx context.Context, values *Values) error {
 		return err
 	}
 
-	hostClient := values.HostCluster.Client()
+	hostClient := values.WorkloadCluster.Client()
 
 	if err := resources.DeleteResource(ctx, hostClient, newWebhooksHPAMutator(valHelper)); err != nil {
 		return err
@@ -150,19 +136,10 @@ func UninstallLandscaper(ctx context.Context, values *Values) error {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newControllerKubeconfigSecretMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, hostClient, newControllerMCPKubeconfigSecretMutator(valHelper)); err != nil {
 		return err
 	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newClusterRoleBindingMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newServiceAccountMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newClusterRoleMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, hostClient, newControllerWorkloadKubeconfigSecretMutator(valHelper)); err != nil {
 		return err
 	}
 
@@ -175,7 +152,7 @@ func CheckReadiness(ctx context.Context, values *Values) readiness.CheckResult {
 		return readiness.NewFailedResult(err)
 	}
 
-	hostClient := values.HostCluster.Client()
+	hostClient := values.WorkloadCluster.Client()
 
 	aggregatedResult := readiness.NewReadyResult()
 	for _, mut := range []resources.Mutator[*appsv1.Deployment]{

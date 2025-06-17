@@ -90,30 +90,8 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithMCPScheme(mcpScheme).
 		WithWorkloadScheme(workloadScheme).
 		WithRetryInterval(10 * time.Second).
-		WithMCPPermissions([]clustersv1alpha1.PermissionsRequest{
-			{
-				// TODO: find the correct set of permissions for the Landscaper provider on the MCP cluster
-				Rules: []rbac.PolicyRule{
-					{
-						APIGroups: []string{"*"},
-						Resources: []string{"*"},
-						Verbs:     []string{"*"},
-					},
-				},
-			},
-		}).
-		WithWorkloadPermissions([]clustersv1alpha1.PermissionsRequest{
-			{
-				// TODO: find the correct set of permissions for the Landscaper provider on the Workload cluster
-				Rules: []rbac.PolicyRule{
-					{
-						APIGroups: []string{"*"},
-						Resources: []string{"*"},
-						Verbs:     []string{"*"},
-					},
-				},
-			},
-		})
+		WithMCPPermissions(getMCPPermissions()).
+		WithWorkloadPermissions(getWorkloadPermissions())
 
 	r.InstanceClusterAccess = &defaultInstanceClusterAccess{}
 
@@ -158,4 +136,73 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		)).
 		Named(controllerName).
 		Complete(r)
+}
+
+func getMCPPermissions() []clustersv1alpha1.PermissionsRequest {
+	return []clustersv1alpha1.PermissionsRequest{
+		{
+			Rules: []rbac.PolicyRule{
+				{
+					APIGroups: []string{"apiextensions.k8s.io"},
+					Resources: []string{"customresourcedefinitions"},
+					Verbs:     []string{"*"},
+				},
+				{
+					APIGroups: []string{"landscaper.gardener.cloud"},
+					Resources: []string{"*"},
+					Verbs:     []string{"*"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"secrets", "configmaps"},
+					Verbs:     []string{"*"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"serviceaccounts"},
+					Verbs:     []string{"get", "list", "watch", "create", "update", "delete"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"serviceaccounts/token"},
+					Verbs:     []string{"create"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"namespaces"},
+					Verbs:     []string{"get", "list", "watch"},
+				},
+				{
+					APIGroups: []string{"rbac.authorization.k8s.io"},
+					Resources: []string{"clusterroles", "clusterrolebindings"},
+					Verbs:     []string{"get", "list", "watch", "create", "update", "delete"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"events"},
+					Verbs:     []string{"get", "watch", "create", "update", "patch"},
+				},
+				{
+					APIGroups: []string{"admissionregistration.k8s.io"},
+					Resources: []string{"validatingwebhookconfigurations"},
+					Verbs:     []string{"*"},
+				},
+			},
+		},
+	}
+}
+
+func getWorkloadPermissions() []clustersv1alpha1.PermissionsRequest {
+	return []clustersv1alpha1.PermissionsRequest{
+		{
+			// TODO: refine the permissions for the Workload cluster
+			Rules: []rbac.PolicyRule{
+				{
+					APIGroups: []string{"*"},
+					Resources: []string{"*"},
+					Verbs:     []string{"*"},
+				},
+			},
+		},
+	}
 }
