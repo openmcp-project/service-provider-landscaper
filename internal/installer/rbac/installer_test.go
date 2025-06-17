@@ -52,7 +52,9 @@ var _ = Describe("Landscaper RBAC Installer", func() {
 			WorkloadCluster: workloadCluster,
 		}
 
-		kubeconfigs, err := InstallLandscaperRBACResources(env.Ctx, values)
+		kubeconfigs, err := GetKubeconfigs(env.Ctx, values)
+		Expect(err).ToNot(HaveOccurred())
+		err = InstallLandscaperRBACResources(env.Ctx, values)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(kubeconfigs.MCPCluster).ToNot(BeEmpty())
 		Expect(kubeconfigs.WorkloadCluster).ToNot(BeEmpty())
