@@ -43,19 +43,21 @@ var _ = Describe("Landscaper RBAC Installer", func() {
 		env := buildTestEnvironment("test-01")
 
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
+		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 
 		values := &Values{
-			Instance:       instanceID,
-			Version:        "v0.127.0",
-			MCPCluster:     mcpCluster,
-			ServiceAccount: &ServiceAccountValues{Create: true},
+			Instance:        instanceID,
+			Version:         "v0.127.0",
+			MCPCluster:      mcpCluster,
+			WorkloadCluster: workloadCluster,
 		}
 
-		kubeconfigs, err := InstallLandscaperRBACResources(env.Ctx, values)
+		kubeconfigs, err := GetKubeconfigs(env.Ctx, values)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(kubeconfigs.ControllerKubeconfig).ToNot(BeNil())
-		Expect(kubeconfigs.WebhooksKubeconfig).ToNot(BeNil())
-		Expect(kubeconfigs.UserKubeconfig).ToNot(BeNil())
+		err = InstallLandscaperRBACResources(env.Ctx, values)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(kubeconfigs.MCPCluster).ToNot(BeEmpty())
+		Expect(kubeconfigs.WorkloadCluster).ToNot(BeEmpty())
 	})
 
 	It("should uninstall the landscaper rbac resources", func() {

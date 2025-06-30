@@ -8,7 +8,7 @@ import (
 func newConfigSecretMutator(b *valuesHelper) resources.Mutator[*v1.Secret] {
 	m := resources.NewSecretMutator(
 		b.configSecretName(),
-		b.hostNamespace(),
+		b.workloadNamespace(),
 		map[string][]byte{
 			"config.yaml": b.configYaml,
 		},

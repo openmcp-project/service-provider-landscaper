@@ -16,81 +16,67 @@ func InstallLandscaper(ctx context.Context, values *Values) error {
 		return err
 	}
 
-	hostClient := values.HostCluster.Client()
+	workloadClient := values.WorkloadCluster.Client()
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.hostNamespace())); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, resources.NewNamespaceMutator(valHelper.workloadNamespace())); err != nil {
 		return err
 	}
 
-	if valHelper.isCreateServiceAccount() {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newClusterRoleMutator(valHelper)); err != nil {
-			return err
-		}
-
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newServiceAccountMutator(valHelper)); err != nil {
-			return err
-		}
-
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newClusterRoleBindingMutator(valHelper)); err != nil {
-			return err
-		}
-	}
-
-	if len(valHelper.values.Controller.MCPKubeconfig.Kubeconfig) > 0 {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newControllerKubeconfigSecretMutator(valHelper)); err != nil {
-			return err
-		}
-	}
-
-	if len(valHelper.values.WebhooksServer.MCPKubeconfig.Kubeconfig) > 0 {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newWebhooksKubeconfigSecretMutator(valHelper)); err != nil {
-			return err
-		}
-	}
-
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newConfigSecretMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newControllerMCPKubeconfigSecretMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newServiceMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newControllerWorkloadKubeconfigSecretMutator(valHelper)); err != nil {
+		return err
+	}
+
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newWebhooksKubeconfigSecretMutator(valHelper)); err != nil {
+		return err
+	}
+
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newConfigSecretMutator(valHelper)); err != nil {
+		return err
+	}
+
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newServiceMutator(valHelper)); err != nil {
 		return err
 	}
 
 	if !valHelper.areAllWebhooksDisabled() {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newWebhooksServiceMutator(valHelper)); err != nil {
+		if err := resources.CreateOrUpdateResource(ctx, workloadClient, newWebhooksServiceMutator(valHelper)); err != nil {
 			return err
 		}
 	}
 
 	if valHelper.values.WebhooksServer.Ingress != nil {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newIngressMutator(valHelper)); err != nil {
+		if err := resources.CreateOrUpdateResource(ctx, workloadClient, newIngressMutator(valHelper)); err != nil {
 			return err
 		}
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newCentralDeploymentMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newCentralDeploymentMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newMainDeploymentMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newMainDeploymentMutator(valHelper)); err != nil {
 		return err
 	}
 
 	if !valHelper.areAllWebhooksDisabled() {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newWebhooksDeploymentMutator(valHelper)); err != nil {
+		if err := resources.CreateOrUpdateResource(ctx, workloadClient, newWebhooksDeploymentMutator(valHelper)); err != nil {
 			return err
 		}
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newMainHPAMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newMainHPAMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newCentralHPAMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newCentralHPAMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newWebhooksHPAMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newWebhooksHPAMutator(valHelper)); err != nil {
 		return err
 	}
 
@@ -104,65 +90,56 @@ func UninstallLandscaper(ctx context.Context, values *Values) error {
 		return err
 	}
 
-	hostClient := values.HostCluster.Client()
+	workloadClient := values.WorkloadCluster.Client()
 
-	if err := resources.DeleteResource(ctx, hostClient, newWebhooksHPAMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newWebhooksHPAMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newCentralHPAMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newCentralHPAMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newMainHPAMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newMainHPAMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newWebhooksDeploymentMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newWebhooksDeploymentMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newMainDeploymentMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newMainDeploymentMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newCentralDeploymentMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newCentralDeploymentMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newIngressMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newIngressMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newWebhooksServiceMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newWebhooksServiceMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newServiceMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newServiceMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newConfigSecretMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newConfigSecretMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newWebhooksKubeconfigSecretMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newWebhooksKubeconfigSecretMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newControllerKubeconfigSecretMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newControllerMCPKubeconfigSecretMutator(valHelper)); err != nil {
 		return err
 	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newClusterRoleBindingMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newServiceAccountMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newClusterRoleMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newControllerWorkloadKubeconfigSecretMutator(valHelper)); err != nil {
 		return err
 	}
 
@@ -175,7 +152,7 @@ func CheckReadiness(ctx context.Context, values *Values) readiness.CheckResult {
 		return readiness.NewFailedResult(err)
 	}
 
-	hostClient := values.HostCluster.Client()
+	hostClient := values.WorkloadCluster.Client()
 
 	aggregatedResult := readiness.NewReadyResult()
 	for _, mut := range []resources.Mutator[*appsv1.Deployment]{

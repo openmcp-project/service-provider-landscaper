@@ -18,16 +18,16 @@ import (
 type Values struct {
 	Instance               identity.Instance `json:"instance,omitempty"`
 	Version                string            `json:"version,omitempty"`
+	MCPCluster             *clusters.Cluster
 	WorkloadCluster        *clusters.Cluster
 	VerbosityLevel         string                      `json:"verbosityLevel,omitempty"`
-	MCPClusterKubeconfig   *KubeconfigValues           `json:"mcpClusterKubeconfig,omitempty"`
+	MCPClusterKubeconfig   string                      `json:"mcpClusterKubeconfig,omitempty"`
 	Image                  api.ImageConfiguration      `json:"image,omitempty"`
 	ImagePullSecrets       []core.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 	ReplicaCount           *int32                      `json:"replicaCount,omitempty"`
 	Resources              core.ResourceRequirements   `json:"resources,omitempty"` // <<<
 	PodSecurityContext     *core.PodSecurityContext    `json:"podSecurityContext,omitempty"`
 	SecurityContext        *core.SecurityContext       `json:"securityContext,omitempty"`
-	ServiceAccount         *ServiceAccountValues       `json:"serviceAccount,omitempty"`
 	Configuration          v1alpha1.Configuration      `json:"configuration,omitempty"`
 	WorkloadClientSettings *ClientSettings             `json:"workloadClientSettings,omitempty"`
 	MCPClientSettings      *ClientSettings             `json:"mcpClientSettings,omitempty"`

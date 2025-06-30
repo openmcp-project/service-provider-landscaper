@@ -18,47 +18,31 @@ func InstallHelmDeployer(ctx context.Context, values *Values) (*Exports, error) 
 		return nil, err
 	}
 
-	hostClient := values.WorkloadCluster.Client()
+	workloadClient := values.WorkloadCluster.Client()
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, resources.NewNamespaceMutator(valHelper.hostNamespace())); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, resources.NewNamespaceMutator(valHelper.workloadNamespace())); err != nil {
 		return nil, err
 	}
 
-	if valHelper.isCreateServiceAccount() {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newClusterRoleMutator(valHelper)); err != nil {
-			return nil, err
-		}
-
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newServiceAccountMutator(valHelper)); err != nil {
-			return nil, err
-		}
-
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newClusterRoleBindingMutator(valHelper)); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newConfigSecretMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newConfigSecretMutator(valHelper)); err != nil {
 		return nil, err
 	}
 
-	if len(valHelper.landscaperClusterKubeconfig()) > 0 {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newKubeconfigSecretMutator(valHelper)); err != nil {
-			return nil, err
-		}
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newKubeconfigSecretMutator(valHelper)); err != nil {
+		return nil, err
 	}
 
 	if valHelper.values.OCI != nil {
-		if err := resources.CreateOrUpdateResource(ctx, hostClient, newRegistrySecretMutator(valHelper)); err != nil {
+		if err := resources.CreateOrUpdateResource(ctx, workloadClient, newRegistrySecretMutator(valHelper)); err != nil {
 			return nil, err
 		}
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newHPAMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newHPAMutator(valHelper)); err != nil {
 		return nil, err
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, hostClient, newDeploymentMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newDeploymentMutator(valHelper)); err != nil {
 		return nil, err
 	}
 
@@ -75,33 +59,21 @@ func UninstallHelmDeployer(ctx context.Context, values *Values) error {
 		return err
 	}
 
-	hostClient := values.WorkloadCluster.Client()
+	workloadClient := values.WorkloadCluster.Client()
 
-	if err := resources.DeleteResource(ctx, hostClient, newDeploymentMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newDeploymentMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newHPAMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newHPAMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newKubeconfigSecretMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newKubeconfigSecretMutator(valHelper)); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, hostClient, newConfigSecretMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newClusterRoleBindingMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newServiceAccountMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, hostClient, newClusterRoleMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newConfigSecretMutator(valHelper)); err != nil {
 		return err
 	}
 

@@ -19,20 +19,14 @@ import (
 type Values struct {
 	Instance           identity.Instance `json:"instance,omitempty"`
 	Version            string            `json:"version,omitempty"`
-	HostCluster        *clusters.Cluster
+	WorkloadCluster    *clusters.Cluster
 	VerbosityLevel     string                           `json:"verbosityLevel,omitempty"`
 	Configuration      v1alpha1.LandscaperConfiguration `json:"configuration,omitempty"`
-	ServiceAccount     *ServiceAccountValues            `json:"serviceAccount,omitempty"`
 	Controller         ControllerValues                 `json:"controller,omitempty"`
 	WebhooksServer     WebhooksServerValues             `json:"webhooksServer,omitempty"`
 	ImagePullSecrets   []core.LocalObjectReference      `json:"imagePullSecrets,omitempty"`
 	PodSecurityContext *core.PodSecurityContext         `json:"podSecurityContext,omitempty"`
 	SecurityContext    *core.SecurityContext            `json:"securityContext,omitempty"`
-}
-
-type KubeconfigValues struct {
-	Kubeconfig string `json:"kubeconfig,omitempty"`
-	SecretRef  string `json:"secretRef,omitempty"`
 }
 
 type ServiceAccountValues struct {
@@ -46,8 +40,9 @@ type ControllerValues struct {
 	Contexts      v1alpha1.ContextsController      `json:"contexts,omitempty"`      // optional, has default value
 
 	// MCPKubeconfig contains the kubeconfig for the mcp cluster.
-	MCPKubeconfig          *KubeconfigValues         `json:"mcpKubeconfig,omitempty"`
-	Service                *ServiceValues            `json:"service,omitempty"` // optional, has default values
+	MCPKubeconfig          string                    `json:"mcpKubeconfig,omitempty"`
+	WorkloadKubeconfig     string                    `json:"workloadKubeconfig,omitempty"` // optional, has default value
+	Service                *ServiceValues            `json:"service,omitempty"`            // optional, has default values
 	Image                  api.ImageConfiguration    `json:"image,omitempty"`
 	ReplicaCount           *int32                    `json:"replicaCount,omitempty"`
 	Resources              core.ResourceRequirements `json:"resources,omitempty"`
@@ -72,7 +67,7 @@ const (
 type WebhooksServerValues struct {
 	DisableWebhooks []string `json:"disableWebhooks,omitempty"`
 	// MCPKubeconfig contains the kubeconfig for the mcp cluster.
-	MCPKubeconfig *KubeconfigValues         `json:"mcpKubeconfig,omitempty"`
+	MCPKubeconfig string                    `json:"mcpKubeconfig,omitempty"`
 	Service       *ServiceValues            `json:"service,omitempty"` // optional, has default value
 	Image         api.ImageConfiguration    `json:"image,omitempty"`
 	ServicePort   int32                     `json:"servicePort,omitempty"`  // required unless DisableWebhooks contains "all"
