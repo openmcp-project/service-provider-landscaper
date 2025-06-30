@@ -2,27 +2,49 @@ package rbac
 
 import (
 	"context"
+	_ "embed"
+
+	"github.com/openmcp-project/controller-utils/pkg/clusters"
 
 	"github.com/openmcp-project/controller-utils/pkg/resources"
-
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 )
+
+// embed the file data/test-kubeconfig.yaml
+//
+//go:embed data/test-kubeconfig.yaml
+var testKubeconfig []byte
 
 type Kubeconfigs struct {
 	MCPCluster      []byte
 	WorkloadCluster []byte
 }
 
+type KubeconfigAccessor func(ctx context.Context, cluster *clusters.Cluster) ([]byte, error)
+
+func defaultKubeconfigAccessorImpl(_ context.Context, cluster *clusters.Cluster) ([]byte, error) {
+	return cluster.WriteKubeconfig()
+}
+
+func TestKubeconfigAccessorImpl(_ context.Context, _ *clusters.Cluster) ([]byte, error) {
+	return testKubeconfig, nil
+}
+
+var kubeconfigAccessor KubeconfigAccessor = defaultKubeconfigAccessorImpl
+
+func SetKubeconfigAccessor(accessor KubeconfigAccessor) {
+	kubeconfigAccessor = accessor
+}
+
 func GetKubeconfigs(ctx context.Context, values *Values) (*Kubeconfigs, error) {
 	var err error
 	kubeconfigs := &Kubeconfigs{}
 
-	kubeconfigs.MCPCluster, err = cluster.CreateKubeconfig(values.MCPCluster)
+	kubeconfigs.MCPCluster, err = kubeconfigAccessor(ctx, values.MCPCluster)
 	if err != nil {
 		return kubeconfigs, err
 	}
 
-	kubeconfigs.WorkloadCluster, err = cluster.CreateKubeconfig(values.WorkloadCluster)
+	kubeconfigs.WorkloadCluster, err = kubeconfigAccessor(ctx, values.WorkloadCluster)
 	if err != nil {
 		return kubeconfigs, err
 	}

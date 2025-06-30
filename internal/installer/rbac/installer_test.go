@@ -1,7 +1,9 @@
-package rbac
+package rbac_test
 
 import (
 	"testing"
+
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
@@ -18,6 +20,8 @@ import (
 )
 
 func TestConfig(t *testing.T) {
+	rbac.SetKubeconfigAccessor(rbac.TestKubeconfigAccessorImpl)
+
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Landscaper RBAC Installer Test Suite")
 }
@@ -45,16 +49,16 @@ var _ = Describe("Landscaper RBAC Installer", func() {
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 
-		values := &Values{
+		values := &rbac.Values{
 			Instance:        instanceID,
 			Version:         "v0.127.0",
 			MCPCluster:      mcpCluster,
 			WorkloadCluster: workloadCluster,
 		}
 
-		kubeconfigs, err := GetKubeconfigs(env.Ctx, values)
+		kubeconfigs, err := rbac.GetKubeconfigs(env.Ctx, values)
 		Expect(err).ToNot(HaveOccurred())
-		err = InstallLandscaperRBACResources(env.Ctx, values)
+		err = rbac.InstallLandscaperRBACResources(env.Ctx, values)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(kubeconfigs.MCPCluster).ToNot(BeEmpty())
 		Expect(kubeconfigs.WorkloadCluster).ToNot(BeEmpty())
@@ -65,12 +69,12 @@ var _ = Describe("Landscaper RBAC Installer", func() {
 
 		resourceCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		values := &Values{
+		values := &rbac.Values{
 			Instance:   instanceID,
 			MCPCluster: resourceCluster,
 		}
 
-		Expect(UninstallLandscaperRBACResources(env.Ctx, values)).ToNot(HaveOccurred())
+		Expect(rbac.UninstallLandscaperRBACResources(env.Ctx, values)).ToNot(HaveOccurred())
 	})
 
 })

@@ -1,7 +1,10 @@
-package instance
+package instance_test
 
 import (
 	"testing"
+
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/instance"
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
@@ -21,6 +24,8 @@ import (
 )
 
 func TestConfig(t *testing.T) {
+	rbac.SetKubeconfigAccessor(rbac.TestKubeconfigAccessorImpl)
+
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Landscaper Instance Installer Test Suite")
 }
@@ -38,30 +43,30 @@ func buildTestEnvironment(testdataDir string, objectsWithStatus ...client.Object
 		Build()
 }
 
-func createConfiguration(env *testutils.Environment) *Configuration {
+func createConfiguration(env *testutils.Environment) *instance.Configuration {
 	providerConfig := lsv1alpha1.ProviderConfig{}
 	Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
-	return &Configuration{
+	return &instance.Configuration{
 		Version: "v0.127.0",
-		Landscaper: LandscaperConfig{
-			Controller: ControllerConfig{
+		Landscaper: instance.LandscaperConfig{
+			Controller: instance.ControllerConfig{
 				Image: lsv1alpha1.ImageConfiguration{
 					Image: providerConfig.Spec.Deployment.LandscaperController.Image,
 				},
 			},
-			WebhooksServer: WebhooksServerConfig{
+			WebhooksServer: instance.WebhooksServerConfig{
 				Image: lsv1alpha1.ImageConfiguration{
 					Image: providerConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
 				},
 			},
 		},
-		ManifestDeployer: ManifestDeployerConfig{
+		ManifestDeployer: instance.ManifestDeployerConfig{
 			Image: lsv1alpha1.ImageConfiguration{
 				Image: providerConfig.Spec.Deployment.ManifestDeployer.Image,
 			},
 		},
-		HelmDeployer: HelmDeployerConfig{
+		HelmDeployer: instance.HelmDeployerConfig{
 			Image: lsv1alpha1.ImageConfiguration{
 				Image: providerConfig.Spec.Deployment.HelmDeployer.Image,
 			},
@@ -108,7 +113,7 @@ var _ = Describe("Landscaper Instance Installer", func() {
 			},
 		}
 
-		err = InstallLandscaperInstance(env.Ctx, config)
+		err = instance.InstallLandscaperInstance(env.Ctx, config)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -124,7 +129,7 @@ var _ = Describe("Landscaper Instance Installer", func() {
 		config.WorkloadCluster = clusters.NewTestClusterFromClient("workload", env.Client())
 		config.MCPCluster = clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		err = UninstallLandscaperInstance(env.Ctx, config)
+		err = instance.UninstallLandscaperInstance(env.Ctx, config)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
