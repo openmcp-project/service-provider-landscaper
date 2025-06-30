@@ -1,7 +1,10 @@
-package manifestdeployer
+package manifestdeployer_test
 
 import (
 	"testing"
+
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/manifestdeployer"
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
@@ -9,8 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -47,13 +48,13 @@ var _ = Describe("Manifest Deployer Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		kubeconfig, err := cluster.CreateKubeconfig(mcpCluster)
+		kubeconfig, err := rbac.TestKubeconfigAccessorImpl(env.Ctx, mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
-		values := &Values{
+		values := &manifestdeployer.Values{
 			Instance:             instanceID,
 			Version:              "v0.127.0",
 			WorkloadCluster:      workloadCluster,
@@ -68,7 +69,7 @@ var _ = Describe("Manifest Deployer Installer", func() {
 			MCPClientSettings:      nil,
 		}
 
-		_, err = InstallManifestDeployer(env.Ctx, values)
+		_, err = manifestdeployer.InstallManifestDeployer(env.Ctx, values)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -78,16 +79,16 @@ var _ = Describe("Manifest Deployer Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		kubeconfig, err := cluster.CreateKubeconfig(mcpCluster)
+		kubeconfig, err := rbac.TestKubeconfigAccessorImpl(env.Ctx, mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
-		values := &Values{
+		values := &manifestdeployer.Values{
 			Instance:             instanceID,
 			WorkloadCluster:      workloadCluster,
 			MCPClusterKubeconfig: string(kubeconfig),
 		}
 
-		Expect(UninstallManifestDeployer(env.Ctx, values)).ToNot(HaveOccurred())
+		Expect(manifestdeployer.UninstallManifestDeployer(env.Ctx, values)).ToNot(HaveOccurred())
 	})
 
 })

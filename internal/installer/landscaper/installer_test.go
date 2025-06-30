@@ -1,4 +1,4 @@
-package landscaper
+package landscaper_test
 
 import (
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
@@ -8,7 +8,8 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	"github.com/openmcp-project/service-provider-landscaper/internal/shared/cluster"
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/landscaper"
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
 
 	"testing"
 
@@ -23,6 +24,8 @@ import (
 )
 
 func TestConfig(t *testing.T) {
+	rbac.SetKubeconfigAccessor(rbac.TestKubeconfigAccessorImpl)
+
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Landscaper Controller Installer Test Suite")
 }
@@ -50,22 +53,22 @@ var _ = Describe("Landscaper Controller Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		kubeconfigMCP, err := cluster.CreateKubeconfig(mcpCluster)
+		kubeconfigMCP, err := rbac.TestKubeconfigAccessorImpl(env.Ctx, mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
-		kubeconfigWorkload, err := cluster.CreateKubeconfig(mcpCluster)
+		kubeconfigWorkload, err := rbac.TestKubeconfigAccessorImpl(env.Ctx, workloadCluster)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
-		values := &Values{
+		values := &landscaper.Values{
 			Instance:        instanceID,
 			Version:         "v0.127.0",
 			WorkloadCluster: workloadCluster,
 			VerbosityLevel:  "INFO",
 			Configuration:   v1alpha1.LandscaperConfiguration{},
-			Controller: ControllerValues{
+			Controller: landscaper.ControllerValues{
 				MCPKubeconfig:      string(kubeconfigMCP),
 				WorkloadKubeconfig: string(kubeconfigWorkload),
 				Image: lsv1alpha1.ImageConfiguration{
@@ -76,7 +79,7 @@ var _ = Describe("Landscaper Controller Installer", func() {
 				ResourcesMain: corev1.ResourceRequirements{},
 				Metrics:       nil,
 			},
-			WebhooksServer: WebhooksServerValues{
+			WebhooksServer: landscaper.WebhooksServerValues{
 				DisableWebhooks: nil,
 				MCPKubeconfig:   string(kubeconfigMCP),
 				Image: lsv1alpha1.ImageConfiguration{
@@ -90,7 +93,7 @@ var _ = Describe("Landscaper Controller Installer", func() {
 			SecurityContext:    nil,
 		}
 
-		err = InstallLandscaper(env.Ctx, values)
+		err = landscaper.InstallLandscaper(env.Ctx, values)
 		Expect(err).ToNot(HaveOccurred())
 	})
 
@@ -100,28 +103,28 @@ var _ = Describe("Landscaper Controller Installer", func() {
 		workloadCluster := clusters.NewTestClusterFromClient("workload", env.Client())
 		mcpCluster := clusters.NewTestClusterFromClient("mcp", env.Client())
 
-		kubeconfigMCP, err := cluster.CreateKubeconfig(mcpCluster)
+		kubeconfigMCP, err := rbac.TestKubeconfigAccessorImpl(env.Ctx, mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
-		kubeconfigWorkload, err := cluster.CreateKubeconfig(mcpCluster)
+		kubeconfigWorkload, err := rbac.TestKubeconfigAccessorImpl(env.Ctx, workloadCluster)
 		Expect(err).ToNot(HaveOccurred())
 
 		providerConfig := lsv1alpha1.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
-		values := &Values{
+		values := &landscaper.Values{
 			Instance:        instanceID,
 			WorkloadCluster: workloadCluster,
-			WebhooksServer: WebhooksServerValues{
+			WebhooksServer: landscaper.WebhooksServerValues{
 				MCPKubeconfig: string(kubeconfigMCP),
 			},
-			Controller: ControllerValues{
+			Controller: landscaper.ControllerValues{
 				WorkloadKubeconfig: string(kubeconfigWorkload),
 				MCPKubeconfig:      string(kubeconfigWorkload),
 			},
 		}
 
-		Expect(UninstallLandscaper(env.Ctx, values)).ToNot(HaveOccurred())
+		Expect(landscaper.UninstallLandscaper(env.Ctx, values)).ToNot(HaveOccurred())
 	})
 
 })

@@ -19,11 +19,15 @@ package controller
 import (
 	"testing"
 
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 func TestControllers(t *testing.T) {
+	rbac.SetKubeconfigAccessor(rbac.TestKubeconfigAccessorImpl)
+
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Controller Suite")
 }
