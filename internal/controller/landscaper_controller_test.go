@@ -30,6 +30,8 @@ import (
 	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
 
 	lscontroller "github.com/openmcp-project/service-provider-landscaper/internal/controller"
+
+	commonapi "github.com/openmcp-project/openmcp-operator/api/common"
 )
 
 const (
@@ -280,10 +282,8 @@ var _ = Describe("Landscaper Controller", func() {
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(accessRequestMCP), accessRequestMCP)).To(Succeed())
 
 			accessRequestMCP.Status.Phase = clustersv1alpha1.REQUEST_GRANTED
-			accessRequestMCP.Status.SecretRef = &clustersv1alpha1.NamespacedObjectReference{
-				ObjectReference: clustersv1alpha1.ObjectReference{
-					Name: "access",
-				},
+			accessRequestMCP.Status.SecretRef = &commonapi.ObjectReference{
+				Name:      "access",
 				Namespace: onboardingNamespace,
 			}
 
@@ -307,10 +307,8 @@ var _ = Describe("Landscaper Controller", func() {
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadAccessRequest), workloadAccessRequest)).To(Succeed())
 
 			workloadAccessRequest.Status.Phase = clustersv1alpha1.REQUEST_GRANTED
-			workloadAccessRequest.Status.SecretRef = &clustersv1alpha1.NamespacedObjectReference{
-				ObjectReference: clustersv1alpha1.ObjectReference{
-					Name: "access",
-				},
+			workloadAccessRequest.Status.SecretRef = &commonapi.ObjectReference{
+				Name:      "access",
 				Namespace: onboardingNamespace,
 			}
 
