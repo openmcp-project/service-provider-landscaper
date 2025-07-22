@@ -12,7 +12,7 @@ require (
 	github.com/openmcp-project/openmcp-operator/api v0.8.3
 	github.com/openmcp-project/openmcp-operator/lib v0.8.3
 	github.com/spf13/cobra v1.9.1
-	golang.org/x/exp v0.0.0-20250711185948-6ae5c78190dc
+	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792
 	k8s.io/api v0.33.3
 	k8s.io/apiextensions-apiserver v0.33.3
 	k8s.io/apimachinery v0.33.3
