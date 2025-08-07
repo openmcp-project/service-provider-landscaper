@@ -9,8 +9,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.38.0
 	github.com/openmcp-project/controller-utils v0.15.0
-	github.com/openmcp-project/openmcp-operator/api v0.9.1
-	github.com/openmcp-project/openmcp-operator/lib v0.9.0
+	github.com/openmcp-project/openmcp-operator/api v0.10.0
+	github.com/openmcp-project/openmcp-operator/lib v0.10.0
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792
 	k8s.io/api v0.33.3

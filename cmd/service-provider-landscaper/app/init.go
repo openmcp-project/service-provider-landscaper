@@ -94,9 +94,9 @@ func (o *InitOptions) Run(ctx context.Context) error {
 		return err
 	}
 
-	providerSystemNamespace := os.Getenv(openmcpconstv1alpha1.EnvVariablePlatformClusterNamespace)
+	providerSystemNamespace := os.Getenv(openmcpconstv1alpha1.EnvVariablePodNamespace)
 	if providerSystemNamespace == "" {
-		return fmt.Errorf("environment variable %s is not set", openmcpconstv1alpha1.EnvVariablePlatformClusterNamespace)
+		return fmt.Errorf("environment variable %s is not set", openmcpconstv1alpha1.EnvVariablePodNamespace)
 	}
 
 	clusterAccessManager := clusteraccess.NewClusterAccessManager(o.Clusters.Platform.Client(), v1alpha1.LandscaperProviderName, providerSystemNamespace)
