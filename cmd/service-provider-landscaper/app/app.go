@@ -14,7 +14,8 @@ import (
 )
 
 type RawSharedOptions struct {
-	Environment string
+	Environment  string
+	ProviderName string
 }
 
 type SharedOptions struct {
@@ -32,6 +33,8 @@ type Clusters struct {
 func (o *SharedOptions) AddPersistentFlags(cmd *cobra.Command) {
 	// environment
 	cmd.PersistentFlags().StringVar(&o.Environment, "environment", "", "Environment to use")
+	// provider name
+	cmd.PersistentFlags().StringVar(&o.ProviderName, "provider-name", "", "Name of the provider resource")
 	// logging
 	logging.InitFlags(cmd.PersistentFlags())
 	// clusters
