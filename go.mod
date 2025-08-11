@@ -5,7 +5,7 @@ go 1.24.6
 //godebug default=go1.23
 
 require (
-	github.com/gardener/landscaper/apis v0.137.0
+	github.com/gardener/landscaper/apis v0.138.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.38.0
 	github.com/openmcp-project/controller-utils v0.15.0
