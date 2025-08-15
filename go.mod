@@ -1,6 +1,6 @@
 module github.com/openmcp-project/service-provider-landscaper
 
-go 1.24.6
+go 1.25.0
 
 //godebug default=go1.23
 
@@ -20,7 +20,6 @@ require (
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	sigs.k8s.io/controller-runtime v0.21.0
 	sigs.k8s.io/yaml v1.6.0
-
 )
 
 require (
