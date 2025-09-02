@@ -174,7 +174,6 @@ var _ = Describe("Landscaper Controller", func() {
 		})
 
 		It("should install/uninstall a landscaper instance", func() {
-			onboardingNamespace := "ob-default"
 			req := reconcile.Request{
 				NamespacedName: client.ObjectKey{
 					Name:      "test",
@@ -182,27 +181,29 @@ var _ = Describe("Landscaper Controller", func() {
 				},
 			}
 
-			requestNameMCP := libutils.StableRequestNameMCP(req.Name, controllerName)
-			requestNameWorkload := libutils.StableRequestNameWorkload(req.Name, controllerName)
+			requestNamespace, err := libutils.StableMCPNamespace(req.Name, req.Namespace)
+			Expect(err).NotTo(HaveOccurred())
+			requestNameMCP := clusteraccess.StableRequestName(controllerName, req) + "--mcp"
+			requestNameWorkload := clusteraccess.StableRequestName(controllerName, req) + "--wl"
 
 			accessRequestMCP := &clustersv1alpha1.AccessRequest{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      requestNameMCP,
-					Namespace: onboardingNamespace,
+					Namespace: requestNamespace,
 				},
 			}
 
 			workloadClusterRequest := &clustersv1alpha1.ClusterRequest{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      requestNameWorkload,
-					Namespace: onboardingNamespace,
+					Namespace: requestNamespace,
 				},
 			}
 
 			workloadAccessRequest := &clustersv1alpha1.AccessRequest{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      requestNameWorkload,
-					Namespace: onboardingNamespace,
+					Namespace: requestNamespace,
 				},
 			}
 
@@ -266,13 +267,12 @@ var _ = Describe("Landscaper Controller", func() {
 			reconcileResult := env.ShouldReconcile(req, "reconcile should return a requeue time")
 			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
 
-			// create the request namespace, "ob-default"
+			// create the namespace for the cluster and access requests
 			ns := &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "ob-default",
+					Name: requestNamespace,
 				},
 			}
-
 			Expect(env.Client().Create(env.Ctx, ns)).To(Succeed())
 
 			// now waiting for the MCP access request to be granted
@@ -284,7 +284,7 @@ var _ = Describe("Landscaper Controller", func() {
 			accessRequestMCP.Status.Phase = clustersv1alpha1.REQUEST_GRANTED
 			accessRequestMCP.Status.SecretRef = &commonapi.ObjectReference{
 				Name:      "access",
-				Namespace: onboardingNamespace,
+				Namespace: requestNamespace,
 			}
 
 			Expect(env.Client().Status().Update(env.Ctx, accessRequestMCP)).To(Succeed())
@@ -309,7 +309,7 @@ var _ = Describe("Landscaper Controller", func() {
 			workloadAccessRequest.Status.Phase = clustersv1alpha1.REQUEST_GRANTED
 			workloadAccessRequest.Status.SecretRef = &commonapi.ObjectReference{
 				Name:      "access",
-				Namespace: onboardingNamespace,
+				Namespace: requestNamespace,
 			}
 
 			Expect(env.Client().Status().Update(env.Ctx, workloadAccessRequest)).To(Succeed())
