@@ -11,7 +11,7 @@ require (
 	github.com/openmcp-project/controller-utils v0.19.0
 	github.com/openmcp-project/openmcp-operator/api v0.13.0
 	github.com/openmcp-project/openmcp-operator/lib v0.13.0
-	github.com/spf13/cobra v1.9.1
+	github.com/spf13/cobra v1.10.0
 	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b
 	k8s.io/api v0.34.0
 	k8s.io/apiextensions-apiserver v0.34.0
