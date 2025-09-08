@@ -6,7 +6,7 @@ go 1.25.0
 
 require (
 	github.com/gardener/landscaper/apis v0.138.0
-	github.com/onsi/ginkgo/v2 v2.25.2
+	github.com/onsi/ginkgo/v2 v2.25.3
 	github.com/onsi/gomega v1.38.2
 	github.com/openmcp-project/controller-utils v0.19.0
 	github.com/openmcp-project/openmcp-operator/api v0.13.0
