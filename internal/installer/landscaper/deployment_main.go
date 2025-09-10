@@ -56,7 +56,6 @@ func (m *mainDeploymentMutator) Mutate(r *appsv1.Deployment) error {
 				AutomountServiceAccountToken: ptr.To(false),
 				Volumes:                      m.volumes(),
 				Containers:                   m.containers(),
-				ServiceAccountName:           m.landscaperFullName(),
 				SecurityContext:              m.values.PodSecurityContext,
 				ImagePullSecrets:             m.values.ImagePullSecrets,
 				TopologySpreadConstraints:    m.controllerMainComponent.TopologySpreadConstraints(),
