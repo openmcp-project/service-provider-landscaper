@@ -14,3 +14,5 @@ includes:
       REPO_URL: 'https://github.com/openmcp-project/service-provider-landscaper'
       GENERATE_DOCS_INDEX: "true"
       CHART_COMPONENTS: "[]"
+      CRDS_COMPONENTS: 'service-provider-landscaper'
+      CRDS_PATH: '{{.ROOT_DIR}}/api/crds/manifests'
