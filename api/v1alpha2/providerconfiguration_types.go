@@ -21,11 +21,11 @@ import (
 )
 
 const (
-	landscaperComponentPrefix         = "github.com/gardener/landscaper"
-	landscaperControllerImageLocation = landscaperComponentPrefix + "/images/landscaper-controller"
-	landscaperWebhooksImageLocations  = landscaperComponentPrefix + "/images/landscaper-webhooks-server"
-	helmDeployerImageLocation         = landscaperComponentPrefix + "/helm-deployer/images/helm-deployer-controller"
-	manifestDeployerController        = landscaperComponentPrefix + "/manifest-deployer/images/manifest-deployer-controller"
+	LandscaperComponentPrefix         = "github.com/gardener/landscaper"
+	LandscaperControllerImageLocation = LandscaperComponentPrefix + "/images/landscaper-controller"
+	LandscaperWebhooksImageLocations  = LandscaperComponentPrefix + "/images/landscaper-webhooks-server"
+	HelmDeployerImageLocation         = LandscaperComponentPrefix + "/helm-deployer/images/helm-deployer-controller"
+	ManifestDeployerImageLocation     = LandscaperComponentPrefix + "/manifest-deployer/images/manifest-deployer-controller"
 )
 
 // ProviderConfigSpec is the specification of the Landscaper Service Provider configuration
@@ -104,7 +104,7 @@ func (pc *ProviderConfig) GetLandscaperControllerImageLocation(version string) s
 		return imageWithVersion(pc.Spec.Deployment.LandscaperController.Image, version)
 	}
 
-	return imageWithVersion(pc.Spec.Deployment.Repository+"/"+landscaperControllerImageLocation, version)
+	return imageWithVersion(pc.Spec.Deployment.Repository+"/"+LandscaperControllerImageLocation, version)
 }
 
 func (pc *ProviderConfig) GetLandscaperWebhooksServerImageLocation(version string) string {
@@ -112,7 +112,7 @@ func (pc *ProviderConfig) GetLandscaperWebhooksServerImageLocation(version strin
 		return imageWithVersion(pc.Spec.Deployment.LandscaperWebhooksServer.Image, version)
 	}
 
-	return imageWithVersion(pc.Spec.Deployment.Repository+"/"+landscaperWebhooksImageLocations, version)
+	return imageWithVersion(pc.Spec.Deployment.Repository+"/"+LandscaperWebhooksImageLocations, version)
 }
 
 func (pc *ProviderConfig) GetHelmDeployerImageLocation(version string) string {
@@ -120,7 +120,7 @@ func (pc *ProviderConfig) GetHelmDeployerImageLocation(version string) string {
 		return imageWithVersion(pc.Spec.Deployment.HelmDeployer.Image, version)
 	}
 
-	return imageWithVersion(pc.Spec.Deployment.Repository+"/"+helmDeployerImageLocation, version)
+	return imageWithVersion(pc.Spec.Deployment.Repository+"/"+HelmDeployerImageLocation, version)
 }
 
 func (pc *ProviderConfig) GetManifestDeployerImageLocation(version string) string {
@@ -128,7 +128,7 @@ func (pc *ProviderConfig) GetManifestDeployerImageLocation(version string) strin
 		return imageWithVersion(pc.Spec.Deployment.ManifestDeployer.Image, version)
 	}
 
-	return imageWithVersion(pc.Spec.Deployment.Repository+"/"+manifestDeployerController, version)
+	return imageWithVersion(pc.Spec.Deployment.Repository+"/"+ManifestDeployerImageLocation, version)
 }
 
 func imageWithVersion(image, version string) string {

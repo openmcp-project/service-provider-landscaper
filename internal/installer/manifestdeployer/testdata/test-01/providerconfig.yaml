@@ -6,12 +6,12 @@ metadata:
   name: default
 spec:
   deployment:
-    repository: registry.test//landscaper/github.com/gardener/landscaper
+    repository: registry.test
     availableVersions:
       - v0.135.0
       - v0.136.0
 
     helmDeployer:
-      image: other.registry.test/landscaper/helm-deployer/images/helm-deployer-controller
+      image: other.registry.test/landscaper/images/helm-deployer-controller
 
   workloadClusterDomain: workload.cluster.local

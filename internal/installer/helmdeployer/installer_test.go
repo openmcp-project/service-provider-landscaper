@@ -18,7 +18,11 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
+	lsv1alpha2 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
+)
+
+const (
+	version = "v0.135.0"
 )
 
 func TestConfig(t *testing.T) {
@@ -32,7 +36,7 @@ func buildTestEnvironment(testdataDir string, objectsWithStatus ...client.Object
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(clustersv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(lsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(lsv1alpha2.AddToScheme(scheme))
 
 	return testutils.NewEnvironmentBuilder().
 		WithFakeClient(scheme).
@@ -53,16 +57,16 @@ var _ = Describe("Helm Deployer Installer", func() {
 		kubeconfig, err := rbac.TestKubeconfigAccessorImpl(env.Ctx, mcpCluster)
 		Expect(err).ToNot(HaveOccurred())
 
-		providerConfig := lsv1alpha1.ProviderConfig{}
+		providerConfig := lsv1alpha2.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 		values := &helmdeployer.Values{
 			Instance:             instanceID,
-			Version:              "v0.135.0",
+			Version:              version,
 			WorkloadCluster:      workloadCluster,
 			MCPClusterKubeconfig: string(kubeconfig),
-			Image: lsv1alpha1.ImageConfiguration{
-				Image: providerConfig.GetHelmDeployerImageLocation("v0.135.0"),
+			Image: lsv1alpha2.ImageConfiguration{
+				Image: providerConfig.GetHelmDeployerImageLocation(version),
 			},
 			ImagePullSecrets:       nil,
 			PodSecurityContext:     nil,

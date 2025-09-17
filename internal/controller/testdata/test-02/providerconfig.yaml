@@ -4,7 +4,7 @@ metadata:
   name: test
 spec:
   deployment:
-    repository: registry.test//landscaper/github.com/gardener/landscaper
+    repository: registry.test
     availableVersions:
       - v0.135.0
 

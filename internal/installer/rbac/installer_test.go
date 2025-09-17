@@ -12,7 +12,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
+	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -30,7 +30,7 @@ func buildTestEnvironment(testdataDir string, objectsWithStatus ...client.Object
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(clustersv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(lsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 
 	return testutils.NewEnvironmentBuilder().
 		WithFakeClient(scheme).

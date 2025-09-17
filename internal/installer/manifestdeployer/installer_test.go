@@ -21,6 +21,10 @@ import (
 	lsv1alpha2 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 )
 
+const (
+	version = "v0.135.0"
+)
+
 func TestConfig(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Manifest Deployer Installer Test Suite")
@@ -56,11 +60,11 @@ var _ = Describe("Manifest Deployer Installer", func() {
 
 		values := &manifestdeployer.Values{
 			Instance:             instanceID,
-			Version:              "v0.135.0",
+			Version:              version,
 			WorkloadCluster:      workloadCluster,
 			MCPClusterKubeconfig: string(kubeconfig),
 			Image: lsv1alpha2.ImageConfiguration{
-				Image: providerConfig.GetManifestDeployerImageLocation("v0.135.0"),
+				Image: providerConfig.GetManifestDeployerImageLocation(version),
 			},
 			ImagePullSecrets:       nil,
 			PodSecurityContext:     nil,

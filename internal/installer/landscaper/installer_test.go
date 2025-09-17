@@ -23,6 +23,10 @@ import (
 	lsv1alpha2 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 )
 
+const (
+	version = "v0.135.0"
+)
+
 func TestConfig(t *testing.T) {
 	rbac.SetKubeconfigAccessor(rbac.TestKubeconfigAccessorImpl)
 
@@ -61,8 +65,6 @@ var _ = Describe("Landscaper Controller Installer", func() {
 
 		providerConfig := lsv1alpha2.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
-
-		version := "v0.127.0"
 
 		values := &landscaper.Values{
 			Instance:        instanceID,
