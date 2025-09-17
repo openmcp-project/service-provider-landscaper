@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )
 
@@ -47,28 +47,30 @@ func createConfiguration(env *testutils.Environment) *instance.Configuration {
 	providerConfig := lsv1alpha1.ProviderConfig{}
 	Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
+	version := "v0.135.0"
+
 	return &instance.Configuration{
-		Version: "v0.127.0",
+		Version: version,
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
 				Image: lsv1alpha1.ImageConfiguration{
-					Image: providerConfig.Spec.Deployment.LandscaperController.Image,
+					Image: providerConfig.GetLandscaperControllerImageLocation(version),
 				},
 			},
 			WebhooksServer: instance.WebhooksServerConfig{
 				Image: lsv1alpha1.ImageConfiguration{
-					Image: providerConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
+					Image: providerConfig.GetLandscaperWebhooksServerImageLocation(version),
 				},
 			},
 		},
 		ManifestDeployer: instance.ManifestDeployerConfig{
 			Image: lsv1alpha1.ImageConfiguration{
-				Image: providerConfig.Spec.Deployment.ManifestDeployer.Image,
+				Image: providerConfig.GetManifestDeployerImageLocation(version),
 			},
 		},
 		HelmDeployer: instance.HelmDeployerConfig{
 			Image: lsv1alpha1.ImageConfiguration{
-				Image: providerConfig.Spec.Deployment.HelmDeployer.Image,
+				Image: providerConfig.GetHelmDeployerImageLocation(version),
 			},
 		},
 	}

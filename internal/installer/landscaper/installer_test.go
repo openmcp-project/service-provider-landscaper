@@ -20,7 +20,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	lsv1alpha2 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 )
 
 func TestConfig(t *testing.T) {
@@ -34,7 +34,7 @@ func buildTestEnvironment(testdataDir string, objectsWithStatus ...client.Object
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(clustersv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(lsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(lsv1alpha2.AddToScheme(scheme))
 
 	return testutils.NewEnvironmentBuilder().
 		WithFakeClient(scheme).
@@ -59,20 +59,22 @@ var _ = Describe("Landscaper Controller Installer", func() {
 		kubeconfigWorkload, err := rbac.TestKubeconfigAccessorImpl(env.Ctx, workloadCluster)
 		Expect(err).ToNot(HaveOccurred())
 
-		providerConfig := lsv1alpha1.ProviderConfig{}
+		providerConfig := lsv1alpha2.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
+
+		version := "v0.127.0"
 
 		values := &landscaper.Values{
 			Instance:        instanceID,
-			Version:         "v0.127.0",
+			Version:         version,
 			WorkloadCluster: workloadCluster,
 			VerbosityLevel:  "INFO",
 			Configuration:   v1alpha1.LandscaperConfiguration{},
 			Controller: landscaper.ControllerValues{
 				MCPKubeconfig:      string(kubeconfigMCP),
 				WorkloadKubeconfig: string(kubeconfigWorkload),
-				Image: lsv1alpha1.ImageConfiguration{
-					Image: providerConfig.Spec.Deployment.LandscaperController.Image,
+				Image: lsv1alpha2.ImageConfiguration{
+					Image: providerConfig.GetLandscaperControllerImageLocation(version),
 				},
 				ReplicaCount:  nil,
 				Resources:     corev1.ResourceRequirements{},
@@ -82,8 +84,8 @@ var _ = Describe("Landscaper Controller Installer", func() {
 			WebhooksServer: landscaper.WebhooksServerValues{
 				DisableWebhooks: nil,
 				MCPKubeconfig:   string(kubeconfigMCP),
-				Image: lsv1alpha1.ImageConfiguration{
-					Image: providerConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
+				Image: lsv1alpha2.ImageConfiguration{
+					Image: providerConfig.GetLandscaperWebhooksServerImageLocation(version),
 				},
 				ServicePort: 0,
 				Ingress:     nil,
@@ -109,7 +111,7 @@ var _ = Describe("Landscaper Controller Installer", func() {
 		kubeconfigWorkload, err := rbac.TestKubeconfigAccessorImpl(env.Ctx, workloadCluster)
 		Expect(err).ToNot(HaveOccurred())
 
-		providerConfig := lsv1alpha1.ProviderConfig{}
+		providerConfig := lsv1alpha2.ProviderConfig{}
 		Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 		values := &landscaper.Values{

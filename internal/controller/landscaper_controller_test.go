@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 
 	lscontroller "github.com/openmcp-project/service-provider-landscaper/internal/controller"
 

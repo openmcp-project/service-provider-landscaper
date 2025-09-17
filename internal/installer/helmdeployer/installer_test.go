@@ -18,7 +18,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 )
 
 func TestConfig(t *testing.T) {
@@ -58,11 +58,11 @@ var _ = Describe("Helm Deployer Installer", func() {
 
 		values := &helmdeployer.Values{
 			Instance:             instanceID,
-			Version:              "v0.127.0",
+			Version:              "v0.135.0",
 			WorkloadCluster:      workloadCluster,
 			MCPClusterKubeconfig: string(kubeconfig),
 			Image: lsv1alpha1.ImageConfiguration{
-				Image: providerConfig.Spec.Deployment.HelmDeployer.Image,
+				Image: providerConfig.GetHelmDeployerImageLocation("v0.135.0"),
 			},
 			ImagePullSecrets:       nil,
 			PodSecurityContext:     nil,

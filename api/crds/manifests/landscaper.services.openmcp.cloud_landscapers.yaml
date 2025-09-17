@@ -16,7 +16,7 @@ spec:
     singular: landscaper
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1alpha2
     schema:
       openAPIV3Schema:
         description: Landscaper is the Schema for the landscapers API.
@@ -43,8 +43,8 @@ spec:
             properties:
               providerConfigRef:
                 description: |-
-                  LocalObjectReference contains enough information to let you locate the
-                  referenced object inside the same namespace.
+                  ProviderConfigRef is a reference to the ProviderConfig that this Landscaper instance should use.
+                  If not specified, the controller will use the default ProviderConfig in the cluster.
                 properties:
                   name:
                     default: ""
@@ -57,25 +57,15 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              version:
+                description: |-
+                  Version is the version of the Landscaper instance to deploy.
+                  If not specified, the latest version will be used.
+                type: string
             type: object
           status:
             description: LandscaperStatus defines the observed state of Landscaper.
             properties:
-              LandscaperComponents:
-                description: LandscaperComponents is a list of components that are
-                  part of the Landscaper instance.
-                items:
-                  description: LandscaperComponent represents a component of the Landscaper
-                    instance.
-                  properties:
-                    name:
-                      description: Name is the name of the component.
-                      type: string
-                    version:
-                      description: Version is the version of the component.
-                      type: string
-                  type: object
-                type: array
               conditions:
                 items:
                   description: Condition contains details for one aspect of the current

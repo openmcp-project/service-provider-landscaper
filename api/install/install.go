@@ -1,7 +1,7 @@
 package install
 
 import (
-	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -11,7 +11,7 @@ import (
 // InstallProviderAPIs installs the provider's APIs in the scheme.
 func InstallProviderAPIs(scheme *runtime.Scheme) *runtime.Scheme {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 	return scheme
 }
 

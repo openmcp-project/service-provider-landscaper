@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
@@ -19,7 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/instance"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 )
@@ -27,7 +28,7 @@ import (
 func (r *LandscaperReconciler) reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, err error) {
 	log := logging.FromContextOrPanic(ctx)
 
-	ls := &v1alpha1.Landscaper{}
+	ls := &v1alpha2.Landscaper{}
 	if err := r.OnboardingCluster.Client().Get(ctx, req.NamespacedName, ls); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
@@ -59,7 +60,7 @@ func (r *LandscaperReconciler) reconcile(ctx context.Context, req ctrl.Request) 
 }
 
 func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
-	ls *v1alpha1.Landscaper) (reconcile.Result, *reconcileStatus, error) {
+	ls *v1alpha2.Landscaper) (reconcile.Result, *reconcileStatus, error) {
 	log := logging.FromContextOrPanic(ctx)
 
 	status := newCreateOrUpdateStatus(ls.GetGeneration())
@@ -79,6 +80,14 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 	providerConfig, err := r.getProviderConfigForLandscaper(ctx, ls, r.PlatformCluster)
 	if err != nil {
 		log.Error(err, "failed to get provider config for landscaper instance")
+		status.setInstallProviderConfigError(err)
+		return reconcile.Result{}, status, err
+	}
+
+	if !providerConfig.Spec.Deployment.IsVersionAvailable(ls.Spec.Version) {
+		err = fmt.Errorf("version %s is not available in provider config %s (available versions=%s)",
+			ls.Spec.Version, providerConfig.Name, strings.Join(providerConfig.Spec.Deployment.AvailableVersions, ", "))
+		log.Error(err, "invalid version for landscaper instance")
 		status.setInstallProviderConfigError(err)
 		return reconcile.Result{}, status, err
 	}
@@ -131,7 +140,7 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return ctrl.Result{RequeueAfter: 40 * time.Second}, status, nil
 	}
 
-	ls.Status.Phase = v1alpha1.PhaseReady
+	ls.Status.Phase = v1alpha2.PhaseReady
 	log.Debug("landscaper instance has become ready")
 	status.setReady()
 
@@ -142,7 +151,7 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 	}, status, nil
 }
 
-func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1alpha1.Landscaper) (reconcile.Result, *reconcileStatus, error) {
+func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1alpha2.Landscaper) (reconcile.Result, *reconcileStatus, error) {
 	log := logging.FromContextOrPanic(ctx)
 
 	status := newDeleteStatus(ls.GetGeneration())
@@ -214,7 +223,7 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 	return reconcile.Result{}, status, nil
 }
 
-func (r *LandscaperReconciler) updateStatus(ctx context.Context, ls *v1alpha1.Landscaper, oldStatus *v1alpha1.LandscaperStatus) error {
+func (r *LandscaperReconciler) updateStatus(ctx context.Context, ls *v1alpha2.Landscaper, oldStatus *v1alpha2.LandscaperStatus) error {
 	log := logging.FromContextOrPanic(ctx)
 	if !reflect.DeepEqual(oldStatus, &ls.Status) {
 		if err := r.OnboardingCluster.Client().Status().Update(ctx, ls); err != nil {
@@ -227,9 +236,9 @@ func (r *LandscaperReconciler) updateStatus(ctx context.Context, ls *v1alpha1.La
 	return nil
 }
 
-func (r *LandscaperReconciler) ensureFinalizer(ctx context.Context, ls *v1alpha1.Landscaper) error {
-	if !controllerutil.ContainsFinalizer(ls, v1alpha1.LandscaperFinalizer) && ls.DeletionTimestamp.IsZero() {
-		controllerutil.AddFinalizer(ls, v1alpha1.LandscaperFinalizer)
+func (r *LandscaperReconciler) ensureFinalizer(ctx context.Context, ls *v1alpha2.Landscaper) error {
+	if !controllerutil.ContainsFinalizer(ls, v1alpha2.LandscaperFinalizer) && ls.DeletionTimestamp.IsZero() {
+		controllerutil.AddFinalizer(ls, v1alpha2.LandscaperFinalizer)
 		if err := r.OnboardingCluster.Client().Update(ctx, ls); err != nil {
 			log := logging.FromContextOrPanic(ctx)
 			log.Error(err, "failed to add finalizer to landscaper resource")
@@ -239,9 +248,9 @@ func (r *LandscaperReconciler) ensureFinalizer(ctx context.Context, ls *v1alpha1
 	return nil
 }
 
-func (r *LandscaperReconciler) removeFinalizer(ctx context.Context, ls *v1alpha1.Landscaper) error {
-	if controllerutil.ContainsFinalizer(ls, v1alpha1.LandscaperFinalizer) {
-		controllerutil.RemoveFinalizer(ls, v1alpha1.LandscaperFinalizer)
+func (r *LandscaperReconciler) removeFinalizer(ctx context.Context, ls *v1alpha2.Landscaper) error {
+	if controllerutil.ContainsFinalizer(ls, v1alpha2.LandscaperFinalizer) {
+		controllerutil.RemoveFinalizer(ls, v1alpha2.LandscaperFinalizer)
 		if err := r.OnboardingCluster.Client().Update(ctx, ls); err != nil {
 			log := logging.FromContextOrPanic(ctx)
 			log.Error(err, "failed to remove finalizer from landscaper resource")
@@ -251,11 +260,11 @@ func (r *LandscaperReconciler) removeFinalizer(ctx context.Context, ls *v1alpha1
 	return nil
 }
 
-func (r *LandscaperReconciler) checkReconcileAnnotation(ctx context.Context, ls *v1alpha1.Landscaper) error {
-	if controller.HasAnnotationWithValue(ls, v1alpha1.LandscaperOperation, v1alpha1.OperationReconcile) {
+func (r *LandscaperReconciler) checkReconcileAnnotation(ctx context.Context, ls *v1alpha2.Landscaper) error {
+	if controller.HasAnnotationWithValue(ls, v1alpha2.LandscaperOperation, v1alpha2.OperationReconcile) {
 		log := logging.FromContextOrPanic(ctx)
 
-		if err := controller.EnsureAnnotation(ctx, r.OnboardingCluster.Client(), ls, v1alpha1.LandscaperOperation, v1alpha1.OperationReconcile, true, controller.DELETE); err != nil {
+		if err := controller.EnsureAnnotation(ctx, r.OnboardingCluster.Client(), ls, v1alpha2.LandscaperOperation, v1alpha2.OperationReconcile, true, controller.DELETE); err != nil {
 			log.Error(err, "failed to remove reconcile annotation from landscaper resource")
 			return fmt.Errorf("failed to remove reconcile annotation from landscaper resource %s/%s: %w", ls.Namespace, ls.Name, err)
 		}
@@ -263,7 +272,7 @@ func (r *LandscaperReconciler) checkReconcileAnnotation(ctx context.Context, ls 
 	return nil
 }
 
-func (r *LandscaperReconciler) ensureInstanceID(ctx context.Context, ls *v1alpha1.Landscaper) error {
+func (r *LandscaperReconciler) ensureInstanceID(ctx context.Context, ls *v1alpha2.Landscaper) error {
 	if len(identity.GetInstanceID(ls)) == 0 {
 		identity.SetInstanceID(ls, identity.ComputeInstanceID(ls))
 		if err := r.OnboardingCluster.Client().Update(ctx, ls); err != nil {
@@ -273,7 +282,7 @@ func (r *LandscaperReconciler) ensureInstanceID(ctx context.Context, ls *v1alpha
 	return nil
 }
 
-func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Context, ls *v1alpha1.Landscaper, platformCluster *clusters.Cluster) (*v1alpha1.ProviderConfig, error) {
+func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Context, ls *v1alpha2.Landscaper, platformCluster *clusters.Cluster) (*v1alpha2.ProviderConfig, error) {
 	var providerConfigName string
 
 	// first, check if the landscaper already has a provider config reference in its status
@@ -288,8 +297,8 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 
 	// if provider config name is empty, find the one with label "landscaper.services.openmcp.cloud/type=default"
 	if providerConfigName == "" {
-		providerConfigList := &v1alpha1.ProviderConfigList{}
-		if err := platformCluster.Client().List(ctx, providerConfigList, client.MatchingLabels{v1alpha1.ProviderConfigTypeLabel: v1alpha1.DefaultProviderConfigValue}); err != nil {
+		providerConfigList := &v1alpha2.ProviderConfigList{}
+		if err := platformCluster.Client().List(ctx, providerConfigList, client.MatchingLabels{v1alpha2.ProviderConfigTypeLabel: v1alpha2.DefaultProviderConfigValue}); err != nil {
 			return nil, fmt.Errorf("failed to list provider config resources: %w", err)
 		}
 		if len(providerConfigList.Items) == 0 {
@@ -298,7 +307,7 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 		providerConfigName = providerConfigList.Items[0].Name
 	}
 
-	providerConfig := &v1alpha1.ProviderConfig{}
+	providerConfig := &v1alpha2.ProviderConfig{}
 	if err := platformCluster.Client().Get(ctx, client.ObjectKey{Name: providerConfigName}, providerConfig); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, fmt.Errorf("provider config %s not found", providerConfigName)
@@ -312,25 +321,6 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 		Name: providerConfigName,
 	}
 
-	ls.Status.LandscaperComponents = []v1alpha1.LandscaperComponent{
-		{
-			Name:    v1alpha1.GetControllerName(),
-			Version: providerConfig.GetControllerVersion(),
-		},
-		{
-			Name:    v1alpha1.GetWebhooksServerName(),
-			Version: providerConfig.GetWebhooksServerVersion(),
-		},
-		{
-			Name:    v1alpha1.GetManifestDeployerName(),
-			Version: providerConfig.GetManifestDeployerVersion(),
-		},
-		{
-			Name:    v1alpha1.GetHelmDeployerName(),
-			Version: providerConfig.GetHelmDeployerVersion(),
-		},
-	}
-
 	if err := r.updateStatus(ctx, ls, oldStatus); err != nil {
 		return nil, err
 	}
@@ -338,7 +328,7 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 	return providerConfig, nil
 }
 
-func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, mcpCluster, workloadCluster *clusters.Cluster, providerConfig *v1alpha1.ProviderConfig) (*instance.Configuration, error) {
+func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster, workloadCluster *clusters.Cluster, providerConfig *v1alpha2.ProviderConfig) (*instance.Configuration, error) {
 	inst := identity.Instance(identity.GetInstanceID(ls))
 
 	cpu, err := resource.ParseQuantity("10m")
@@ -357,34 +347,34 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha1.Landscaper, mcpCluster,
 	}
 	conf := &instance.Configuration{
 		Instance:              inst,
-		Version:               "v0.127.0",
+		Version:               ls.Spec.Version,
 		MCPCluster:            mcpCluster,
 		WorkloadCluster:       workloadCluster,
 		WorkloadClusterDomain: providerConfig.Spec.WorkloadClusterDomain,
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
-				Image: v1alpha1.ImageConfiguration{
-					Image: providerConfig.Spec.Deployment.LandscaperController.Image,
+				Image: v1alpha2.ImageConfiguration{
+					Image: providerConfig.GetLandscaperControllerImageLocation(ls.Spec.Version),
 				},
 				Resources:     resources,
 				ResourcesMain: resources,
 			},
 			WebhooksServer: instance.WebhooksServerConfig{
-				Image: v1alpha1.ImageConfiguration{
-					Image: providerConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
+				Image: v1alpha2.ImageConfiguration{
+					Image: providerConfig.GetLandscaperWebhooksServerImageLocation(ls.Spec.Version),
 				},
 				Resources: resources,
 			},
 		},
 		ManifestDeployer: instance.ManifestDeployerConfig{
-			Image: v1alpha1.ImageConfiguration{
-				Image: providerConfig.Spec.Deployment.ManifestDeployer.Image,
+			Image: v1alpha2.ImageConfiguration{
+				Image: providerConfig.GetManifestDeployerImageLocation(ls.Spec.Version),
 			},
 			Resources: resources,
 		},
 		HelmDeployer: instance.HelmDeployerConfig{
-			Image: v1alpha1.ImageConfiguration{
-				Image: providerConfig.Spec.Deployment.HelmDeployer.Image,
+			Image: v1alpha2.ImageConfiguration{
+				Image: providerConfig.GetHelmDeployerImageLocation(ls.Spec.Version),
 			},
 			Resources: resources,
 		},

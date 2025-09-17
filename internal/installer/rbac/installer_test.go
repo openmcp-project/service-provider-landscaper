@@ -12,7 +12,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

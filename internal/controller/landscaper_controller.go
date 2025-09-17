@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	"github.com/openmcp-project/controller-utils/pkg/logging"
@@ -85,7 +85,7 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	workloadScheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(workloadScheme))
 
-	r.ClusterAccessReconciler = clusteraccess.NewClusterAccessReconciler(r.PlatformCluster.Client(), v1alpha1.LandscaperProviderName)
+	r.ClusterAccessReconciler = clusteraccess.NewClusterAccessReconciler(r.PlatformCluster.Client(), v1alpha2.LandscaperProviderName)
 	r.ClusterAccessReconciler.
 		WithMCPScheme(mcpScheme).
 		WithWorkloadScheme(workloadScheme).
@@ -98,19 +98,19 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.Landscaper{}).
-		WatchesRawSource(source.Kind(r.PlatformCluster.Cluster().GetCache(), &v1alpha1.ProviderConfig{},
-			handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, providerConfig *v1alpha1.ProviderConfig) []ctrl.Request {
+		For(&v1alpha2.Landscaper{}).
+		WatchesRawSource(source.Kind(r.PlatformCluster.Cluster().GetCache(), &v1alpha2.ProviderConfig{},
+			handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, providerConfig *v1alpha2.ProviderConfig) []ctrl.Request {
 				log := logging.Wrap(mgr.GetLogger()).WithName(controllerName + "/ProviderConfig")
 
 				if log.Enabled(logging.DEBUG) {
-					providerConfigType, hasLabel := controller.GetLabel(providerConfig, v1alpha1.ProviderConfigTypeLabel)
-					isDefault := hasLabel && providerConfigType == v1alpha1.DefaultProviderConfigValue
+					providerConfigType, hasLabel := controller.GetLabel(providerConfig, v1alpha2.ProviderConfigTypeLabel)
+					isDefault := hasLabel && providerConfigType == v1alpha2.DefaultProviderConfigValue
 					log.Debug("Starting reconcile", "providerConfig", providerConfig.Name, "isDefault", isDefault)
 				}
 
 				// Find all Landscaper resources referencing this ProviderConfig
-				landscapers := &v1alpha1.LandscaperList{}
+				landscapers := &v1alpha2.LandscaperList{}
 				if err := r.OnboardingCluster.Client().List(ctx, landscapers); err != nil {
 					log.Error(err, "Failed to list Landscaper resources")
 					return nil
@@ -124,7 +124,7 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 						if err := controller.EnsureAnnotation(
 							ctx, r.OnboardingCluster.Client(),
 							&landscaper,
-							v1alpha1.LandscaperOperation, v1alpha1.OperationReconcile,
+							v1alpha2.LandscaperOperation, v1alpha2.OperationReconcile,
 							true, controller.OVERWRITE); err != nil {
 							log.Error(err, "Failed to set reconcile annotation for Landscaper resource", "landscaper", landscaper.Name, "namespace", landscaper.Namespace)
 							return nil
@@ -134,7 +134,7 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 					}
 				}
 				return nil
-			}), controller.ToTypedPredicate[*v1alpha1.ProviderConfig](predicate.GenerationChangedPredicate{}),
+			}), controller.ToTypedPredicate[*v1alpha2.ProviderConfig](predicate.GenerationChangedPredicate{}),
 		)).
 		Named(controllerName).
 		Complete(r)

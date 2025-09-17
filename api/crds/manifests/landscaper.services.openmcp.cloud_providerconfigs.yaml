@@ -18,7 +18,7 @@ spec:
     singular: providerconfig
   scope: Cluster
   versions:
-  - name: v1alpha1
+  - name: v1alpha2
     schema:
       openAPIV3Schema:
         properties:
@@ -40,42 +40,66 @@ spec:
           metadata:
             type: object
           spec:
+            description: ProviderConfigSpec is the specification of the Landscaper
+              Service Provider configuration
             properties:
               deployment:
+                description: Deployment specifies the OCI image locations and available
+                  versions of the landscaper
                 properties:
+                  availableVersions:
+                    items:
+                      type: string
+                    minItems: 1
+                    type: array
                   helmDeployer:
+                    description: HelmDeployer allows to override the image location
+                      of the landscaper helm deployer manually
                     properties:
                       image:
+                        minLength: 1
                         type: string
                     required:
                     - image
                     type: object
                   landscaperController:
+                    description: LandscaperController allows to override the image
+                      location of the landscaper controller manually
                     properties:
                       image:
+                        minLength: 1
                         type: string
                     required:
                     - image
                     type: object
                   landscaperWebhooksServer:
+                    description: LandscaperWebhooksServer allows to override the image
+                      location of the landscaper webhooks server manually
                     properties:
                       image:
+                        minLength: 1
                         type: string
                     required:
                     - image
                     type: object
                   manifestDeployer:
+                    description: ManifestDeployer allows to override the image location
+                      of the landscaper manifest deployer manually
                     properties:
                       image:
+                        minLength: 1
                         type: string
                     required:
                     - image
                     type: object
+                  repository:
+                    description: Repository is the OCI repository where the Landscaper
+                      images are stored
+                    minLength: 1
+                    type: string
                 required:
-                - helmDeployer
-                - landscaperController
-                - landscaperWebhooksServer
-                - manifestDeployer
+                - availableVersions
+                - repository
                 type: object
               workloadClusterDomain:
                 minLength: 1
@@ -84,6 +108,8 @@ spec:
             - deployment
             type: object
           status:
+            description: ProviderConfigStatus is the status of the Landscaper Service
+              Provider configuration
             type: object
         type: object
     served: true
