@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
 
-	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )

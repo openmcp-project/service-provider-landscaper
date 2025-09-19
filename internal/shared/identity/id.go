@@ -5,7 +5,7 @@ import (
 	"encoding/base32"
 	"fmt"
 
-	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 )
 
 const (
@@ -13,18 +13,18 @@ const (
 	base32EncodeStdLowerCase = "abcdefghijklmnopqrstuvwxyz234567"
 )
 
-func GetInstanceID(ls *v1alpha1.Landscaper) string {
+func GetInstanceID(ls *v1alpha2.Landscaper) string {
 	return ls.Labels[labelInstanceID]
 }
 
-func SetInstanceID(ls *v1alpha1.Landscaper, tenantID string) {
+func SetInstanceID(ls *v1alpha2.Landscaper, tenantID string) {
 	if ls.Labels == nil {
 		ls.Labels = map[string]string{}
 	}
 	ls.Labels[labelInstanceID] = tenantID
 }
 
-func ComputeInstanceID(ls *v1alpha1.Landscaper) string {
+func ComputeInstanceID(ls *v1alpha2.Landscaper) string {
 	// TODO: use utils.K8sNameHash of the mcp-operator
 	h := sha1.New()
 	_, _ = fmt.Fprintf(h, ls.Namespace, "/", ls.Name)

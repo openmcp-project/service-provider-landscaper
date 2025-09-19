@@ -5,7 +5,7 @@ import (
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 
-	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	api "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
 )

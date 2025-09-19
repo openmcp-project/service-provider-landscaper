@@ -1,4 +1,4 @@
-apiVersion: landscaper.services.openmcp.cloud/v1alpha1
+apiVersion: landscaper.services.openmcp.cloud/v1alpha2
 kind: ProviderConfig
 metadata:
   labels:
@@ -6,12 +6,11 @@ metadata:
   name: default
 spec:
   deployment:
-    landscaperController:
-      image: registry.test//landscaper/github.com/gardener/landscaper/images/landscaper-controller:v0.135.0
-    landscaperWebhooksServer:
-      image: registry.test//landscaper/github.com/gardener/landscaper/images/landscaper-webhooks-server:v0.135.0
-    manifestDeployer:
-      image: registry.test//landscaper/github.com/gardener/landscaper/manifest-deployer/images/manifest-deployer-controller:v0.135.0
+    repository: registry.test
+    availableVersions:
+      - v0.135.0
+
     helmDeployer:
-      image: registry.test/landscaper/helm-deployer/images/helm-deployer-controller:v0.135.0
+      image: other.registry.test/landscaper/helm-deployer/images/helm-deployer-controller
+
   workloadClusterDomain: workload.cluster.local
