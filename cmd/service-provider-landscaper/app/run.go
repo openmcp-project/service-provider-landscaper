@@ -10,7 +10,7 @@ import (
 
 	"github.com/openmcp-project/openmcp-operator/lib/clusteraccess"
 
-	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 
@@ -104,7 +104,7 @@ func (o *RunOptions) Run(ctx context.Context) error {
 		return fmt.Errorf("environment variable %s is not set", openmcpconstv1alpha1.EnvVariablePodNamespace)
 	}
 
-	clusterAccessManager := clusteraccess.NewClusterAccessManager(o.Clusters.Platform.Client(), v1alpha1.LandscaperProviderName, providerSystemNamespace)
+	clusterAccessManager := clusteraccess.NewClusterAccessManager(o.Clusters.Platform.Client(), v1alpha2.LandscaperProviderName, providerSystemNamespace)
 	clusterAccessManager.WithLogger(&o.Log).
 		WithInterval(10 * time.Second).
 		WithTimeout(30 * time.Minute)

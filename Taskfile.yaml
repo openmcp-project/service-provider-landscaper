@@ -7,9 +7,9 @@ includes:
     excludes: [] # put task names in here which are overwritten in this file
     vars:
       NESTED_MODULES: api
-      API_DIRS: '{{.ROOT_DIR}}/api/v1alpha1/...'
+      API_DIRS: '{{.ROOT_DIR}}/api/v1alpha2/...'
       MANIFEST_OUT: '{{.ROOT_DIR}}/api/crds/manifests'
-      CODE_DIRS: '{{.ROOT_DIR}}/cmd/... {{.ROOT_DIR}}/internal/... {{.ROOT_DIR}}/api/v1alpha1/...'
+      CODE_DIRS: '{{.ROOT_DIR}}/cmd/... {{.ROOT_DIR}}/internal/... {{.ROOT_DIR}}/api/v1alpha2/...'
       COMPONENTS: 'service-provider-landscaper'
       REPO_URL: 'https://github.com/openmcp-project/service-provider-landscaper'
       GENERATE_DOCS_INDEX: "true"

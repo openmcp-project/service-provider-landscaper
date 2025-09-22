@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 
 	lscontroller "github.com/openmcp-project/service-provider-landscaper/internal/controller"
 
@@ -72,7 +72,7 @@ func buildTestEnvironmentReconcile(testdataDir string, objectsWithStatus ...clie
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(clustersv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(lsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 
 	return testutils.NewEnvironmentBuilder().
 		WithFakeClient(scheme).
@@ -131,7 +131,7 @@ var _ = Describe("Landscaper Controller", func() {
 
 			env.ShouldReconcile(req, "reconcile should not return an error and set finalizer")
 
-			ls := &lsv1alpha1.Landscaper{
+			ls := &v1alpha2.Landscaper{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test",
 					Namespace: "default",
@@ -139,14 +139,14 @@ var _ = Describe("Landscaper Controller", func() {
 			}
 
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(ls), ls)).To(Succeed())
-			Expect(ls.ObjectMeta.Finalizers).To(ContainElement(lsv1alpha1.LandscaperFinalizer))
+			Expect(ls.ObjectMeta.Finalizers).To(ContainElement(v1alpha2.LandscaperFinalizer))
 
 			Expect(ls.Status.ProviderConfigRef.Name).To(Equal("default"))
-			Expect(ls.Status.Phase).To(Equal(lsv1alpha1.PhaseProgressing))
+			Expect(ls.Status.Phase).To(Equal(v1alpha2.PhaseProgressing))
 			Expect(ls.Status.Conditions).To(HaveLen(2))
-			Expect(ls.Status.Conditions[0].Type).To(Equal(lsv1alpha1.ConditionTypeInstalled))
+			Expect(ls.Status.Conditions[0].Type).To(Equal(v1alpha2.ConditionTypeInstalled))
 			Expect(ls.Status.Conditions[0].Status).To(Equal(metav1.ConditionFalse))
-			Expect(ls.Status.Conditions[1].Type).To(Equal(lsv1alpha1.ConditionTypeReady))
+			Expect(ls.Status.Conditions[1].Type).To(Equal(v1alpha2.ConditionTypeReady))
 			Expect(ls.Status.Conditions[1].Status).To(Equal(metav1.ConditionUnknown))
 		})
 
@@ -162,7 +162,7 @@ var _ = Describe("Landscaper Controller", func() {
 
 			env.ShouldReconcile(req, "reconcile should not return an error and set finalizer")
 
-			ls := &lsv1alpha1.Landscaper{
+			ls := &v1alpha2.Landscaper{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test",
 					Namespace: "default",
@@ -207,7 +207,7 @@ var _ = Describe("Landscaper Controller", func() {
 				},
 			}
 
-			ls := &lsv1alpha1.Landscaper{
+			ls := &v1alpha2.Landscaper{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      req.Name,
 					Namespace: req.Namespace,
@@ -320,9 +320,9 @@ var _ = Describe("Landscaper Controller", func() {
 
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(ls), ls)).To(Succeed())
 			Expect(ls.Status.Conditions).To(HaveLen(2))
-			Expect(ls.Status.Conditions[0].Type).To(Equal(lsv1alpha1.ConditionTypeInstalled))
+			Expect(ls.Status.Conditions[0].Type).To(Equal(v1alpha2.ConditionTypeInstalled))
 			Expect(ls.Status.Conditions[0].Status).To(Equal(metav1.ConditionTrue))
-			Expect(ls.Status.Conditions[1].Type).To(Equal(lsv1alpha1.ConditionTypeReady))
+			Expect(ls.Status.Conditions[1].Type).To(Equal(v1alpha2.ConditionTypeReady))
 			Expect(ls.Status.Conditions[1].Status).To(Equal(metav1.ConditionFalse))
 
 			installationNs := &corev1.Namespace{
@@ -351,11 +351,11 @@ var _ = Describe("Landscaper Controller", func() {
 
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(ls), ls)).To(Succeed())
 			Expect(ls.Status.Conditions).To(HaveLen(2))
-			Expect(ls.Status.Conditions[0].Type).To(Equal(lsv1alpha1.ConditionTypeInstalled))
+			Expect(ls.Status.Conditions[0].Type).To(Equal(v1alpha2.ConditionTypeInstalled))
 			Expect(ls.Status.Conditions[0].Status).To(Equal(metav1.ConditionTrue))
-			Expect(ls.Status.Conditions[1].Type).To(Equal(lsv1alpha1.ConditionTypeReady))
+			Expect(ls.Status.Conditions[1].Type).To(Equal(v1alpha2.ConditionTypeReady))
 			Expect(ls.Status.Conditions[1].Status).To(Equal(metav1.ConditionTrue))
-			Expect(ls.Status.Phase).To(Equal(lsv1alpha1.PhaseReady))
+			Expect(ls.Status.Phase).To(Equal(v1alpha2.PhaseReady))
 
 			// delete the landscaper instance
 			Expect(env.Client().Delete(env.Ctx, ls)).To(Succeed())

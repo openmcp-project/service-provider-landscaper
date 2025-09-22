@@ -19,8 +19,12 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	lsv1alpha1 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha1"
+	lsv1alpha2 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/types"
+)
+
+const (
+	version = "v0.135.0"
 )
 
 func TestConfig(t *testing.T) {
@@ -34,7 +38,7 @@ func buildTestEnvironment(testdataDir string, objectsWithStatus ...client.Object
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(clustersv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(lsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(lsv1alpha2.AddToScheme(scheme))
 
 	return testutils.NewEnvironmentBuilder().
 		WithFakeClient(scheme).
@@ -44,31 +48,31 @@ func buildTestEnvironment(testdataDir string, objectsWithStatus ...client.Object
 }
 
 func createConfiguration(env *testutils.Environment) *instance.Configuration {
-	providerConfig := lsv1alpha1.ProviderConfig{}
+	providerConfig := lsv1alpha2.ProviderConfig{}
 	Expect(env.Client().Get(env.Ctx, client.ObjectKey{Name: "default"}, &providerConfig)).To(Succeed())
 
 	return &instance.Configuration{
-		Version: "v0.127.0",
+		Version: version,
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
-				Image: lsv1alpha1.ImageConfiguration{
-					Image: providerConfig.Spec.Deployment.LandscaperController.Image,
+				Image: lsv1alpha2.ImageConfiguration{
+					Image: providerConfig.GetLandscaperControllerImageLocation(version),
 				},
 			},
 			WebhooksServer: instance.WebhooksServerConfig{
-				Image: lsv1alpha1.ImageConfiguration{
-					Image: providerConfig.Spec.Deployment.LandscaperWebhooksServer.Image,
+				Image: lsv1alpha2.ImageConfiguration{
+					Image: providerConfig.GetLandscaperWebhooksServerImageLocation(version),
 				},
 			},
 		},
 		ManifestDeployer: instance.ManifestDeployerConfig{
-			Image: lsv1alpha1.ImageConfiguration{
-				Image: providerConfig.Spec.Deployment.ManifestDeployer.Image,
+			Image: lsv1alpha2.ImageConfiguration{
+				Image: providerConfig.GetManifestDeployerImageLocation(version),
 			},
 		},
 		HelmDeployer: instance.HelmDeployerConfig{
-			Image: lsv1alpha1.ImageConfiguration{
-				Image: providerConfig.Spec.Deployment.HelmDeployer.Image,
+			Image: lsv1alpha2.ImageConfiguration{
+				Image: providerConfig.GetHelmDeployerImageLocation(version),
 			},
 		},
 	}
@@ -123,6 +127,11 @@ var _ = Describe("Landscaper Instance Installer", func() {
 		// Create configuration with instance independent values
 		env := buildTestEnvironment("test-01")
 		config := createConfiguration(env)
+
+		Expect(config.Landscaper.Controller.Image.Image).To(Equal("registry.test/" + lsv1alpha2.LandscaperControllerImageLocation + ":" + version))
+		Expect(config.Landscaper.WebhooksServer.Image.Image).To(Equal("registry.test/" + lsv1alpha2.LandscaperWebhooksImageLocations + ":" + version))
+		Expect(config.ManifestDeployer.Image.Image).To(Equal("registry.test/" + lsv1alpha2.ManifestDeployerImageLocation + ":" + version))
+		Expect(config.HelmDeployer.Image.Image).To(Equal("other.registry.test/landscaper/images/helm-deployer-controller" + ":" + version))
 
 		// Add instance specific values
 		config.Instance = instanceID

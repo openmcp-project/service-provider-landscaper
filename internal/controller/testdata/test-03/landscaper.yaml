@@ -1,6 +1,7 @@
-apiVersion: landscaper.services.openmcp.cloud/v1alpha1
+apiVersion: landscaper.services.openmcp.cloud/v1alpha2
 kind: Landscaper
 metadata:
   name: test
   namespace: default
-spec: {}
+spec:
+  version: v0.135.0

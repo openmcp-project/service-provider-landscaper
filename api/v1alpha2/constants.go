@@ -1,4 +1,4 @@
-package v1alpha1
+package v1alpha2
 
 const (
 	LandscaperDomain           = "landscaper.services.openmcp.cloud"

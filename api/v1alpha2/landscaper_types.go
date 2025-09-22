@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1alpha2
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -58,8 +58,15 @@ type LandscaperComponent struct {
 
 // LandscaperSpec defines the desired state of Landscaper.
 type LandscaperSpec struct {
+	// ProviderConfigRef is a reference to the ProviderConfig that this Landscaper instance should use.
+	// If not specified, the controller will use the default ProviderConfig in the cluster.
 	// +optional
 	ProviderConfigRef *corev1.LocalObjectReference `json:"providerConfigRef,omitempty"`
+
+	// Version is the version of the Landscaper instance to deploy.
+	// If not specified, the latest version will be used.
+	// +optional
+	Version string `json:"version,omitempty"`
 }
 
 // LandscaperStatus defines the observed state of Landscaper.
@@ -76,10 +83,6 @@ type LandscaperStatus struct {
 
 	// The current phase of the Landscaper instance deployment.
 	Phase LandscaperPhase `json:"phase,omitempty"`
-
-	// LandscaperComponents is a list of components that are part of the Landscaper instance.
-	// +optional
-	LandscaperComponents []LandscaperComponent `json:"LandscaperComponents,omitempty"`
 }
 
 // +kubebuilder:object:root=true
