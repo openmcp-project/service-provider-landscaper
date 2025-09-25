@@ -32,8 +32,6 @@ const (
 type ProviderConfigSpec struct {
 	// +kubebuilder:validation:Required
 	Deployment Deployment `json:"deployment"`
-	// +kubebuilder:validation:MinLength=1
-	WorkloadClusterDomain string `json:"workloadClusterDomain,omitempty"`
 }
 
 // ProviderConfigStatus is the status of the Landscaper Service Provider configuration
