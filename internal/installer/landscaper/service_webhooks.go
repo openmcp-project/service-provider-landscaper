@@ -30,13 +30,18 @@ func (m *webhooksServiceMutator) MetadataMutator() resources.MetadataMutator {
 }
 
 func (m *webhooksServiceMutator) Empty() *core.Service {
+	serviceName := m.landscaperWebhooksFullName()
+	if m.values.WebhooksServer.Service != nil && m.values.WebhooksServer.Service.Name != "" {
+		serviceName = m.values.WebhooksServer.Service.Name
+	}
+
 	return &core.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.landscaperWebhooksFullName(),
+			Name:      serviceName,
 			Namespace: m.workloadNamespace(),
 		},
 	}

@@ -6,6 +6,8 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/openmcp-project/service-provider-landscaper/internal/dns"
+
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
 	rbac "k8s.io/api/rbac/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -40,6 +42,7 @@ type LandscaperReconciler struct {
 	OnboardingCluster       *clusters.Cluster
 	ClusterAccessReconciler clusteraccess.Reconciler
 	Scheme                  *runtime.Scheme
+	DNSReconciler           *dns.Reconciler
 
 	InstanceClusterAccess InstanceClusterAccess
 }
@@ -96,6 +99,8 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.InstanceClusterAccess = &defaultInstanceClusterAccess{
 		clusterAccessReconciler: r.ClusterAccessReconciler,
 	}
+
+	r.DNSReconciler = dns.NewReconciler()
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha2.Landscaper{}).
