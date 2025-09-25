@@ -123,10 +123,11 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 
 	inst := identity.Instance(identity.GetInstanceID(ls))
 	dnsInstance := &dns.Instance{
-		Name:        dnsServiceName(),
-		Namespace:   inst.Namespace(),
-		BackendName: dnsServiceName(),
-		BackendPort: dnsServicePort(),
+		Name:            dnsServiceName(),
+		Namespace:       inst.Namespace(),
+		SubDomainPrefix: "landscaper-webhooks-",
+		BackendName:     dnsServiceName(),
+		BackendPort:     dnsServicePort(),
 	}
 
 	dnsResult, err := r.DNSReconciler.ReconcileGateway(ctx, dnsInstance, workloadCluster)
