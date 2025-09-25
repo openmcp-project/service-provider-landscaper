@@ -91,8 +91,6 @@ func (r *Reconciler) ReconcileGateway(ctx context.Context, instance *Instance, t
 
 	log.Debug("Base domain found", "baseDomain", baseDomain)
 
-	// create tls route
-
 	hostName := getHostName(baseDomain, instance)
 
 	return GatewayReconcileResult{
