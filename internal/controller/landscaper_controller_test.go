@@ -265,7 +265,7 @@ var _ = Describe("Landscaper Controller", func() {
 			inst := identity.Instance(identity.GetInstanceID(ls))
 			tlsRoute := &gatewayv1alpha2.TLSRoute{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      string(inst),
+					Name:      "webhooks-tls",
 					Namespace: inst.Namespace(),
 				},
 			}

@@ -123,9 +123,9 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 
 	inst := identity.Instance(identity.GetInstanceID(ls))
 	dnsInstance := &dns.Instance{
-		Name:        string(inst),
+		Name:        dnsServiceName(),
 		Namespace:   inst.Namespace(),
-		BackendName: dnsServiceName(inst),
+		BackendName: dnsServiceName(),
 		BackendPort: dnsServicePort(),
 	}
 
@@ -240,7 +240,7 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 
 	inst := identity.Instance(identity.GetInstanceID(ls))
 	if err = r.DNSReconciler.DeleteTLSRoute(ctx, &dns.Instance{
-		Name:      string(inst),
+		Name:      dnsServiceName(),
 		Namespace: inst.Namespace(),
 	}, workloadCluster); err != nil {
 		log.Error(err, "failed to delete TLS route for landscaper instance")
@@ -416,7 +416,7 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster,
 				},
 				Resources:   resources,
 				ServicePort: dnsServicePort(),
-				ServiceName: dnsServiceName(inst),
+				ServiceName: dnsServiceName(),
 			},
 		},
 		ManifestDeployer: instance.ManifestDeployerConfig{
@@ -435,8 +435,8 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster,
 	return conf, nil
 }
 
-func dnsServiceName(instance identity.Instance) string {
-	return fmt.Sprintf("%s-tls", string(instance))
+func dnsServiceName() string {
+	return "webhooks-tls"
 }
 
 func dnsServicePort() int32 {
