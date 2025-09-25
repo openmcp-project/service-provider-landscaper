@@ -401,7 +401,7 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster,
 		Version:               ls.Spec.Version,
 		MCPCluster:            mcpCluster,
 		WorkloadCluster:       workloadCluster,
-		WorkloadClusterDomain: workloadClusterDomain,
+		WorkloadClusterURL: fmt.Sprintf("https://%s:%d", workloadClusterDomain, 9443), // 9443 is the port for TLS passthrough configured in the Gateway
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
 				Image: v1alpha2.ImageConfiguration{
