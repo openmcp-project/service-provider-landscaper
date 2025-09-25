@@ -24,25 +24,39 @@ const (
 	RequeueInterval         = 20 * time.Second
 )
 
+// Reconciler is a reconciler for managing DNS records using Gateway API resources.
 type Reconciler struct {
 }
 
+// Instance represents a service instance for that the TLSRoute will be managed.
 type Instance struct {
-	Namespace   string
-	Name        string
+	// Namespace in which the TLSRoute will be created.
+	Namespace string
+	// Name of the TLSRoute.
+	Name string
+	// BackendName is the name of the backend service to which the TLSRoute will route traffic.
 	BackendName string
+	// BackendPort is the port of the backend service to which the TLSRoute will route traffic.
 	BackendPort int32
 }
 
+// GatewayReconcileResult is the result of a gateway reconciliation.
+// If Result.Requeue is not set, the gateway is ready and the HostName can be used.
 type GatewayReconcileResult struct {
+	// HostName is the hostname that was created for the instance and can be used for DNS records.
 	HostName string
+	// Result is the result of the reconciliation.
 	reconcile.Result
 }
 
+// NewReconciler creates a new DNS reconciler.
 func NewReconciler() *Reconciler {
 	return &Reconciler{}
 }
 
+// ReconcileGateway ensures that the default gateway exists and retrieves the base domain from its annotations.
+// It returns the full hostname for the given instance that can be used for DNS records.
+// If the default gateway is not found, it will requeue after a predefined interval.
 func (r *Reconciler) ReconcileGateway(ctx context.Context, instance *Instance, targetCluster *clusters.Cluster) (GatewayReconcileResult, error) {
 	log := logging.FromContextOrPanic(ctx)
 
@@ -87,6 +101,7 @@ func (r *Reconciler) ReconcileGateway(ctx context.Context, instance *Instance, t
 	}, nil
 }
 
+// ReconcileTLSRoute ensures that a TLSRoute exists for the given instance, pointing to the default gateway.
 func (r *Reconciler) ReconcileTLSRoute(ctx context.Context, instance *Instance, targetCluster *clusters.Cluster) error {
 	// get default gateway
 
@@ -147,6 +162,7 @@ func (r *Reconciler) ReconcileTLSRoute(ctx context.Context, instance *Instance, 
 	return nil
 }
 
+// IsTLSRouteReady checks if the TLSRoute for the given instance is accepted by the default gateway.
 func (r *Reconciler) IsTLSRouteReady(ctx context.Context, instance *Instance, targetCluster *clusters.Cluster) (bool, error) {
 	log := logging.FromContextOrPanic(ctx)
 
@@ -174,6 +190,7 @@ func (r *Reconciler) IsTLSRouteReady(ctx context.Context, instance *Instance, ta
 	return false, nil
 }
 
+// DeleteTLSRoute deletes the TLSRoute for the given instance.
 func (r *Reconciler) DeleteTLSRoute(ctx context.Context, instance *Instance, targetCluster *clusters.Cluster) error {
 	log := logging.FromContextOrPanic(ctx)
 
