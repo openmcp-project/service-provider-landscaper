@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/openmcp-project/service-provider-landscaper/internal/dns"
 
@@ -87,6 +89,8 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	workloadScheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(workloadScheme))
+	utilruntime.Must(gatewayv1.Install(workloadScheme))
+	utilruntime.Must(gatewayv1alpha2.Install(workloadScheme))
 
 	r.ClusterAccessReconciler = clusteraccess.NewClusterAccessReconciler(r.PlatformCluster.Client(), v1alpha2.LandscaperProviderName)
 	r.ClusterAccessReconciler.
