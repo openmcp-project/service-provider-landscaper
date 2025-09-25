@@ -34,6 +34,8 @@ type Instance struct {
 	Namespace string
 	// Name of the TLSRoute.
 	Name string
+	// SubDomainPrefix is the prefix for the subdomain that will be created for the instance.
+	SubDomainPrefix string
 	// BackendName is the name of the backend service to which the TLSRoute will route traffic.
 	BackendName string
 	// BackendPort is the port of the backend service to which the TLSRoute will route traffic.
@@ -225,5 +227,5 @@ func getBaseDomain(gateway *gatewayv1.Gateway) (string, bool) {
 
 func getHostName(baseDomain string, instance *Instance) string {
 	subDomain := controller.NameHashSHAKE128Base32(instance.Name, instance.Namespace)
-	return fmt.Sprintf("landscaper-webhooks-%s.%s", subDomain, baseDomain)
+	return fmt.Sprintf("%s-%s.%s", instance.SubDomainPrefix, subDomain, baseDomain)
 }
