@@ -125,7 +125,7 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 	dnsInstance := &dns.Instance{
 		Name:            dnsServiceName(),
 		Namespace:       inst.Namespace(),
-		SubDomainPrefix: "landscaper-webhooks-",
+		SubDomainPrefix: "landscaper-webhooks",
 		BackendName:     dnsServiceName(),
 		BackendPort:     dnsServicePort(),
 	}
