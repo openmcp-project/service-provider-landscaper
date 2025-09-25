@@ -5,6 +5,10 @@ import (
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+
+	"github.com/openmcp-project/service-provider-landscaper/internal/dns"
 
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
 	rbac "k8s.io/api/rbac/v1"
@@ -40,6 +44,7 @@ type LandscaperReconciler struct {
 	OnboardingCluster       *clusters.Cluster
 	ClusterAccessReconciler clusteraccess.Reconciler
 	Scheme                  *runtime.Scheme
+	DNSReconciler           *dns.Reconciler
 
 	InstanceClusterAccess InstanceClusterAccess
 }
@@ -84,6 +89,8 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	workloadScheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(workloadScheme))
+	utilruntime.Must(gatewayv1.Install(workloadScheme))
+	utilruntime.Must(gatewayv1alpha2.Install(workloadScheme))
 
 	r.ClusterAccessReconciler = clusteraccess.NewClusterAccessReconciler(r.PlatformCluster.Client(), v1alpha2.LandscaperProviderName)
 	r.ClusterAccessReconciler.
@@ -96,6 +103,8 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.InstanceClusterAccess = &defaultInstanceClusterAccess{
 		clusterAccessReconciler: r.ClusterAccessReconciler,
 	}
+
+	r.DNSReconciler = dns.NewReconciler()
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha2.Landscaper{}).

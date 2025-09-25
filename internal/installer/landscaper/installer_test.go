@@ -90,7 +90,6 @@ var _ = Describe("Landscaper Controller Installer", func() {
 					Image: providerConfig.GetLandscaperWebhooksServerImageLocation(version),
 				},
 				ServicePort: 0,
-				Ingress:     nil,
 			},
 			ImagePullSecrets:   nil,
 			PodSecurityContext: nil,

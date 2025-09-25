@@ -70,9 +70,9 @@ type WebhooksServerValues struct {
 	MCPKubeconfig string                    `json:"mcpKubeconfig,omitempty"`
 	Service       *ServiceValues            `json:"service,omitempty"` // optional, has default value
 	Image         api.ImageConfiguration    `json:"image,omitempty"`
+	URL           string                    `json:"url,omitempty"`
 	ServicePort   int32                     `json:"servicePort,omitempty"`  // required unless DisableWebhooks contains "all"
 	ReplicaCount  *int32                    `json:"replicaCount,omitempty"` // optional - has default value
-	Ingress       *IngressValues            `json:"ingress,omitempty"`      // optional - if nil, no ingress will be created.
 	Resources     core.ResourceRequirements `json:"resources,omitempty"`    // optional - has default value
 	HPA           types.HPAValues           `json:"hpa,omitempty"`          // optional - has default value
 }
@@ -82,6 +82,7 @@ type CommonControllerValues struct {
 }
 
 type ServiceValues struct {
+	Name string `json:"name,omitempty"`
 	Type string `json:"type,omitempty"`
 	Port int32  `json:"port,omitempty"`
 }
