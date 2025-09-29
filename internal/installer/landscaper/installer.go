@@ -48,12 +48,6 @@ func InstallLandscaper(ctx context.Context, values *Values) error {
 		}
 	}
 
-	if valHelper.values.WebhooksServer.Ingress != nil {
-		if err := resources.CreateOrUpdateResource(ctx, workloadClient, newIngressMutator(valHelper)); err != nil {
-			return err
-		}
-	}
-
 	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newCentralDeploymentMutator(valHelper)); err != nil {
 		return err
 	}
@@ -113,10 +107,6 @@ func UninstallLandscaper(ctx context.Context, values *Values) error {
 	}
 
 	if err := resources.DeleteResource(ctx, workloadClient, newCentralDeploymentMutator(valHelper)); err != nil {
-		return err
-	}
-
-	if err := resources.DeleteResource(ctx, workloadClient, newIngressMutator(valHelper)); err != nil {
 		return err
 	}
 

@@ -162,6 +162,36 @@ func (s *reconcileStatus) setUninstallConfigurationError(err error) {
 	}
 }
 
+func (s *reconcileStatus) setInstallDNSConfigFailed(err error) {
+	s.InstallCondition = &meta.Condition{
+		Type:               v1alpha2.ConditionTypeInstalled,
+		Status:             meta.ConditionFalse,
+		ObservedGeneration: s.ObservedGeneration,
+		Reason:             v1alpha2.ConditionReasonDNSConfigFailed,
+		Message:            err.Error(),
+	}
+}
+
+func (s *reconcileStatus) setInstallWaitForDNSReady() {
+	s.InstallCondition = &meta.Condition{
+		Type:               v1alpha2.ConditionTypeInstalled,
+		Status:             meta.ConditionFalse,
+		ObservedGeneration: s.ObservedGeneration,
+		Reason:             v1alpha2.ConditionReasonWaitForDNSReady,
+		Message:            "Waiting for DNS to be ready",
+	}
+}
+
+func (s *reconcileStatus) SetUninstallDNSConfigFailed(err error) {
+	s.UninstallCondition = &meta.Condition{
+		Type:               v1alpha2.ConditionTypeUninstalled,
+		Status:             meta.ConditionFalse,
+		ObservedGeneration: s.ObservedGeneration,
+		Reason:             v1alpha2.ConditionReasonDNSConfigFailed,
+		Message:            err.Error(),
+	}
+}
+
 func newCreateOrUpdateStatus(generation int64) *reconcileStatus {
 	s := &reconcileStatus{
 		ObservedGeneration: generation,

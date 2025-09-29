@@ -38,9 +38,11 @@ type ControllerConfig struct {
 }
 
 type WebhooksServerConfig struct {
-	Image     api.ImageConfiguration
-	Resources core.ResourceRequirements
-	HPA       types.HPAValues
+	Image       api.ImageConfiguration
+	Resources   core.ResourceRequirements
+	HPA         types.HPAValues
+	ServiceName string
+	ServicePort int32
 }
 
 type ManifestDeployerConfig struct {

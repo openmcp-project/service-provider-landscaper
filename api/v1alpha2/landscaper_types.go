@@ -44,6 +44,9 @@ const (
 	ConditionReasonClusterAccessError  = "ClusterAccessError"
 	ConditionReasonProviderConfigError = "ProviderConfigError"
 	ConditionReasonConfigurationError  = "ConfigurationError"
+
+	ConditionReasonDNSConfigFailed = "DNSConfigFailed"
+	ConditionReasonWaitForDNSReady = "WaitForDNSReady"
 )
 
 // LandscaperComponent represents a component of the Landscaper instance.

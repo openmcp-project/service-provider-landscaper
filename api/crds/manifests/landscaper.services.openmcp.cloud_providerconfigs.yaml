@@ -101,9 +101,6 @@ spec:
                 - availableVersions
                 - repository
                 type: object
-              workloadClusterDomain:
-                minLength: 1
-                type: string
             required:
             - deployment
             type: object

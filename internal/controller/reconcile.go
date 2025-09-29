@@ -10,6 +10,8 @@ import (
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 
+	"github.com/openmcp-project/service-provider-landscaper/internal/dns"
+
 	"github.com/openmcp-project/controller-utils/pkg/controller"
 	"github.com/openmcp-project/controller-utils/pkg/logging"
 	core "k8s.io/api/core/v1"
@@ -119,7 +121,29 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return reconcile.Result{}, status, err
 	}
 
-	conf, err := r.createConfig(ls, mcpCluster, workloadCluster, providerConfig)
+	inst := identity.Instance(identity.GetInstanceID(ls))
+	dnsInstance := &dns.Instance{
+		Name:            dnsServiceName(),
+		Namespace:       inst.Namespace(),
+		SubDomainPrefix: "landscaper-webhooks",
+		BackendName:     dnsServiceName(),
+		BackendPort:     dnsServicePort(),
+	}
+
+	dnsResult, err := r.DNSReconciler.ReconcileGateway(ctx, dnsInstance, workloadCluster)
+	if err != nil {
+		log.Error(err, "failed to reconcile DNS for landscaper instance")
+		status.setInstallDNSConfigFailed(err)
+		return reconcile.Result{}, status, err
+	}
+
+	if dnsResult.RequeueAfter > 0 {
+		log.Debug("waiting for DNS to be ready")
+		status.setInstallWaitForDNSReady()
+		return reconcile.Result{RequeueAfter: dnsResult.RequeueAfter}, status, nil
+	}
+
+	conf, err := r.createConfig(ls, mcpCluster, workloadCluster, providerConfig, dnsResult.HostName)
 	if err != nil {
 		log.Error(err, "failed to create configuration for landscaper instance")
 		status.setInstallConfigurationError(err)
@@ -133,6 +157,24 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 	}
 	log.Debug("landscaper instance has been installed")
 	status.setInstalled()
+
+	if err = r.DNSReconciler.ReconcileTLSRoute(ctx, dnsInstance, workloadCluster); err != nil {
+		log.Error(err, "failed to reconcile TLS route for landscaper instance")
+		status.setInstallDNSConfigFailed(err)
+		return reconcile.Result{}, status, err
+	}
+
+	tlsReady, err := r.DNSReconciler.IsTLSRouteReady(ctx, dnsInstance, workloadCluster)
+	if err != nil {
+		log.Error(err, "failed to check TLS route for landscaper instance")
+		status.setInstallDNSConfigFailed(err)
+		return reconcile.Result{}, status, err
+	}
+	if !tlsReady {
+		log.Debug("TLS route is not yet ready")
+		status.setInstallWaitForDNSReady()
+		return reconcile.Result{RequeueAfter: 20 * time.Second}, status, nil
+	}
 
 	if readinessCheckResult := instance.CheckReadiness(ctx, conf); !readinessCheckResult.IsReady() {
 		log.Debug("landscaper instance is not yet ready")
@@ -190,10 +232,20 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 		return reconcile.Result{}, status, err
 	}
 
-	conf, err := r.createConfig(ls, mcpCluster, workloadCluster, providerConfig)
+	conf, err := r.createConfig(ls, mcpCluster, workloadCluster, providerConfig, "")
 	if err != nil {
 		log.Error(err, "failed to create configuration to uninstall landscaper instance")
 		status.setUninstallConfigurationError(err)
+		return reconcile.Result{}, status, err
+	}
+
+	inst := identity.Instance(identity.GetInstanceID(ls))
+	if err = r.DNSReconciler.DeleteTLSRoute(ctx, &dns.Instance{
+		Name:      dnsServiceName(),
+		Namespace: inst.Namespace(),
+	}, workloadCluster); err != nil {
+		log.Error(err, "failed to delete TLS route for landscaper instance")
+		status.SetUninstallDNSConfigFailed(err)
 		return reconcile.Result{}, status, err
 	}
 
@@ -328,7 +380,7 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 	return providerConfig, nil
 }
 
-func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster, workloadCluster *clusters.Cluster, providerConfig *v1alpha2.ProviderConfig) (*instance.Configuration, error) {
+func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster, workloadCluster *clusters.Cluster, providerConfig *v1alpha2.ProviderConfig, workloadClusterDomain string) (*instance.Configuration, error) {
 	inst := identity.Instance(identity.GetInstanceID(ls))
 
 	cpu, err := resource.ParseQuantity("10m")
@@ -350,7 +402,7 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster,
 		Version:               ls.Spec.Version,
 		MCPCluster:            mcpCluster,
 		WorkloadCluster:       workloadCluster,
-		WorkloadClusterDomain: providerConfig.Spec.WorkloadClusterDomain,
+		WorkloadClusterDomain: fmt.Sprintf("https://%s:%d", workloadClusterDomain, dnsServicePort()), // 9443 is the port for TLS passthrough configured in the Gateway
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
 				Image: v1alpha2.ImageConfiguration{
@@ -363,7 +415,9 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster,
 				Image: v1alpha2.ImageConfiguration{
 					Image: providerConfig.GetLandscaperWebhooksServerImageLocation(ls.Spec.Version),
 				},
-				Resources: resources,
+				Resources:   resources,
+				ServicePort: dnsServicePort(),
+				ServiceName: dnsServiceName(),
 			},
 		},
 		ManifestDeployer: instance.ManifestDeployerConfig{
@@ -380,4 +434,12 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster,
 		},
 	}
 	return conf, nil
+}
+
+func dnsServiceName() string {
+	return "webhooks-tls"
+}
+
+func dnsServicePort() int32 {
+	return 9443
 }

@@ -7,6 +7,9 @@ import (
 	libutils "github.com/openmcp-project/openmcp-operator/lib/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
+
+	"github.com/openmcp-project/service-provider-landscaper/internal/dns"
 
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 
@@ -32,6 +35,9 @@ import (
 	lscontroller "github.com/openmcp-project/service-provider-landscaper/internal/controller"
 
 	commonapi "github.com/openmcp-project/openmcp-operator/api/common"
+
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 const (
@@ -73,6 +79,8 @@ func buildTestEnvironmentReconcile(testdataDir string, objectsWithStatus ...clie
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(clustersv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(v1alpha2.AddToScheme(scheme))
+	utilruntime.Must(gatewayv1.Install(scheme))
+	utilruntime.Must(gatewayv1alpha2.Install(scheme))
 
 	return testutils.NewEnvironmentBuilder().
 		WithFakeClient(scheme).
@@ -254,6 +262,14 @@ var _ = Describe("Landscaper Controller", func() {
 				},
 			}
 
+			inst := identity.Instance(identity.GetInstanceID(ls))
+			tlsRoute := &gatewayv1alpha2.TLSRoute{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "webhooks-tls",
+					Namespace: inst.Namespace(),
+				},
+			}
+
 			env := buildTestEnvironmentReconcile("test-03",
 				accessRequestMCP,
 				workloadClusterRequest,
@@ -262,7 +278,8 @@ var _ = Describe("Landscaper Controller", func() {
 				lsMainDeployment,
 				lsWebhooksServerDeployment,
 				manifestDeployerDeployment,
-				helmDeployerDeployment)
+				helmDeployerDeployment,
+				tlsRoute)
 
 			reconcileResult := env.ShouldReconcile(req, "reconcile should return a requeue time")
 			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
@@ -313,6 +330,28 @@ var _ = Describe("Landscaper Controller", func() {
 			}
 
 			Expect(env.Client().Status().Update(env.Ctx, workloadAccessRequest)).To(Succeed())
+
+			// now the landscaper should wait for the tls route to be created and ready
+			reconcileResult = env.ShouldReconcile(req, "reconcile should not return a requeue time")
+			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
+
+			// set the tls route to ready
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(tlsRoute), tlsRoute)).To(Succeed())
+			tlsRoute.Status.Parents = []gatewayv1alpha2.RouteParentStatus{
+				{
+					ParentRef: gatewayv1alpha2.ParentReference{
+						Name:      dns.DefaultGatewayName,
+						Namespace: ptr.To(gatewayv1.Namespace(dns.DefaultGatewayNamespace)),
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:   string(gatewayv1alpha2.RouteConditionAccepted),
+							Status: metav1.ConditionTrue,
+						},
+					},
+				},
+			}
+			Expect(env.Client().Status().Update(env.Ctx, tlsRoute)).To(Succeed())
 
 			// now the landscaper should be installed and wait for readiness check
 			reconcileResult = env.ShouldReconcile(req, "reconcile should not return a requeue time")
