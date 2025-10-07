@@ -3,6 +3,8 @@ package landscaper
 import (
 	"context"
 
+	imgpullsecrets "github.com/openmcp-project/service-provider-landscaper/internal/shared/imagepullsecrets"
+
 	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/openmcp-project/controller-utils/pkg/readiness"
@@ -19,6 +21,28 @@ func InstallLandscaper(ctx context.Context, values *Values) error {
 	workloadClient := values.WorkloadCluster.Client()
 
 	if err := resources.CreateOrUpdateResource(ctx, workloadClient, resources.NewNamespaceMutator(valHelper.workloadNamespace())); err != nil {
+		return err
+	}
+
+	imgPullSecretsSync := imgpullsecrets.SecretSync{
+		PlatformCluster:          values.PlatformCluster,
+		PlatformClusterNamespace: values.PlatformClusterNamespace,
+		WorkloadCluster:          values.WorkloadCluster,
+		WorkloadClusterNamespace: valHelper.workloadNamespace(),
+	}
+
+	controllerMainImagePullSecrets, err := imgPullSecretsSync.CreateOrUpdate(ctx, valHelper.controllerMainComponent, values.Controller.Image.ImagePullSecrets)
+	if err != nil {
+		return err
+	}
+
+	controllerImagePullSecrets, err := imgPullSecretsSync.CreateOrUpdate(ctx, valHelper.controllerComponent, values.Controller.Image.ImagePullSecrets)
+	if err != nil {
+		return err
+	}
+
+	webhooksImagePullSecrets, err := imgPullSecretsSync.CreateOrUpdate(ctx, valHelper.webhooksComponent, values.WebhooksServer.Image.ImagePullSecrets)
+	if err != nil {
 		return err
 	}
 
@@ -48,16 +72,19 @@ func InstallLandscaper(ctx context.Context, values *Values) error {
 		}
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newCentralDeploymentMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newCentralDeploymentMutator(valHelper).
+		WithImagePullSecrets(controllerImagePullSecrets).Convert()); err != nil {
 		return err
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newMainDeploymentMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newMainDeploymentMutator(valHelper).
+		WithImagePullSecrets(controllerMainImagePullSecrets).Convert()); err != nil {
 		return err
 	}
 
 	if !valHelper.areAllWebhooksDisabled() {
-		if err := resources.CreateOrUpdateResource(ctx, workloadClient, newWebhooksDeploymentMutator(valHelper)); err != nil {
+		if err := resources.CreateOrUpdateResource(ctx, workloadClient, newWebhooksDeploymentMutator(valHelper).
+			WithImagePullSecrets(webhooksImagePullSecrets).Convert()); err != nil {
 			return err
 		}
 	}
@@ -98,15 +125,15 @@ func UninstallLandscaper(ctx context.Context, values *Values) error {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, workloadClient, newWebhooksDeploymentMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newWebhooksDeploymentMutator(valHelper).Convert()); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, workloadClient, newMainDeploymentMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newMainDeploymentMutator(valHelper).Convert()); err != nil {
 		return err
 	}
 
-	if err := resources.DeleteResource(ctx, workloadClient, newCentralDeploymentMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newCentralDeploymentMutator(valHelper).Convert()); err != nil {
 		return err
 	}
 
@@ -130,6 +157,25 @@ func UninstallLandscaper(ctx context.Context, values *Values) error {
 		return err
 	}
 	if err := resources.DeleteResource(ctx, workloadClient, newControllerWorkloadKubeconfigSecretMutator(valHelper)); err != nil {
+		return err
+	}
+
+	impPullSecretsSync := imgpullsecrets.SecretSync{
+		PlatformCluster:          values.PlatformCluster,
+		PlatformClusterNamespace: values.PlatformClusterNamespace,
+		WorkloadCluster:          values.WorkloadCluster,
+		WorkloadClusterNamespace: valHelper.workloadNamespace(),
+	}
+
+	if err := impPullSecretsSync.Delete(ctx, valHelper.controllerMainComponent, values.Controller.Image.ImagePullSecrets); err != nil {
+		return err
+	}
+
+	if err := impPullSecretsSync.Delete(ctx, valHelper.controllerComponent, values.Controller.Image.ImagePullSecrets); err != nil {
+		return err
+	}
+
+	if err := impPullSecretsSync.Delete(ctx, valHelper.webhooksComponent, values.WebhooksServer.Image.ImagePullSecrets); err != nil {
 		return err
 	}
 

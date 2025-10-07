@@ -17,16 +17,17 @@ import (
 )
 
 type Values struct {
-	Instance           identity.Instance `json:"instance,omitempty"`
-	Version            string            `json:"version,omitempty"`
-	WorkloadCluster    *clusters.Cluster
-	VerbosityLevel     string                           `json:"verbosityLevel,omitempty"`
-	Configuration      v1alpha1.LandscaperConfiguration `json:"configuration,omitempty"`
-	Controller         ControllerValues                 `json:"controller,omitempty"`
-	WebhooksServer     WebhooksServerValues             `json:"webhooksServer,omitempty"`
-	ImagePullSecrets   []core.LocalObjectReference      `json:"imagePullSecrets,omitempty"`
-	PodSecurityContext *core.PodSecurityContext         `json:"podSecurityContext,omitempty"`
-	SecurityContext    *core.SecurityContext            `json:"securityContext,omitempty"`
+	Instance                 identity.Instance `json:"instance,omitempty"`
+	Version                  string            `json:"version,omitempty"`
+	PlatformCluster          *clusters.Cluster
+	PlatformClusterNamespace string
+	WorkloadCluster          *clusters.Cluster
+	VerbosityLevel           string                           `json:"verbosityLevel,omitempty"`
+	Configuration            v1alpha1.LandscaperConfiguration `json:"configuration,omitempty"`
+	Controller               ControllerValues                 `json:"controller,omitempty"`
+	WebhooksServer           WebhooksServerValues             `json:"webhooksServer,omitempty"`
+	PodSecurityContext       *core.PodSecurityContext         `json:"podSecurityContext,omitempty"`
+	SecurityContext          *core.SecurityContext            `json:"securityContext,omitempty"`
 }
 
 type ServiceAccountValues struct {

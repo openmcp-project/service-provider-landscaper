@@ -3,6 +3,7 @@ package identity
 import (
 	"fmt"
 
+	"github.com/openmcp-project/controller-utils/pkg/controller"
 	"golang.org/x/exp/maps"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -108,4 +109,8 @@ func (c *Component) ClusterScopedDefaultResourceName() string {
 // "landscaper:<instance>:<component>:<suffix>", for example "landscaper:test0001-abcdefgh:landscaper-rbac:user".
 func (c *Component) ClusterScopedResourceName(suffix string) string {
 	return fmt.Sprintf("%s:%s:%s:%s", applicationLandscaper, c.Instance, c.Name, suffix)
+}
+
+func (c *Component) ImagePullSecretName(sourceSecretName string) string {
+	return c.NamespacedResourceName(fmt.Sprintf("imgpull-%s", controller.NameHashSHAKE128Base32(sourceSecretName)))
 }

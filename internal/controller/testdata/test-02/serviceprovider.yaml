@@ -1,0 +1,10 @@
+apiVersion: openmcp.cloud/v1alpha1
+kind: ServiceProvider
+metadata:
+  name: landscaper
+spec:
+  image: service-provider-landscaper:v0.1.0
+  verbosity: INFO
+  imagePullSecrets:
+    - name: my-registry-secret
+    - name: another-registry-secret

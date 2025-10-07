@@ -13,5 +13,7 @@ spec:
 
     helmDeployer:
       image: other.registry.test/landscaper/helm-deployer/images/helm-deployer-controller
+      imagePullSecrets:
+        - name: helm-deployer-secret
 
   workloadClusterDomain: workload.cluster.local

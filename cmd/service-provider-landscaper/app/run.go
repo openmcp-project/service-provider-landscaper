@@ -15,6 +15,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
+	deploymentv1alpha1 "github.com/openmcp-project/openmcp-operator/api/provider/v1alpha1"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -89,6 +90,7 @@ func (o *RunOptions) Run(ctx context.Context) error {
 	platformScheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(platformScheme))
 	utilruntime.Must(clustersv1alpha1.AddToScheme(platformScheme))
+	utilruntime.Must(deploymentv1alpha1.AddToScheme(platformScheme))
 	providerscheme.InstallProviderAPIs(platformScheme)
 
 	onboardingScheme := runtime.NewScheme()
@@ -146,6 +148,8 @@ func (o *RunOptions) Run(ctx context.Context) error {
 		OnboardingCluster: onboardingCluster,
 		PlatformCluster:   o.Clusters.Platform,
 		Scheme:            mgr.GetScheme(),
+		ProviderName:      o.ProviderName,
+		ProviderNamespace: providerSystemNamespace,
 	}).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller: %w", err)
 	}

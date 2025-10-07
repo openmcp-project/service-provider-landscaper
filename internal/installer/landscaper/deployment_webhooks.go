@@ -14,13 +14,23 @@ import (
 
 type webhooksDeploymentMutator struct {
 	*valuesHelper
-	metadata resources.MetadataMutator
+	metadata         resources.MetadataMutator
+	imagePullSecrets []corev1.LocalObjectReference
 }
 
 var _ resources.Mutator[*appsv1.Deployment] = &webhooksDeploymentMutator{}
 
-func newWebhooksDeploymentMutator(h *valuesHelper) resources.Mutator[*appsv1.Deployment] {
+func newWebhooksDeploymentMutator(h *valuesHelper) *webhooksDeploymentMutator {
 	return &webhooksDeploymentMutator{valuesHelper: h, metadata: resources.NewMetadataMutator()}
+}
+
+func (m *webhooksDeploymentMutator) WithImagePullSecrets(imagePullSecrets []corev1.LocalObjectReference) *webhooksDeploymentMutator {
+	m.imagePullSecrets = imagePullSecrets
+	return m
+}
+
+func (m *webhooksDeploymentMutator) Convert() resources.Mutator[*appsv1.Deployment] {
+	return m
 }
 
 func (m *webhooksDeploymentMutator) String() string {
@@ -54,7 +64,7 @@ func (m *webhooksDeploymentMutator) Mutate(r *appsv1.Deployment) error {
 				Volumes:                      m.volumes(),
 				Containers:                   m.containers(),
 				SecurityContext:              m.values.PodSecurityContext,
-				ImagePullSecrets:             m.values.ImagePullSecrets,
+				ImagePullSecrets:             m.imagePullSecrets,
 				TopologySpreadConstraints:    m.webhooksComponent.TopologySpreadConstraints(),
 			},
 		},

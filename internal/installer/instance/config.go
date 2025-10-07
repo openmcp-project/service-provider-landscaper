@@ -14,9 +14,11 @@ type Configuration struct {
 	Instance identity.Instance
 	Version  string
 
-	MCPCluster            *clusters.Cluster
-	WorkloadCluster       *clusters.Cluster
-	WorkloadClusterDomain string
+	PlatformCluster          *clusters.Cluster
+	PlatformClusterNamespace string
+	MCPCluster               *clusters.Cluster
+	WorkloadCluster          *clusters.Cluster
+	WorkloadClusterDomain    string
 
 	Landscaper LandscaperConfig
 

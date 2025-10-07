@@ -23,13 +23,15 @@ func rbacValues(c *Configuration) *rbac.Values {
 // manifestDeployerValues determines the import values for the installation of the manifest deployer
 func manifestDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *manifestdeployer.Values {
 	v := &manifestdeployer.Values{
-		Instance:             c.Instance,
-		Version:              c.Version,
-		WorkloadCluster:      c.WorkloadCluster,
-		Image:                c.ManifestDeployer.Image,
-		Resources:            c.ManifestDeployer.Resources,
-		HPA:                  c.ManifestDeployer.HPA,
-		MCPClusterKubeconfig: string(kubeconfigs.MCPCluster),
+		Instance:                 c.Instance,
+		Version:                  c.Version,
+		PlatformCluster:          c.PlatformCluster,
+		PlatformClusterNamespace: c.PlatformClusterNamespace,
+		WorkloadCluster:          c.WorkloadCluster,
+		Image:                    c.ManifestDeployer.Image,
+		Resources:                c.ManifestDeployer.Resources,
+		HPA:                      c.ManifestDeployer.HPA,
+		MCPClusterKubeconfig:     string(kubeconfigs.MCPCluster),
 	}
 
 	return v
@@ -39,13 +41,15 @@ func manifestDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *ma
 // helmDeployerValues determines the import values for the installation of the helm deployer
 func helmDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *helmdeployer.Values {
 	v := &helmdeployer.Values{
-		Instance:             c.Instance,
-		Version:              c.Version,
-		WorkloadCluster:      c.WorkloadCluster,
-		Image:                c.HelmDeployer.Image,
-		Resources:            c.HelmDeployer.Resources,
-		HPA:                  c.HelmDeployer.HPA,
-		MCPClusterKubeconfig: string(kubeconfigs.MCPCluster),
+		Instance:                 c.Instance,
+		Version:                  c.Version,
+		PlatformCluster:          c.PlatformCluster,
+		PlatformClusterNamespace: c.PlatformClusterNamespace,
+		WorkloadCluster:          c.WorkloadCluster,
+		Image:                    c.HelmDeployer.Image,
+		Resources:                c.HelmDeployer.Resources,
+		HPA:                      c.HelmDeployer.HPA,
+		MCPClusterKubeconfig:     string(kubeconfigs.MCPCluster),
 	}
 
 	return v
@@ -54,11 +58,13 @@ func helmDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *helmde
 // landscaperValues determines the import values for the installation of the landscaper controllers and webhooks server
 func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestExports *manifestdeployer.Exports, helmExports *helmdeployer.Exports) *landscaper.Values {
 	v := &landscaper.Values{
-		Instance:        c.Instance,
-		Version:         c.Version,
-		WorkloadCluster: c.WorkloadCluster,
-		VerbosityLevel:  "INFO",
-		Configuration:   v1alpha1.LandscaperConfiguration{},
+		Instance:                 c.Instance,
+		Version:                  c.Version,
+		PlatformCluster:          c.PlatformCluster,
+		PlatformClusterNamespace: c.PlatformClusterNamespace,
+		WorkloadCluster:          c.WorkloadCluster,
+		VerbosityLevel:           "INFO",
+		Configuration:            v1alpha1.LandscaperConfiguration{},
 		Controller: landscaper.ControllerValues{
 			MCPKubeconfig:      string(kubeconfigs.MCPCluster),
 			WorkloadKubeconfig: string(kubeconfigs.WorkloadCluster),

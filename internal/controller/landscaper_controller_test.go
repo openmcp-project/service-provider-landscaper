@@ -15,6 +15,7 @@ import (
 
 	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
+	deploymentv1alpha1 "github.com/openmcp-project/openmcp-operator/api/provider/v1alpha1"
 	"github.com/openmcp-project/openmcp-operator/lib/clusteraccess"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,6 +62,23 @@ func setDeploymentReady(ctx context.Context, deployment *appsv1.Deployment, c cl
 	Expect(c.Status().Update(ctx, deployment)).To(Succeed())
 }
 
+// expectImagePullSecretsValid verifies that a deployment has the expected number of image pull secrets
+// and that each secret exists in the given namespace with the correct type and data
+func expectImagePullSecretsValid(ctx context.Context, c client.Client, deployment *appsv1.Deployment, expectedCount int, namespace string) {
+	Expect(deployment.Spec.Template.Spec.ImagePullSecrets).To(HaveLen(expectedCount))
+	for _, s := range deployment.Spec.Template.Spec.ImagePullSecrets {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      s.Name,
+				Namespace: namespace,
+			},
+		}
+		Expect(c.Get(ctx, client.ObjectKeyFromObject(secret), secret)).To(Succeed())
+		Expect(secret.Type).To(Equal(corev1.SecretTypeDockerConfigJson))
+		Expect(secret.Data).To(HaveKey(".dockerconfigjson"))
+	}
+}
+
 type testInstanceClusterAccess struct {
 	mcpCluster      *clusters.Cluster
 	workloadCluster *clusters.Cluster
@@ -78,6 +96,7 @@ func buildTestEnvironmentReconcile(testdataDir string, objectsWithStatus ...clie
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(clustersv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(deploymentv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(v1alpha2.AddToScheme(scheme))
 	utilruntime.Must(gatewayv1.Install(scheme))
 	utilruntime.Must(gatewayv1alpha2.Install(scheme))
@@ -118,6 +137,8 @@ func buildTestEnvironmentReconcile(testdataDir string, objectsWithStatus ...clie
 					mcpCluster:      clusters.NewTestClusterFromClient("mcp", c),
 					workloadCluster: clusters.NewTestClusterFromClient("workload", c),
 				},
+				ProviderName:      "landscaper",
+				ProviderNamespace: "openmcp-system",
 			}
 
 			return r
@@ -372,13 +393,20 @@ var _ = Describe("Landscaper Controller", func() {
 
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(installationNs), installationNs)).To(Succeed())
 
-			// set deployments to ready
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsControllerDeployment), lsControllerDeployment)).To(Succeed())
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsMainDeployment), lsMainDeployment)).To(Succeed())
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsWebhooksServerDeployment), lsWebhooksServerDeployment)).To(Succeed())
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(manifestDeployerDeployment), manifestDeployerDeployment)).To(Succeed())
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(helmDeployerDeployment), helmDeployerDeployment)).To(Succeed())
 
+			// expect the image pull secrets to be created in the installation namespace
+			expectImagePullSecretsValid(env.Ctx, env.Client(), lsControllerDeployment, 2, installationNamespace)
+			expectImagePullSecretsValid(env.Ctx, env.Client(), lsMainDeployment, 2, installationNamespace)
+			expectImagePullSecretsValid(env.Ctx, env.Client(), lsWebhooksServerDeployment, 2, installationNamespace)
+			expectImagePullSecretsValid(env.Ctx, env.Client(), manifestDeployerDeployment, 2, installationNamespace)
+			expectImagePullSecretsValid(env.Ctx, env.Client(), helmDeployerDeployment, 1, installationNamespace)
+
+			// set deployments to ready
 			setDeploymentReady(env.Ctx, lsControllerDeployment, env.Client())
 			setDeploymentReady(env.Ctx, lsMainDeployment, env.Client())
 			setDeploymentReady(env.Ctx, lsWebhooksServerDeployment, env.Client())

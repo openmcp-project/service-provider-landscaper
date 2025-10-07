@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha2
 
 import (
+	"github.com/openmcp-project/openmcp-operator/api/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -65,7 +66,8 @@ type Deployment struct {
 type ImageConfiguration struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
-	Image string `json:"image"`
+	Image            string                        `json:"image"`
+	ImagePullSecrets []common.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
 // +kubebuilder:object:root=true
