@@ -15,13 +15,23 @@ import (
 
 type deploymentMutator struct {
 	*valuesHelper
-	metadata resources.MetadataMutator
+	metadata         resources.MetadataMutator
+	imagePullSecrets []corev1.LocalObjectReference
 }
 
 var _ resources.Mutator[*appsv1.Deployment] = &deploymentMutator{}
 
-func newDeploymentMutator(b *valuesHelper) resources.Mutator[*appsv1.Deployment] {
+func newDeploymentMutator(b *valuesHelper) *deploymentMutator {
 	return &deploymentMutator{valuesHelper: b, metadata: resources.NewMetadataMutator()}
+}
+
+func (d *deploymentMutator) WithImagePullSecrets(imagePullSecrets []corev1.LocalObjectReference) *deploymentMutator {
+	d.imagePullSecrets = imagePullSecrets
+	return d
+}
+
+func (d *deploymentMutator) Convert() resources.Mutator[*appsv1.Deployment] {
+	return d
 }
 
 func (d *deploymentMutator) String() string {
@@ -58,7 +68,7 @@ func (d *deploymentMutator) Mutate(r *appsv1.Deployment) error {
 				Volumes:                      d.volumes(),
 				Containers:                   d.containers(),
 				SecurityContext:              d.values.PodSecurityContext,
-				ImagePullSecrets:             d.values.ImagePullSecrets,
+				ImagePullSecrets:             d.imagePullSecrets,
 				TopologySpreadConstraints:    d.helmDeployerComponent.TopologySpreadConstraints(),
 			},
 		},

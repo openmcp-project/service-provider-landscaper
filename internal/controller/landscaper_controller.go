@@ -45,6 +45,8 @@ type LandscaperReconciler struct {
 	ClusterAccessReconciler clusteraccess.Reconciler
 	Scheme                  *runtime.Scheme
 	DNSReconciler           *dns.Reconciler
+	ProviderName            string
+	ProviderNamespace       string
 
 	InstanceClusterAccess InstanceClusterAccess
 }

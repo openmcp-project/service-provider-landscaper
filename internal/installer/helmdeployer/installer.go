@@ -5,6 +5,8 @@ import (
 
 	"github.com/openmcp-project/controller-utils/pkg/readiness"
 	"github.com/openmcp-project/controller-utils/pkg/resources"
+
+	imgpullsecrets "github.com/openmcp-project/service-provider-landscaper/internal/shared/imagepullsecrets"
 )
 
 type Exports struct {
@@ -21,6 +23,18 @@ func InstallHelmDeployer(ctx context.Context, values *Values) (*Exports, error) 
 	workloadClient := values.WorkloadCluster.Client()
 
 	if err := resources.CreateOrUpdateResource(ctx, workloadClient, resources.NewNamespaceMutator(valHelper.workloadNamespace())); err != nil {
+		return nil, err
+	}
+
+	imgPullSecretsSync := imgpullsecrets.SecretSync{
+		PlatformCluster:          values.PlatformCluster,
+		PlatformClusterNamespace: values.PlatformClusterNamespace,
+		WorkloadCluster:          values.WorkloadCluster,
+		WorkloadClusterNamespace: valHelper.workloadNamespace(),
+	}
+
+	imagePullSecrets, err := imgPullSecretsSync.CreateOrUpdate(ctx, valHelper.helmDeployerComponent, values.Image.ImagePullSecrets)
+	if err != nil {
 		return nil, err
 	}
 
@@ -42,7 +56,7 @@ func InstallHelmDeployer(ctx context.Context, values *Values) (*Exports, error) 
 		return nil, err
 	}
 
-	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newDeploymentMutator(valHelper)); err != nil {
+	if err := resources.CreateOrUpdateResource(ctx, workloadClient, newDeploymentMutator(valHelper).WithImagePullSecrets(imagePullSecrets).Convert()); err != nil {
 		return nil, err
 	}
 
@@ -61,7 +75,7 @@ func UninstallHelmDeployer(ctx context.Context, values *Values) error {
 
 	workloadClient := values.WorkloadCluster.Client()
 
-	if err := resources.DeleteResource(ctx, workloadClient, newDeploymentMutator(valHelper)); err != nil {
+	if err := resources.DeleteResource(ctx, workloadClient, newDeploymentMutator(valHelper).Convert()); err != nil {
 		return err
 	}
 
@@ -77,6 +91,17 @@ func UninstallHelmDeployer(ctx context.Context, values *Values) error {
 		return err
 	}
 
+	imgPullSecretsSync := imgpullsecrets.SecretSync{
+		PlatformCluster:          values.PlatformCluster,
+		PlatformClusterNamespace: values.PlatformClusterNamespace,
+		WorkloadCluster:          values.WorkloadCluster,
+		WorkloadClusterNamespace: valHelper.workloadNamespace(),
+	}
+
+	if err := imgPullSecretsSync.Delete(ctx, valHelper.helmDeployerComponent, values.Image.ImagePullSecrets); err != nil {
+		return nil
+	}
+
 	return nil
 }
 
@@ -87,7 +112,7 @@ func CheckReadiness(ctx context.Context, values *Values) readiness.CheckResult {
 	}
 
 	hostClient := values.WorkloadCluster.Client()
-	dp, err := resources.GetResource(ctx, hostClient, newDeploymentMutator(valHelper))
+	dp, err := resources.GetResource(ctx, hostClient, newDeploymentMutator(valHelper).Convert())
 	if err != nil {
 		return readiness.NewFailedResult(err)
 	}

@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
+	"github.com/openmcp-project/openmcp-operator/api/common"
+	"github.com/openmcp-project/openmcp-operator/api/provider/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openmcp-project/service-provider-landscaper/internal/dns"
 
@@ -143,7 +146,7 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return reconcile.Result{RequeueAfter: dnsResult.RequeueAfter}, status, nil
 	}
 
-	conf, err := r.createConfig(ls, mcpCluster, workloadCluster, providerConfig, dnsResult.HostName)
+	conf, err := r.createConfig(ctx, ls, mcpCluster, workloadCluster, providerConfig, dnsResult.HostName)
 	if err != nil {
 		log.Error(err, "failed to create configuration for landscaper instance")
 		status.setInstallConfigurationError(err)
@@ -232,7 +235,7 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 		return reconcile.Result{}, status, err
 	}
 
-	conf, err := r.createConfig(ls, mcpCluster, workloadCluster, providerConfig, "")
+	conf, err := r.createConfig(ctx, ls, mcpCluster, workloadCluster, providerConfig, "")
 	if err != nil {
 		log.Error(err, "failed to create configuration to uninstall landscaper instance")
 		status.setUninstallConfigurationError(err)
@@ -380,7 +383,20 @@ func (r *LandscaperReconciler) getProviderConfigForLandscaper(ctx context.Contex
 	return providerConfig, nil
 }
 
-func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster, workloadCluster *clusters.Cluster, providerConfig *v1alpha2.ProviderConfig, workloadClusterDomain string) (*instance.Configuration, error) {
+func (r *LandscaperReconciler) getServiceProviderResource(ctx context.Context) (*v1alpha1.ServiceProvider, error) {
+	serviceProvider := &v1alpha1.ServiceProvider{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: r.ProviderName,
+		},
+	}
+	if err := r.PlatformCluster.Client().Get(ctx, client.ObjectKeyFromObject(serviceProvider), serviceProvider); err != nil {
+		return nil, fmt.Errorf("failed to get service provider resource %s/%s: %w", r.ProviderNamespace, r.ProviderName, err)
+	}
+
+	return serviceProvider, nil
+}
+
+func (r *LandscaperReconciler) createConfig(ctx context.Context, ls *v1alpha2.Landscaper, mcpCluster, workloadCluster *clusters.Cluster, providerConfig *v1alpha2.ProviderConfig, workloadClusterDomain string) (*instance.Configuration, error) {
 	inst := identity.Instance(identity.GetInstanceID(ls))
 
 	cpu, err := resource.ParseQuantity("10m")
@@ -397,23 +413,41 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster,
 			core.ResourceMemory: memory,
 		},
 	}
+
+	serviceProvider, err := r.getServiceProviderResource(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	getImagePullSecrets := func(imageConfiguration *v1alpha2.ImageConfiguration) []common.LocalObjectReference {
+		if imageConfiguration == nil {
+			return serviceProvider.Spec.ImagePullSecrets
+		}
+
+		return imageConfiguration.ImagePullSecrets
+	}
+
 	conf := &instance.Configuration{
-		Instance:              inst,
-		Version:               ls.Spec.Version,
-		MCPCluster:            mcpCluster,
-		WorkloadCluster:       workloadCluster,
-		WorkloadClusterDomain: fmt.Sprintf("https://%s:%d", workloadClusterDomain, dnsServicePort()), // 9443 is the port for TLS passthrough configured in the Gateway
+		Instance:                 inst,
+		Version:                  ls.Spec.Version,
+		PlatformCluster:          r.PlatformCluster,
+		PlatformClusterNamespace: r.ProviderNamespace,
+		MCPCluster:               mcpCluster,
+		WorkloadCluster:          workloadCluster,
+		WorkloadClusterDomain:    fmt.Sprintf("https://%s:%d", workloadClusterDomain, dnsServicePort()), // 9443 is the port for TLS passthrough configured in the Gateway
 		Landscaper: instance.LandscaperConfig{
 			Controller: instance.ControllerConfig{
 				Image: v1alpha2.ImageConfiguration{
-					Image: providerConfig.GetLandscaperControllerImageLocation(ls.Spec.Version),
+					Image:            providerConfig.GetLandscaperControllerImageLocation(ls.Spec.Version),
+					ImagePullSecrets: getImagePullSecrets(providerConfig.Spec.Deployment.LandscaperController),
 				},
 				Resources:     resources,
 				ResourcesMain: resources,
 			},
 			WebhooksServer: instance.WebhooksServerConfig{
 				Image: v1alpha2.ImageConfiguration{
-					Image: providerConfig.GetLandscaperWebhooksServerImageLocation(ls.Spec.Version),
+					Image:            providerConfig.GetLandscaperWebhooksServerImageLocation(ls.Spec.Version),
+					ImagePullSecrets: getImagePullSecrets(providerConfig.Spec.Deployment.LandscaperWebhooksServer),
 				},
 				Resources:   resources,
 				ServicePort: dnsServicePort(),
@@ -422,13 +456,15 @@ func (r *LandscaperReconciler) createConfig(ls *v1alpha2.Landscaper, mcpCluster,
 		},
 		ManifestDeployer: instance.ManifestDeployerConfig{
 			Image: v1alpha2.ImageConfiguration{
-				Image: providerConfig.GetManifestDeployerImageLocation(ls.Spec.Version),
+				Image:            providerConfig.GetManifestDeployerImageLocation(ls.Spec.Version),
+				ImagePullSecrets: getImagePullSecrets(providerConfig.Spec.Deployment.ManifestDeployer),
 			},
 			Resources: resources,
 		},
 		HelmDeployer: instance.HelmDeployerConfig{
 			Image: v1alpha2.ImageConfiguration{
-				Image: providerConfig.GetHelmDeployerImageLocation(ls.Spec.Version),
+				Image:            providerConfig.GetHelmDeployerImageLocation(ls.Spec.Version),
+				ImagePullSecrets: getImagePullSecrets(providerConfig.Spec.Deployment.HelmDeployer),
 			},
 			Resources: resources,
 		},
