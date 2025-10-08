@@ -145,7 +145,7 @@ func (r *Reconciler) ReconcileTLSRoute(ctx context.Context, instance *Instance, 
 						{
 							BackendObjectReference: gatewayv1alpha2.BackendObjectReference{
 								Name: gatewayv1.ObjectName(instance.BackendName),
-								Port: ptr.To(gatewayv1.PortNumber(instance.BackendPort)),
+								Port: ptr.To(instance.BackendPort),
 							},
 						},
 					},
