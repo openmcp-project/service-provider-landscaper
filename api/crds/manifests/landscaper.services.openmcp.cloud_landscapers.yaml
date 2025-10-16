@@ -58,10 +58,12 @@ spec:
                 type: object
                 x-kubernetes-map-type: atomic
               version:
-                description: |-
-                  Version is the version of the Landscaper instance to deploy.
-                  If not specified, the latest version will be used.
+                description: Version is the version of the Landscaper instance to
+                  deploy.
+                minLength: 1
                 type: string
+            required:
+            - version
             type: object
           status:
             description: LandscaperStatus defines the observed state of Landscaper.

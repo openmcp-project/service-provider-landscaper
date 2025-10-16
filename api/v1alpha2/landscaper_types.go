@@ -67,8 +67,8 @@ type LandscaperSpec struct {
 	ProviderConfigRef *corev1.LocalObjectReference `json:"providerConfigRef,omitempty"`
 
 	// Version is the version of the Landscaper instance to deploy.
-	// If not specified, the latest version will be used.
-	// +optional
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
 	Version string `json:"version,omitempty"`
 }
 
