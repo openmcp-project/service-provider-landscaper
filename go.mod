@@ -10,7 +10,7 @@ require (
 	github.com/onsi/gomega v1.38.2
 	github.com/openmcp-project/controller-utils v0.23.1
 	github.com/openmcp-project/openmcp-operator/api v0.15.2
-	github.com/openmcp-project/openmcp-operator/lib v0.15.1
+	github.com/openmcp-project/openmcp-operator/lib v0.15.2
 	github.com/spf13/cobra v1.10.1
 	golang.org/x/exp v0.0.0-20251017212417-90e834f514db
 	k8s.io/api v0.34.1
