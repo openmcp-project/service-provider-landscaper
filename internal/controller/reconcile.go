@@ -209,56 +209,70 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 	}
 
 	req := reconcile.Request{NamespacedName: client.ObjectKeyFromObject(ls)}
-	res, err := r.ClusterAccessReconciler.Reconcile(ctx, req)
-	if err != nil {
-		log.Error(err, "failed to reconcile cluster access for landscaper instance deletion")
-		status.setUninstallClusterAccessError(err)
-		return res, status, err
-	}
 
-	if res.RequeueAfter > 0 {
-		status.setUninstallWaitForClusterAccessReady()
-		return res, status, nil
-	}
-
-	mcpCluster, err := r.InstanceClusterAccess.MCPCluster(ctx, req)
+	accessRequestsInDeletion, err := r.areAccessRequestsInDeletion(ctx, req)
 	if err != nil {
-		log.Error(err, "failed to get MCP cluster for landscaper instance")
+		log.Error(err, "failed to check access requests for landscaper instance")
 		status.setUninstallClusterAccessError(err)
 		return reconcile.Result{}, status, err
 	}
+	log.Debug("access requests deletion status for landscaper instance", "deleted", accessRequestsInDeletion)
 
-	workloadCluster, err := r.InstanceClusterAccess.WorkloadCluster(ctx, req)
-	if err != nil {
-		log.Error(err, "failed to get Workload cluster for landscaper instance")
-		status.setUninstallClusterAccessError(err)
-		return reconcile.Result{}, status, err
-	}
+	// For the uninstallation, we 1. call ClusterAccessReconciler.Reconcile to get access to the mcp and workload cluster,
+	// 2. uninstall the landscaper instance, 3. call ClusterAccessReconciler.ReconcileDelete to delete the requests.
+	// Once we have reached step 3, we skip step 1 and 2 in all following reconciliations, so that we do not recreate the requests.
+	if !accessRequestsInDeletion {
+		res, err := r.ClusterAccessReconciler.Reconcile(ctx, req)
+		if err != nil {
+			log.Error(err, "failed to reconcile cluster access for landscaper instance deletion")
+			status.setUninstallClusterAccessError(err)
+			return res, status, err
+		}
 
-	conf, err := r.createConfig(ctx, ls, mcpCluster, workloadCluster, providerConfig, "")
-	if err != nil {
-		log.Error(err, "failed to create configuration to uninstall landscaper instance")
-		status.setUninstallConfigurationError(err)
-		return reconcile.Result{}, status, err
-	}
+		if res.RequeueAfter > 0 {
+			status.setUninstallWaitForClusterAccessReady()
+			return res, status, nil
+		}
 
-	inst := identity.Instance(identity.GetInstanceID(ls))
-	if err = r.DNSReconciler.DeleteTLSRoute(ctx, &dns.Instance{
-		Name:      dnsServiceName(),
-		Namespace: inst.Namespace(),
-	}, workloadCluster); err != nil {
-		log.Error(err, "failed to delete TLS route for landscaper instance")
-		status.SetUninstallDNSConfigFailed(err)
-		return reconcile.Result{}, status, err
-	}
+		mcpCluster, err := r.InstanceClusterAccess.MCPCluster(ctx, req)
+		if err != nil {
+			log.Error(err, "failed to get MCP cluster for landscaper instance")
+			status.setUninstallClusterAccessError(err)
+			return reconcile.Result{}, status, err
+		}
 
-	if err = instance.UninstallLandscaperInstance(ctx, conf); err != nil {
-		log.Error(err, "failed to uninstall landscaper instance")
-		status.setUninstallFailed(err)
-		return reconcile.Result{}, status, err
+		workloadCluster, err := r.InstanceClusterAccess.WorkloadCluster(ctx, req)
+		if err != nil {
+			log.Error(err, "failed to get Workload cluster for landscaper instance")
+			status.setUninstallClusterAccessError(err)
+			return reconcile.Result{}, status, err
+		}
+
+		conf, err := r.createConfig(ctx, ls, mcpCluster, workloadCluster, providerConfig, "")
+		if err != nil {
+			log.Error(err, "failed to create configuration to uninstall landscaper instance")
+			status.setUninstallConfigurationError(err)
+			return reconcile.Result{}, status, err
+		}
+
+		inst := identity.Instance(identity.GetInstanceID(ls))
+		if err = r.DNSReconciler.DeleteTLSRoute(ctx, &dns.Instance{
+			Name:      dnsServiceName(),
+			Namespace: inst.Namespace(),
+		}, workloadCluster); err != nil {
+			log.Error(err, "failed to delete TLS route for landscaper instance")
+			status.SetUninstallDNSConfigFailed(err)
+			return reconcile.Result{}, status, err
+		}
+
+		if err = instance.UninstallLandscaperInstance(ctx, conf); err != nil {
+			log.Error(err, "failed to uninstall landscaper instance")
+			status.setUninstallFailed(err)
+			return reconcile.Result{}, status, err
+		}
+		log.Debug("landscaper instance has been uninstalled")
+		status.setUninstalled()
 	}
-	log.Debug("landscaper instance has been uninstalled")
-	status.setUninstalled()
 
 	result, err := r.ClusterAccessReconciler.ReconcileDelete(ctx, req)
 	if err != nil {
@@ -394,6 +408,30 @@ func (r *LandscaperReconciler) getServiceProviderResource(ctx context.Context) (
 	}
 
 	return serviceProvider, nil
+}
+
+// areAccessRequestsInDeletion determines if the access requests for a landscaper instance are in deletion.
+// It returns true if at least one of the access requests (mcp, workload) is deleted or has a deletion timestamp.
+func (r *LandscaperReconciler) areAccessRequestsInDeletion(ctx context.Context, req reconcile.Request) (bool, error) {
+	accessRequest, err := r.ClusterAccessReconciler.MCPAccessRequest(ctx, req)
+	if apierrors.IsNotFound(err) {
+		return true, nil
+	} else if err != nil {
+		return false, err
+	} else if accessRequest.DeletionTimestamp != nil {
+		return true, nil
+	}
+
+	accessRequest, err = r.ClusterAccessReconciler.WorkloadAccessRequest(ctx, req)
+	if apierrors.IsNotFound(err) {
+		return true, nil
+	} else if err != nil {
+		return false, err
+	} else if accessRequest.DeletionTimestamp != nil {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (r *LandscaperReconciler) createConfig(ctx context.Context, ls *v1alpha2.Landscaper, mcpCluster, workloadCluster *clusters.Cluster, providerConfig *v1alpha2.ProviderConfig, workloadClusterDomain string) (*instance.Configuration, error) {
