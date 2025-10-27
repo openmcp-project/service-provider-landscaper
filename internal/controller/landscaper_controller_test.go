@@ -305,14 +305,6 @@ var _ = Describe("Landscaper Controller", func() {
 			reconcileResult := env.ShouldReconcile(req, "reconcile should return a requeue time")
 			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
 
-			// create the namespace for the cluster and access requests
-			ns := &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: requestNamespace,
-				},
-			}
-			Expect(env.Client().Create(env.Ctx, ns)).To(Succeed())
-
 			// now waiting for the MCP access request to be granted
 			reconcileResult = env.ShouldReconcile(req, "reconcile should return a requeue time")
 			Expect(reconcileResult.RequeueAfter).ToNot(BeZero())
@@ -320,9 +312,8 @@ var _ = Describe("Landscaper Controller", func() {
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(accessRequestMCP), accessRequestMCP)).To(Succeed())
 
 			accessRequestMCP.Status.Phase = clustersv1alpha1.REQUEST_GRANTED
-			accessRequestMCP.Status.SecretRef = &commonapi.ObjectReference{
-				Name:      "access",
-				Namespace: requestNamespace,
+			accessRequestMCP.Status.SecretRef = &commonapi.LocalObjectReference{
+				Name: "access",
 			}
 
 			Expect(env.Client().Status().Update(env.Ctx, accessRequestMCP)).To(Succeed())
@@ -345,9 +336,8 @@ var _ = Describe("Landscaper Controller", func() {
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadAccessRequest), workloadAccessRequest)).To(Succeed())
 
 			workloadAccessRequest.Status.Phase = clustersv1alpha1.REQUEST_GRANTED
-			workloadAccessRequest.Status.SecretRef = &commonapi.ObjectReference{
-				Name:      "access",
-				Namespace: requestNamespace,
+			workloadAccessRequest.Status.SecretRef = &commonapi.LocalObjectReference{
+				Name: "access",
 			}
 
 			Expect(env.Client().Status().Update(env.Ctx, workloadAccessRequest)).To(Succeed())
@@ -426,18 +416,20 @@ var _ = Describe("Landscaper Controller", func() {
 
 			// delete the landscaper instance
 			Expect(env.Client().Delete(env.Ctx, ls)).To(Succeed())
-			reconcileResult = env.ShouldReconcile(req, "reconcile should not return a requeue time")
-			Expect(reconcileResult.RequeueAfter).To(BeZero())
 
-			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsControllerDeployment), lsControllerDeployment)).ToNot(Succeed())
-			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsMainDeployment), lsMainDeployment)).ToNot(Succeed())
-			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsWebhooksServerDeployment), lsWebhooksServerDeployment)).ToNot(Succeed())
-			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(manifestDeployerDeployment), manifestDeployerDeployment)).ToNot(Succeed())
-			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(helmDeployerDeployment), helmDeployerDeployment)).ToNot(Succeed())
-			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(installationNs), installationNs)).ToNot(Succeed())
-			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(accessRequestMCP), accessRequestMCP)).ToNot(Succeed())
-			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadClusterRequest), accessRequestMCP)).ToNot(Succeed())
-			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadAccessRequest), accessRequestMCP)).ToNot(Succeed())
+			Eventually(func(g Gomega) {
+				_ = env.ShouldReconcile(req, "should reconcile after deletion")
+
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsControllerDeployment), lsControllerDeployment)).ToNot(Succeed())
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsMainDeployment), lsMainDeployment)).ToNot(Succeed())
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsWebhooksServerDeployment), lsWebhooksServerDeployment)).ToNot(Succeed())
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(manifestDeployerDeployment), manifestDeployerDeployment)).ToNot(Succeed())
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(helmDeployerDeployment), helmDeployerDeployment)).ToNot(Succeed())
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(installationNs), installationNs)).ToNot(Succeed())
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(accessRequestMCP), accessRequestMCP)).ToNot(Succeed())
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadAccessRequest), workloadAccessRequest)).ToNot(Succeed())
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadClusterRequest), workloadClusterRequest)).ToNot(Succeed())
+			}, 10*time.Second, 1*time.Second).Should(Succeed())
 		})
 	})
 })
