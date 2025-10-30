@@ -6,22 +6,21 @@ import (
 	"os"
 	"time"
 
-	openmcpconstv1alpha1 "github.com/openmcp-project/openmcp-operator/api/constants"
-
-	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
-
-	rbacv1 "k8s.io/api/rbac/v1"
-
 	crdutil "github.com/openmcp-project/controller-utils/pkg/crds"
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
+	openmcpconstv1alpha1 "github.com/openmcp-project/openmcp-operator/api/constants"
+	deploymentv1alpha1 "github.com/openmcp-project/openmcp-operator/api/provider/v1alpha1"
+	"github.com/openmcp-project/openmcp-operator/lib/clusteraccess"
+	"github.com/openmcp-project/openmcp-operator/lib/utils"
 	"github.com/spf13/cobra"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 
-	"github.com/openmcp-project/openmcp-operator/lib/clusteraccess"
-
 	"github.com/openmcp-project/service-provider-landscaper/api/crds"
 	providerscheme "github.com/openmcp-project/service-provider-landscaper/api/install"
+	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 )
 
 func NewInitCommand(so *SharedOptions) *cobra.Command {
@@ -86,11 +85,21 @@ func (o *InitOptions) Run(ctx context.Context) error {
 	platformScheme := runtime.NewScheme()
 	providerscheme.InstallCRDAPIs(platformScheme)
 	utilruntime.Must(clustersv1alpha1.AddToScheme(platformScheme))
+	utilruntime.Must(deploymentv1alpha1.AddToScheme(platformScheme))
 
 	onboardingScheme := runtime.NewScheme()
 	providerscheme.InstallCRDAPIs(onboardingScheme)
 
 	if err := o.Clusters.Platform.InitializeClient(platformScheme); err != nil {
+		return err
+	}
+
+	landscaperGVK := metav1.GroupVersionKind{
+		Group:   v1alpha2.GroupVersion.Group,
+		Version: v1alpha2.GroupVersion.Version,
+		Kind:    "Landscaper",
+	}
+	if err := utils.RegisterGVKsAtServiceProvider(ctx, o.Clusters.Platform.Client(), o.ProviderName, landscaperGVK); err != nil {
 		return err
 	}
 
