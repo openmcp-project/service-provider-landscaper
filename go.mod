@@ -8,7 +8,7 @@ require (
 	github.com/gardener/landscaper/apis v0.144.0
 	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
-	github.com/openmcp-project/controller-utils v0.23.4
+	github.com/openmcp-project/controller-utils v0.24.0
 	github.com/openmcp-project/openmcp-operator/api v0.17.0
 	github.com/openmcp-project/openmcp-operator/lib v0.17.0
 	github.com/spf13/cobra v1.10.1
