@@ -4,9 +4,8 @@ import (
 	"time"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
-
-	"github.com/gardener/landscaper/apis/config/v1alpha1"
-	lscore "github.com/gardener/landscaper/apis/core/v1alpha1"
+	"github.com/openmcp-project/landscaper/apis/config/v1alpha1"
+	lscore "github.com/openmcp-project/landscaper/apis/core/v1alpha1"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"

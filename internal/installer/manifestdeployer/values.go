@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
-
-	"github.com/gardener/landscaper/apis/deployer/manifest/v1alpha2"
+	"github.com/openmcp-project/landscaper/apis/deployer/manifest/v1alpha2"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
