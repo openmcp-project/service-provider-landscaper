@@ -20,8 +20,8 @@ const (
 	labelVersion        = "app.kubernetes.io/version"
 	labelManagedBy      = "app.kubernetes.io/managed-by"
 	labelValueManagedBy = "landscaper-provider"
-	labelTopology       = "landscaper.gardener.cloud/topology"
-	labelTopologyNs     = "landscaper.gardener.cloud/topology-ns"
+	labelTopology       = "landscaper.openmcp-project.cloud/topology"
+	labelTopologyNs     = "landscaper.openmcp-project.cloud/topology-ns"
 )
 
 type Component struct {

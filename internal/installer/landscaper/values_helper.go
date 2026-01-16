@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/gardener/landscaper/apis/config/v1alpha1"
+	"github.com/openmcp-project/landscaper/apis/config/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
