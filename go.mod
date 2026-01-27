@@ -8,7 +8,7 @@ require (
 	github.com/gardener/landscaper/apis v0.151.0
 	github.com/onsi/ginkgo/v2 v2.27.5
 	github.com/onsi/gomega v1.39.0
-	github.com/openmcp-project/controller-utils v0.24.0
+	github.com/openmcp-project/controller-utils v0.25.0
 	github.com/openmcp-project/openmcp-operator/api v0.17.1
 	github.com/openmcp-project/openmcp-operator/lib v0.17.1
 	github.com/spf13/cobra v1.10.2
@@ -18,7 +18,7 @@ require (
 	k8s.io/apimachinery v0.35.0
 	k8s.io/client-go v0.35.0
 	k8s.io/utils v0.0.0-20260108192941-914a6e750570
-	sigs.k8s.io/controller-runtime v0.22.4
+	sigs.k8s.io/controller-runtime v0.23.0
 	sigs.k8s.io/gateway-api v1.4.1
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -89,7 +89,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
+	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.32.0 // indirect
