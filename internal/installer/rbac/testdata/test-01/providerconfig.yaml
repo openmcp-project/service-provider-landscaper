@@ -7,11 +7,11 @@ metadata:
 spec:
   deployment:
     landscaperController:
-      image: registry.test//landscaper/github.com/gardener/landscaper/images/landscaper-controller:v0.135.0
+      image: registry.test//landscaper/github.com/openmcp-project/landscaper/images/landscaper-controller:v0.0.987
     landscaperWebhooksServer:
-      image: registry.test//landscaper/github.com/gardener/landscaper/images/landscaper-webhooks-server:v0.135.0
+      image: registry.test//landscaper/github.com/openmcp-project/landscaper/images/landscaper-webhooks-server:v0.0.987
     manifestDeployer:
-      image: registry.test//landscaper/github.com/gardener/landscaper/manifest-deployer/images/manifest-deployer-controller:v0.135.0
+      image: registry.test//landscaper/github.com/openmcp-project/landscaper/manifest-deployer/images/manifest-deployer-controller:v0.0.987
     helmDeployer:
       image: registry.test/landscaper/helm-deployer/images/helm-deployer-controller:v0.135.0
   workloadClusterDomain: workload.cluster.local

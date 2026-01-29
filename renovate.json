@@ -29,8 +29,6 @@
     },
     {
       "matchPackageNames": [
-        "github.com/gardener/landscaper",
-        "github.com/gardener/landscaper-service",
         "github.com/openmcp-project/*"
       ],
       "description": "Update all components from openmcp-project and landscaper immediately",

@@ -1,7 +1,7 @@
 package instance
 
 import (
-	"github.com/gardener/landscaper/apis/config/v1alpha1"
+	"github.com/openmcp-project/landscaper/apis/config/v1alpha1"
 	"k8s.io/utils/ptr"
 
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/helmdeployer"

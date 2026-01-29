@@ -1,27 +1,24 @@
 package landscaper_test
 
 import (
+	"testing"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	testutils "github.com/openmcp-project/controller-utils/pkg/testing"
+	"github.com/openmcp-project/landscaper/apis/config/v1alpha1"
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
 	deploymentv1alpha1 "github.com/openmcp-project/openmcp-operator/api/provider/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/landscaper"
-	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
-
-	"testing"
-
-	"github.com/gardener/landscaper/apis/config/v1alpha1"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	lsv1alpha2 "github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/landscaper"
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/rbac"
 )
 
 const (

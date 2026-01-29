@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	LandscaperComponentPrefix         = "github.com/gardener/landscaper"
+	LandscaperComponentPrefix         = "github.com/openmcp-project/landscaper"
 	LandscaperControllerImageLocation = LandscaperComponentPrefix + "/images/landscaper-controller"
 	LandscaperWebhooksImageLocations  = LandscaperComponentPrefix + "/images/landscaper-webhooks-server"
 	HelmDeployerImageLocation         = LandscaperComponentPrefix + "/helm-deployer/images/helm-deployer-controller"
