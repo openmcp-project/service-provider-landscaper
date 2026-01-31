@@ -133,8 +133,8 @@ github.com/openmcp-project/landscaper/apis v1.0.5 h1:R22mLduHpmLAvJGbUDcASVBNJIg
 github.com/openmcp-project/landscaper/apis v1.0.5/go.mod h1:lZmqxpt11CAARAx4FFToDBvCPoRjUJMsKZ2xklfbzzg=
 github.com/openmcp-project/landscaper/legacy-component-spec/bindings-go v1.0.5 h1:DMhF8+O0kxkrEVOQTR23iinhyviHiDhNYZZXPHRG9jw=
 github.com/openmcp-project/landscaper/legacy-component-spec/bindings-go v1.0.5/go.mod h1:BT8wol9WdzbF/xi2ItLpaBgdsmMenJW9tDyFvtGAT28=
-github.com/openmcp-project/openmcp-operator/api v0.17.1 h1:ZJQWWUHtN7ml98IbSuaHiLfkG/my6LNehsLN62qxE80=
-github.com/openmcp-project/openmcp-operator/api v0.17.1/go.mod h1:4khFA0fuEVDcwptyDkHcH/7BGuMVhouUTUoiu61wqZQ=
+github.com/openmcp-project/openmcp-operator/api v0.18.1 h1:jBc0b8FxgDZR+8l+wkrLaCj/h31RYJTkdio+yIHH8hU=
+github.com/openmcp-project/openmcp-operator/api v0.18.1/go.mod h1:eI3caa7YYHXV3eD0BD/vfQLb2epxOBRgdDK4T2xr12w=
 github.com/openmcp-project/openmcp-operator/lib v0.17.1 h1:gzqZXcEmnZxaytwafW/as91E9MtnjXGpo5VlggJLplk=
 github.com/openmcp-project/openmcp-operator/lib v0.17.1/go.mod h1:sqU7DBCqvrlMWIfw6kBTYDJhrVoLtSsazzPfs9hzd5I=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
