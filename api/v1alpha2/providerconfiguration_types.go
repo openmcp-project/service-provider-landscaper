@@ -40,7 +40,15 @@ type ProviderConfigStatus struct{}
 
 // Deployment specifies the OCI image locations and available versions of the landscaper
 type Deployment struct {
-	// Repository is the OCI repository where the Landscaper images are stored
+	// Repository is the base OCI registry URL used to derive image locations for all
+	// Landscaper components. The provider appends the full OCI component
+	// path to this base, producing image references of the form:
+	//   <repository>/github.com/openmcp-project/landscaper/<component>/images/<image-name>:<version>
+	// For example, with repository "ghcr.io/openmcp-project/components", the helm deployer
+	// image resolves to:
+	//   ghcr.io/openmcp-project/components/github.com/openmcp-project/landscaper/helm-deployer/images/helm-deployer-controller:<version>
+	// To override the image for a specific component, use the per-component fields
+	// (LandscaperController, LandscaperWebhooksServer, HelmDeployer, ManifestDeployer).
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	Repository string `json:"repository,omitempty"`

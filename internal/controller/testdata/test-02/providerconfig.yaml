@@ -4,7 +4,7 @@ metadata:
   name: test
 spec:
   deployment:
-    repository: registry.test
+    repository: registry.test/components
     availableVersions:
       - v0.135.0
 

@@ -32,6 +32,64 @@ flowchart LR
     landscaper_controller -- reconciles --> installation
 ```
 
+## ProviderConfig Resource
+
+The `ProviderConfig` resource lives on the **platform cluster** and defines the container image registry and available versions for all Landscaper instances managed by the provider.
+
+```yaml
+apiVersion: landscaper.services.openmcp.cloud/v1alpha2
+kind: ProviderConfig
+metadata:
+  name: default
+  labels:
+    landscaper.services.openmcp.cloud/providertype: default
+spec:
+  deployment:
+    repository: ghcr.io/openmcp-project/components
+    availableVersions:
+      - v1.1.0
+```
+
+### The `repository` field
+
+`repository` must be a **bare base OCI registry URL** — no trailing slash, and no component-specific path. The provider constructs each component's full image reference by appending a fixed OCI component path:
+
+| Component | Appended path |
+|---|---|
+| Landscaper controller | `github.com/openmcp-project/landscaper/images/landscaper-controller` |
+| Landscaper webhooks server | `github.com/openmcp-project/landscaper/images/landscaper-webhooks-server` |
+| Helm deployer | `github.com/openmcp-project/landscaper/helm-deployer/images/helm-deployer-controller` |
+| Manifest deployer | `github.com/openmcp-project/landscaper/manifest-deployer/images/manifest-deployer-controller` |
+
+For example, with `repository: ghcr.io/openmcp-project/components` and version `v1.1.0`, the helm deployer image resolves to:
+```
+ghcr.io/openmcp-project/components/github.com/openmcp-project/landscaper/helm-deployer/images/helm-deployer-controller:v1.1.0
+```
+
+### Per-component overrides
+
+To use a custom image for a specific component, set the corresponding override field instead of (or in addition to) `repository`:
+
+```yaml
+spec:
+  deployment:
+    repository: ghcr.io/openmcp-project/components
+    availableVersions:
+      - v1.1.0
+    landscaperController:
+      image: my.registry.example/custom-landscaper-controller
+    landscaperWebhooksServer:
+      image: my.registry.example/custom-webhooks-server
+    helmDeployer:
+      image: my.registry.example/custom-helm-deployer
+    manifestDeployer:
+      image: my.registry.example/custom-manifest-deployer
+```
+
+### Default ProviderConfig
+
+If the label `landscaper.services.openmcp.cloud/providertype: default` is set, this `ProviderConfig` is used by all `Landscaper` resources that do not explicitly reference a provider configuration.
+
 ## Landscaper Resource
 
 ```yaml
