@@ -11,9 +11,14 @@ import (
 	"github.com/openmcp-project/service-provider-landscaper/internal/dns"
 
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
+	"github.com/openmcp-project/openmcp-operator/api/common"
+	"github.com/openmcp-project/openmcp-operator/api/provider/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openmcp-project/service-provider-landscaper/api/install"
 
@@ -111,44 +116,135 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha2.Landscaper{}).
 		WatchesRawSource(source.Kind(r.PlatformCluster.Cluster().GetCache(), &v1alpha2.ProviderConfig{},
-			handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, providerConfig *v1alpha2.ProviderConfig) []ctrl.Request {
-				log := logging.Wrap(mgr.GetLogger()).WithName(controllerName + "/ProviderConfig")
-
-				if log.Enabled(logging.DEBUG) {
-					providerConfigType, hasLabel := controller.GetLabel(providerConfig, v1alpha2.ProviderConfigTypeLabel)
-					isDefault := hasLabel && providerConfigType == v1alpha2.DefaultProviderConfigValue
-					log.Debug("Starting reconcile", "providerConfig", providerConfig.Name, "isDefault", isDefault)
-				}
-
-				// Find all Landscaper resources referencing this ProviderConfig
-				landscapers := &v1alpha2.LandscaperList{}
-				if err := r.OnboardingCluster.Client().List(ctx, landscapers); err != nil {
-					log.Error(err, "Failed to list Landscaper resources")
-					return nil
-				}
-
-				for _, landscaper := range landscapers.Items {
-					if landscaper.Status.ProviderConfigRef != nil && landscaper.Status.ProviderConfigRef.Name == providerConfig.Name {
-						// set the reconcile annotation for the landscaper
-						log.Debug("Setting reconcile annotation for Landscaper resource", "landscaper", landscaper.Name, "namespace", landscaper.Namespace)
-
-						if err := controller.EnsureAnnotation(
-							ctx, r.OnboardingCluster.Client(),
-							&landscaper,
-							v1alpha2.LandscaperOperation, v1alpha2.OperationReconcile,
-							true, controller.OVERWRITE); err != nil {
-							log.Error(err, "Failed to set reconcile annotation for Landscaper resource", "landscaper", landscaper.Name, "namespace", landscaper.Namespace)
-							return nil
-						}
-
-						// don't add the request since it will already be reconciled by setting the annotation
-					}
-				}
-				return nil
-			}), controller.ToTypedPredicate[*v1alpha2.ProviderConfig](predicate.GenerationChangedPredicate{}),
+			handler.TypedEnqueueRequestsFromMapFunc(r.mapProviderConfigToRequests(mgr)), controller.ToTypedPredicate[*v1alpha2.ProviderConfig](predicate.GenerationChangedPredicate{}),
+		)).
+		WatchesRawSource(source.Kind(r.PlatformCluster.Cluster().GetCache(), &corev1.Secret{},
+			handler.TypedEnqueueRequestsFromMapFunc(r.mapImagePullSecretToRequests(mgr)),
 		)).
 		Named(controllerName).
 		Complete(r)
+}
+
+// mapProviderConfigToRequests returns a handler function that triggers reconciliation of Landscaper resources
+// whenever a ProviderConfig they reference changes.
+func (r *LandscaperReconciler) mapProviderConfigToRequests(mgr ctrl.Manager) func(context.Context, *v1alpha2.ProviderConfig) []ctrl.Request {
+	return func(ctx context.Context, providerConfig *v1alpha2.ProviderConfig) []ctrl.Request {
+		log := logging.Wrap(mgr.GetLogger()).WithName(controllerName + "/ProviderConfig")
+
+		if log.Enabled(logging.DEBUG) {
+			providerConfigType, hasLabel := controller.GetLabel(providerConfig, v1alpha2.ProviderConfigTypeLabel)
+			isDefault := hasLabel && providerConfigType == v1alpha2.DefaultProviderConfigValue
+			log.Debug("Starting reconcile", "providerConfig", providerConfig.Name, "isDefault", isDefault)
+		}
+
+		// Find all Landscaper resources referencing this ProviderConfig
+		landscapers := &v1alpha2.LandscaperList{}
+		if err := r.OnboardingCluster.Client().List(ctx, landscapers); err != nil {
+			log.Error(err, "Failed to list Landscaper resources")
+			return nil
+		}
+
+		for _, landscaper := range landscapers.Items {
+			if landscaper.Status.ProviderConfigRef != nil && landscaper.Status.ProviderConfigRef.Name == providerConfig.Name {
+				// set the reconcile annotation for the landscaper
+				log.Debug("Setting reconcile annotation for Landscaper resource", "landscaper", landscaper.Name, "namespace", landscaper.Namespace)
+
+				if err := controller.EnsureAnnotation(
+					ctx, r.OnboardingCluster.Client(),
+					&landscaper,
+					v1alpha2.LandscaperOperation, v1alpha2.OperationReconcile,
+					true, controller.OVERWRITE); err != nil {
+					log.Error(err, "Failed to set reconcile annotation for Landscaper resource", "landscaper", landscaper.Name, "namespace", landscaper.Namespace)
+					return nil
+				}
+
+				// don't add the request since it will already be reconciled by setting the annotation
+			}
+		}
+		return nil
+	}
+}
+
+// mapImagePullSecretToRequests returns a handler function that triggers reconciliation of Landscaper resources
+// whenever an image pull secret they reference changes.
+func (r *LandscaperReconciler) mapImagePullSecretToRequests(mgr ctrl.Manager) func(context.Context, *corev1.Secret) []ctrl.Request {
+	return func(ctx context.Context, secret *corev1.Secret) []ctrl.Request {
+		log := logging.Wrap(mgr.GetLogger()).WithName(controllerName + "/Secret")
+
+		if secret.Namespace != r.ProviderNamespace {
+			return nil
+		}
+
+		if !r.isReferencedImagePullSecret(ctx, secret.Name) {
+			return nil
+		}
+
+		log.Debug("Image pull secret changed, triggering reconcile", "secret", secret.Name)
+
+		landscapers := &v1alpha2.LandscaperList{}
+		if err := r.OnboardingCluster.Client().List(ctx, landscapers); err != nil {
+			log.Error(err, "Failed to list Landscaper resources")
+			return nil
+		}
+
+		for _, landscaper := range landscapers.Items {
+			if err := controller.EnsureAnnotation(
+				ctx, r.OnboardingCluster.Client(),
+				&landscaper,
+				v1alpha2.LandscaperOperation, v1alpha2.OperationReconcile,
+				true, controller.OVERWRITE); err != nil {
+				log.Error(err, "Failed to set reconcile annotation for Landscaper resource", "landscaper", landscaper.Name, "namespace", landscaper.Namespace)
+			}
+		}
+		return nil
+	}
+}
+
+// isReferencedImagePullSecret checks whether the given secret name is referenced as an image pull secret
+// in any ServiceProvider or ProviderConfig resource on the platform cluster.
+func (r *LandscaperReconciler) isReferencedImagePullSecret(ctx context.Context, secretName string) bool {
+	log := logging.Wrap(ctrl.Log).WithName(controllerName + "/Secret")
+
+	// Check ServiceProvider image pull secrets
+	serviceProvider := &v1alpha1.ServiceProvider{}
+	if err := r.PlatformCluster.Client().Get(ctx, client.ObjectKey{Name: r.ProviderName}, serviceProvider); err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.Error(err, "Failed to get ServiceProvider", "name", r.ProviderName)
+		}
+	} else if referencesSecret(serviceProvider.Spec.ImagePullSecrets, secretName) {
+		return true
+	}
+
+	// Check ProviderConfig image pull secrets
+	providerConfigList := &v1alpha2.ProviderConfigList{}
+	if err := r.PlatformCluster.Client().List(ctx, providerConfigList); err != nil {
+		log.Error(err, "Failed to list ProviderConfig resources")
+		return false
+	}
+	for _, providerConfig := range providerConfigList.Items {
+		for _, imgCfg := range []*v1alpha2.ImageConfiguration{
+			providerConfig.Spec.Deployment.LandscaperController,
+			providerConfig.Spec.Deployment.LandscaperWebhooksServer,
+			providerConfig.Spec.Deployment.HelmDeployer,
+			providerConfig.Spec.Deployment.ManifestDeployer,
+		} {
+			if imgCfg != nil && referencesSecret(imgCfg.ImagePullSecrets, secretName) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// referencesSecret checks whether the given secret name appears in the provided list of object references.
+func referencesSecret(refs []common.LocalObjectReference, name string) bool {
+	for _, ref := range refs {
+		if ref.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func getMCPPermissions() []clustersv1alpha1.PermissionsRequest {
