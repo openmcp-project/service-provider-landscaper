@@ -130,9 +130,9 @@ var _ = Describe("Landscaper Instance Installer", func() {
 		env := buildTestEnvironment("test-01")
 		config := createConfiguration(env)
 
-		Expect(config.Landscaper.Controller.Image.Image).To(Equal("registry.test/" + lsv1alpha2.LandscaperControllerImageLocation + ":" + version))
-		Expect(config.Landscaper.WebhooksServer.Image.Image).To(Equal("registry.test/" + lsv1alpha2.LandscaperWebhooksImageLocations + ":" + version))
-		Expect(config.ManifestDeployer.Image.Image).To(Equal("registry.test/" + lsv1alpha2.ManifestDeployerImageLocation + ":" + version))
+		Expect(config.Landscaper.Controller.Image.Image).To(Equal("registry.test/components/" + lsv1alpha2.LandscaperControllerImageLocation + ":" + version))
+		Expect(config.Landscaper.WebhooksServer.Image.Image).To(Equal("registry.test/components/" + lsv1alpha2.LandscaperWebhooksImageLocations + ":" + version))
+		Expect(config.ManifestDeployer.Image.Image).To(Equal("registry.test/components/" + lsv1alpha2.ManifestDeployerImageLocation + ":" + version))
 		Expect(config.HelmDeployer.Image.Image).To(Equal("other.registry.test/landscaper/images/helm-deployer-controller" + ":" + version))
 
 		// Add instance specific values

@@ -20,10 +20,10 @@ metadata:
     landscaper.services.openmcp.cloud/providertype: default
 spec:
   deployment:
-    repository: europe-docker.pkg.dev/sap-gcp-cp-k8s-stable-hub/landscaper
+    repository: ghcr.io/openmcp-project/components 
     availableVersions:
-      - v0.136.0
-      - v0.137.0 
+      - v1.1.0
+      - v1.1.0 
 ```
 
 If the label `landscaper.services.openmcp.cloud/providertype` is set to `default`, the Service Provider Landscaper will automatically use this `ProviderConfig` resource.
