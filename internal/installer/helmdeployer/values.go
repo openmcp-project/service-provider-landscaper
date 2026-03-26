@@ -76,6 +76,9 @@ func (v *Values) Default() error {
 		// TODO
 		v.Configuration.Identity = fmt.Sprintf("helm-deployer-%s", v.Instance)
 	}
+	if v.Configuration.Controller.Workers == 0 {
+		v.Configuration.Controller.Workers = 30
+	}
 	if v.WorkloadClientSettings == nil {
 		v.WorkloadClientSettings = &ClientSettings{}
 	}
