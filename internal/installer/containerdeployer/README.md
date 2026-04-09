@@ -1,0 +1,7 @@
+- [ ] deployment.go
+- [ ] containerDeployerValues in instance/values.go
+- [ ] values.go
+- [x] values_helper.go
+- [x] config_secret.go
+- [x] kubeconfig_secret.go
+- [x] hpa.go

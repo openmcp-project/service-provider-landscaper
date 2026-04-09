@@ -6,6 +6,7 @@ import (
 
 	"github.com/openmcp-project/controller-utils/pkg/readiness"
 
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/containerdeployer"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/helmdeployer"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/landscaper"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/manifestdeployer"
@@ -36,8 +37,14 @@ func InstallLandscaperInstance(ctx context.Context, config *Configuration) error
 		return fmt.Errorf("failed to install helm deployer: %w", err)
 	}
 
+	// Container deployer
+	containerExports, err := containerdeployer.InstallContainerDeployer(ctx, containerDeployerValues(config, kubeconfigs))
+	if err != nil {
+		return fmt.Errorf("failed to install container deployer: %w", err)
+	}
+
 	// Landscaper
-	err = landscaper.InstallLandscaper(ctx, landscaperValues(config, kubeconfigs, manifestExports, helmExports))
+	err = landscaper.InstallLandscaper(ctx, landscaperValues(config, kubeconfigs, manifestExports, helmExports, containerExports))
 	if err != nil {
 		return fmt.Errorf("failed to install landscaper controllers: %w", err)
 	}
@@ -51,9 +58,14 @@ func UninstallLandscaperInstance(ctx context.Context, config *Configuration) err
 		return fmt.Errorf("failed to get kubeconfigs: %w", err)
 	}
 
-	err = landscaper.UninstallLandscaper(ctx, landscaperValues(config, kubeconfigs, nil, nil))
+	err = landscaper.UninstallLandscaper(ctx, landscaperValues(config, kubeconfigs, nil, nil, nil))
 	if err != nil {
 		return fmt.Errorf("failed to uninstall landscaper controllers: %w", err)
+	}
+
+	err = containerdeployer.UninstallContainerDeployer(ctx, containerDeployerValues(config, kubeconfigs))
+	if err != nil {
+		return fmt.Errorf("failed to uninstall container deployer: %w", err)
 	}
 
 	err = helmdeployer.UninstallHelmDeployer(ctx, helmDeployerValues(config, kubeconfigs))
@@ -78,6 +90,7 @@ func CheckReadiness(ctx context.Context, config *Configuration) readiness.CheckR
 	return readiness.Aggregate(
 		manifestdeployer.CheckReadiness(ctx, manifestDeployerValues(config, kubeconfigs)),
 		helmdeployer.CheckReadiness(ctx, helmDeployerValues(config, kubeconfigs)),
-		landscaper.CheckReadiness(ctx, landscaperValues(config, kubeconfigs, nil, nil)),
+		containerdeployer.CheckReadiness(ctx, containerDeployerValues(config, kubeconfigs)),
+		landscaper.CheckReadiness(ctx, landscaperValues(config, kubeconfigs, nil, nil, nil)),
 	)
 }

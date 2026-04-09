@@ -4,6 +4,7 @@ import (
 	"github.com/openmcp-project/landscaper/apis/config/v1alpha1"
 	"k8s.io/utils/ptr"
 
+	"github.com/openmcp-project/service-provider-landscaper/internal/installer/containerdeployer"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/helmdeployer"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/landscaper"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/manifestdeployer"
@@ -55,8 +56,27 @@ func helmDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *helmde
 	return v
 }
 
+// TODO container deployer
+// containerDeployerValues determines the import values for the installation of the container deployer
+func containerDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *containerdeployer.Values {
+	v := &containerdeployer.Values{
+		Instance:                 c.Instance,
+		Version:                  c.Version,
+		PlatformCluster:          c.PlatformCluster,
+		PlatformClusterNamespace: c.PlatformClusterNamespace,
+		WorkloadCluster:          c.WorkloadCluster,
+		Image:                    c.ManifestDeployer.Image,
+		Resources:                c.ManifestDeployer.Resources,
+		HPA:                      c.ManifestDeployer.HPA,
+		MCPClusterKubeconfig:     string(kubeconfigs.MCPCluster),
+	}
+
+	return v
+
+}
+
 // landscaperValues determines the import values for the installation of the landscaper controllers and webhooks server
-func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestExports *manifestdeployer.Exports, helmExports *helmdeployer.Exports) *landscaper.Values {
+func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestExports *manifestdeployer.Exports, helmExports *helmdeployer.Exports, containerExports *containerdeployer.Exports) *landscaper.Values {
 	v := &landscaper.Values{
 		Instance:                 c.Instance,
 		Version:                  c.Version,
@@ -97,6 +117,9 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 	}
 	if helmExports != nil {
 		deployments = append(deployments, helmExports.DeploymentName)
+	}
+	if containerExports != nil {
+		deployments = append(deployments, containerExports.DeploymentName)
 	}
 	v.Controller.HealthChecks = &v1alpha1.AdditionalDeployments{
 		Deployments: deployments,

@@ -283,6 +283,13 @@ var _ = Describe("Landscaper Controller", func() {
 				},
 			}
 
+			containerDeployerDeployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "container-deployer",
+					Namespace: installationNamespace,
+				},
+			}
+
 			inst := identity.Instance(identity.GetInstanceID(ls))
 			tlsRoute := &gatewayv1alpha2.TLSRoute{
 				ObjectMeta: metav1.ObjectMeta{
@@ -300,6 +307,7 @@ var _ = Describe("Landscaper Controller", func() {
 				lsWebhooksServerDeployment,
 				manifestDeployerDeployment,
 				helmDeployerDeployment,
+				containerDeployerDeployment,
 				tlsRoute)
 
 			reconcileResult := env.ShouldReconcile(req, "reconcile should return a requeue time")
@@ -388,6 +396,7 @@ var _ = Describe("Landscaper Controller", func() {
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsWebhooksServerDeployment), lsWebhooksServerDeployment)).To(Succeed())
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(manifestDeployerDeployment), manifestDeployerDeployment)).To(Succeed())
 			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(helmDeployerDeployment), helmDeployerDeployment)).To(Succeed())
+			Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(containerDeployerDeployment), containerDeployerDeployment)).To(Succeed())
 
 			// expect the image pull secrets to be created in the installation namespace
 			expectImagePullSecretsValid(env.Ctx, env.Client(), lsControllerDeployment, 2, installationNamespace)
@@ -395,6 +404,7 @@ var _ = Describe("Landscaper Controller", func() {
 			expectImagePullSecretsValid(env.Ctx, env.Client(), lsWebhooksServerDeployment, 2, installationNamespace)
 			expectImagePullSecretsValid(env.Ctx, env.Client(), manifestDeployerDeployment, 2, installationNamespace)
 			expectImagePullSecretsValid(env.Ctx, env.Client(), helmDeployerDeployment, 1, installationNamespace)
+			expectImagePullSecretsValid(env.Ctx, env.Client(), containerDeployerDeployment, 1, installationNamespace)
 
 			// set deployments to ready
 			setDeploymentReady(env.Ctx, lsControllerDeployment, env.Client())
@@ -402,6 +412,7 @@ var _ = Describe("Landscaper Controller", func() {
 			setDeploymentReady(env.Ctx, lsWebhooksServerDeployment, env.Client())
 			setDeploymentReady(env.Ctx, manifestDeployerDeployment, env.Client())
 			setDeploymentReady(env.Ctx, helmDeployerDeployment, env.Client())
+			setDeploymentReady(env.Ctx, containerDeployerDeployment, env.Client())
 
 			// now the landscaper should be ready
 			reconcileResult = env.ShouldReconcile(req, "reconcile should not return a requeue time")
@@ -425,6 +436,7 @@ var _ = Describe("Landscaper Controller", func() {
 				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(lsWebhooksServerDeployment), lsWebhooksServerDeployment)).ToNot(Succeed())
 				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(manifestDeployerDeployment), manifestDeployerDeployment)).ToNot(Succeed())
 				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(helmDeployerDeployment), helmDeployerDeployment)).ToNot(Succeed())
+				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(containerDeployerDeployment), containerDeployerDeployment)).ToNot(Succeed())
 				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(installationNs), installationNs)).ToNot(Succeed())
 				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(accessRequestMCP), accessRequestMCP)).ToNot(Succeed())
 				g.Expect(env.Client().Get(env.Ctx, client.ObjectKeyFromObject(workloadAccessRequest), workloadAccessRequest)).ToNot(Succeed())
