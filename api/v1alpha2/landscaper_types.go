@@ -19,6 +19,7 @@ package v1alpha2
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type LandscaperPhase string
@@ -114,5 +115,8 @@ type LandscaperList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Landscaper{}, &LandscaperList{})
+	SchemeBuilder.Register(func(scheme *runtime.Scheme) error {
+		scheme.AddKnownTypes(GroupVersion, &Landscaper{}, &LandscaperList{})
+		return nil
+	})
 }

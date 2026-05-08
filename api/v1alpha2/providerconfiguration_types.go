@@ -19,6 +19,7 @@ package v1alpha2
 import (
 	"github.com/openmcp-project/openmcp-operator/api/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -144,5 +145,8 @@ func imageWithVersion(image, version string) string {
 }
 
 func init() {
-	SchemeBuilder.Register(&ProviderConfig{}, &ProviderConfigList{})
+	SchemeBuilder.Register(func(scheme *runtime.Scheme) error {
+		scheme.AddKnownTypes(GroupVersion, &ProviderConfig{}, &ProviderConfigList{})
+		return nil
+	})
 }
