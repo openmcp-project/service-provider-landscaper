@@ -25,9 +25,9 @@ import (
 type LandscaperPhase string
 
 const (
-	PhaseProgressing LandscaperPhase = "PhaseProgressing"
-	PhaseTerminating LandscaperPhase = "PhaseTerminating"
-	PhaseReady       LandscaperPhase = "PhaseReady"
+	PhaseProgressing LandscaperPhase = "Progressing"
+	PhaseTerminating LandscaperPhase = "Terminating"
+	PhaseReady       LandscaperPhase = "Ready"
 
 	ConditionTypeInstalled   = "Installed"
 	ConditionTypeUninstalled = "Uninstalled"
