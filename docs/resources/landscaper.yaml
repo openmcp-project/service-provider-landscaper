@@ -1,4 +1,4 @@
-apiVersion: landscaper.services.openmcp.cloud/v1alpha1
+apiVersion: landscaper.services.open-control-plane.io/v1alpha1
 kind: Landscaper
 metadata:
   name: sample
