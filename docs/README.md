@@ -7,6 +7,7 @@
 
 ## Technical Documentation
 
+- [Custom CA Bundle Configuration](technical/custom-ca.md)
 - [Installing the Service Provider Landscaper](technical/install.md)
 - [Packages](technical/packages.md)
 
