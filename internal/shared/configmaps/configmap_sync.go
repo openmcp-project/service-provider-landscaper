@@ -3,6 +3,7 @@ package configmapsync
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
 	"github.com/openmcp-project/controller-utils/pkg/resources"
@@ -12,10 +13,23 @@ import (
 )
 
 const (
-	CustomCaPath       = "/etc/custom-ca"
 	CustomCaVolumeName = "custom-ca-bundle"
-	SystemCaPath       = "/etc/ssl/certs"
+	CustomCaPath       = "/etc/open-control-plane/custom-ca"
 )
+
+// from x509 go standard lib (https://github.com/golang/go/blob/015343854b5d9e2829481df30dbcae2ca6682d25/src/crypto/x509/root_linux.go)
+var CertDirectories = []string{
+	"/etc/ssl/certs",
+	"/etc/pki/tls/certs",
+}
+
+// SSLCertDirEnvValue builds the SSL_CERT_DIR value used by all Landscaper components.
+func SSLCertDirEnvValue() string {
+	dirs := make([]string, 0, len(CertDirectories)+1)
+	dirs = append(dirs, CertDirectories...)
+	dirs = append(dirs, CustomCaPath)
+	return strings.Join(dirs, ":")
+}
 
 var ErrNilSourceConfigMapRef = errors.New("caBundleRef must not be nil")
 

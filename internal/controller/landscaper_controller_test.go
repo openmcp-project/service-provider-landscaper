@@ -2,7 +2,6 @@ package controller_test
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	libutils "github.com/openmcp-project/openmcp-operator/lib/utils"
@@ -108,7 +107,7 @@ func expectCaConfigMapValid(ctx context.Context, c client.Client, deployment *ap
 
 	for _, container := range deployment.Spec.Template.Spec.Containers {
 		for _, envVar := range container.Env {
-			if envVar.Value == fmt.Sprintf("%s:%s", configmapsync.SystemCaPath, configmapsync.CustomCaPath) {
+			if envVar.Value == configmapsync.SSLCertDirEnvValue() {
 				foundEnvVar = true
 			}
 		}
