@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca-bundle
+  namespace: openmcp-system
+data:
+  ca.crt: dummy-ca-cert

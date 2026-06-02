@@ -20,17 +20,18 @@ type Values struct {
 	PlatformCluster          *clusters.Cluster
 	PlatformClusterNamespace string `json:"platformClusterNamespace,omitempty"`
 	WorkloadCluster          *clusters.Cluster
-	VerbosityLevel           string                    `json:"verbosityLevel,omitempty"`
-	MCPClusterKubeconfig     string                    `json:"mcpClusterKubeconfig,omitempty"`
-	Image                    api.ImageConfiguration    `json:"image,omitempty"`
-	ReplicaCount             *int32                    `json:"replicaCount,omitempty"`
-	Resources                core.ResourceRequirements `json:"resources,omitempty"`
-	PodSecurityContext       *core.PodSecurityContext  `json:"podSecurityContext,omitempty"`
-	SecurityContext          *core.SecurityContext     `json:"securityContext,omitempty"`
-	Configuration            v1alpha2.Configuration    `json:"configuration,omitempty"`
-	WorkloadClientSettings   *ClientSettings           `json:"workloadClientSettings,omitempty"`
-	MCPClientSettings        *ClientSettings           `json:"mcpClientSettings,omitempty"`
-	HPA                      types.HPAValues           `json:"hpa,omitempty"`
+	VerbosityLevel           string                     `json:"verbosityLevel,omitempty"`
+	MCPClusterKubeconfig     string                     `json:"mcpClusterKubeconfig,omitempty"`
+	Image                    api.ImageConfiguration     `json:"image,omitempty"`
+	ReplicaCount             *int32                     `json:"replicaCount,omitempty"`
+	Resources                core.ResourceRequirements  `json:"resources,omitempty"`
+	PodSecurityContext       *core.PodSecurityContext   `json:"podSecurityContext,omitempty"`
+	SecurityContext          *core.SecurityContext      `json:"securityContext,omitempty"`
+	Configuration            v1alpha2.Configuration     `json:"configuration,omitempty"`
+	WorkloadClientSettings   *ClientSettings            `json:"workloadClientSettings,omitempty"`
+	MCPClientSettings        *ClientSettings            `json:"mcpClientSettings,omitempty"`
+	HPA                      types.HPAValues            `json:"hpa,omitempty"`
+	CAConfigMap              *core.ConfigMapKeySelector `json:"caConfigMap,omitempty"`
 }
 
 type ReleaseValues struct {
