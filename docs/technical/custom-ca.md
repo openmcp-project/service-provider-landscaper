@@ -108,8 +108,8 @@ flowchart TB
 
 When you configure `spec.caBundleRef` in a ProviderConfig, the service provider reads the referenced ConfigMap (name/key) from the provider namespace on the platform cluster and copies it into the Landscaper instance namespace on the workload cluster.
 
-Each Landscaper component (controller, main, webhooks, helm deployer, manifest deployer) mounts the copied ConfigMap as a volume named `custom-ca-bundle` at `/etc/custom-ca`. Only the selected ConfigMap key is mounted as a file with the key as filename `/etc/custom-ca/<configmap-key>`.
+Each Landscaper component (controller, main, webhooks, helm deployer, manifest deployer) mounts the copied ConfigMap as a volume named `custom-ca-bundle` at `/etc/open-control-plane/custom-ca`. Only the selected ConfigMap key is mounted as a file with the key as filename `/etc/open-control-plane/custom-ca/<configmap-key>`.
 
-To make the bundle effective, the pods set `SSL_CERT_DIR=/etc/ssl/certs:/etc/custom-ca`. This keeps the system trust store and extends it with your custom CA bundle.
+To make the bundle effective, the pods set `SSL_CERT_DIR=<default-cert-dirs>:/etc/open-control-plane/custom-ca`. This keeps the system trust store and extends it with your custom CA bundle.
 
 **Notice:** If your container runtime also needs to trust a private registry, install the CA bundle on the cluster nodes as well.

@@ -242,7 +242,7 @@ func (m *centralDeploymentMutator) env() []corev1.EnvVar {
 	if m.values.Controller.CAConfigMap != nil {
 		caEnvVar := corev1.EnvVar{
 			Name:  "SSL_CERT_DIR",
-			Value: fmt.Sprintf("%s:%s", configmapsync.SystemCaPath, configmapsync.CustomCaPath),
+			Value: configmapsync.SSLCertDirEnvValue(),
 		}
 		envVars = append(envVars, caEnvVar)
 	}
