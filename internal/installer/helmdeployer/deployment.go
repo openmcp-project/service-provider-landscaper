@@ -11,6 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openmcp-project/controller-utils/pkg/resources"
+
+	configmapsync "github.com/openmcp-project/service-provider-landscaper/internal/shared/configmaps"
 )
 
 type deploymentMutator struct {
@@ -138,6 +140,24 @@ func (d *deploymentMutator) volumes() []corev1.Volume {
 		volumes = append(volumes, ociRegistryVolume)
 	}
 
+	if d.values.CAConfigMap != nil {
+		caVolume := corev1.Volume{
+			Name: configmapsync.CustomCaVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: d.values.CAConfigMap.LocalObjectReference,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  d.values.CAConfigMap.Key,
+							Path: d.values.CAConfigMap.Key,
+						},
+					},
+				},
+			},
+		}
+		volumes = append(volumes, caVolume)
+	}
+
 	return volumes
 }
 
@@ -160,6 +180,14 @@ func (d *deploymentMutator) volumeMounts() []corev1.VolumeMount {
 		})
 	}
 
+	if d.values.CAConfigMap != nil {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      configmapsync.CustomCaVolumeName,
+			MountPath: configmapsync.CustomCaPath,
+			ReadOnly:  true,
+		})
+	}
+
 	return volumeMounts
 }
 
@@ -174,7 +202,7 @@ func (d *deploymentMutator) args() []string {
 }
 
 func (d *deploymentMutator) env() []corev1.EnvVar {
-	return []corev1.EnvVar{
+	envVars := []corev1.EnvVar{
 		{
 			Name:  "KUBECONFIG",
 			Value: fmt.Sprintf("/app/ls/%s/kubeconfig", d.mcpKubeconfigSecretName()),
@@ -212,4 +240,14 @@ func (d *deploymentMutator) env() []corev1.EnvVar {
 			Value: strconv.FormatInt(int64(d.values.MCPClientSettings.QPS), 10),
 		},
 	}
+
+	if d.values.CAConfigMap != nil {
+		caEnvVar := corev1.EnvVar{
+			Name:  "SSL_CERT_DIR",
+			Value: fmt.Sprintf("%s:%s", configmapsync.SystemCaPath, configmapsync.CustomCaPath),
+		}
+		envVars = append(envVars, caEnvVar)
+	}
+
+	return envVars
 }
