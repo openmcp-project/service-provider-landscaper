@@ -18,15 +18,15 @@ const (
 )
 
 // from x509 go standard lib (https://github.com/golang/go/blob/015343854b5d9e2829481df30dbcae2ca6682d25/src/crypto/x509/root_linux.go)
-var CertDirectories = []string{
+var certDirectories = []string{
 	"/etc/ssl/certs",
 	"/etc/pki/tls/certs",
 }
 
 // SSLCertDirEnvValue builds the SSL_CERT_DIR value used by all Landscaper components.
 func SSLCertDirEnvValue() string {
-	dirs := make([]string, 0, len(CertDirectories)+1)
-	dirs = append(dirs, CertDirectories...)
+	dirs := make([]string, 0, len(certDirectories)+1)
+	dirs = append(dirs, certDirectories...)
 	dirs = append(dirs, CustomCaPath)
 	return strings.Join(dirs, ":")
 }
