@@ -55,6 +55,7 @@ type ControllerValues struct {
 	HPAMain            types.HPAValues                 `json:"hpaMain,omitempty"`            // optional, has default value
 	DeployItemTimeouts *v1alpha1.DeployItemTimeouts    `json:"deployItemTimeouts,omitempty"` // optional, has default value
 	HealthChecks       *v1alpha1.AdditionalDeployments `json:"healthChecks,omitempty"`       // optional, has default value
+	CAConfigMap        *core.ConfigMapKeySelector      `json:"caConfigMap,omitempty"`
 }
 
 const (
@@ -67,14 +68,15 @@ const (
 type WebhooksServerValues struct {
 	DisableWebhooks []string `json:"disableWebhooks,omitempty"`
 	// MCPKubeconfig contains the kubeconfig for the mcp cluster.
-	MCPKubeconfig string                    `json:"mcpKubeconfig,omitempty"`
-	Service       *ServiceValues            `json:"service,omitempty"` // optional, has default value
-	Image         api.ImageConfiguration    `json:"image,omitempty"`
-	URL           string                    `json:"url,omitempty"`
-	ServicePort   int32                     `json:"servicePort,omitempty"`  // required unless DisableWebhooks contains "all"
-	ReplicaCount  *int32                    `json:"replicaCount,omitempty"` // optional - has default value
-	Resources     core.ResourceRequirements `json:"resources,omitempty"`    // optional - has default value
-	HPA           types.HPAValues           `json:"hpa,omitempty"`          // optional - has default value
+	MCPKubeconfig string                     `json:"mcpKubeconfig,omitempty"`
+	Service       *ServiceValues             `json:"service,omitempty"` // optional, has default value
+	Image         api.ImageConfiguration     `json:"image,omitempty"`
+	URL           string                     `json:"url,omitempty"`
+	ServicePort   int32                      `json:"servicePort,omitempty"`  // required unless DisableWebhooks contains "all"
+	ReplicaCount  *int32                     `json:"replicaCount,omitempty"` // optional - has default value
+	Resources     core.ResourceRequirements  `json:"resources,omitempty"`    // optional - has default value
+	HPA           types.HPAValues            `json:"hpa,omitempty"`          // optional - has default value
+	CAConfigMap   *core.ConfigMapKeySelector `json:"caConfigMap,omitempty"`
 }
 
 type CommonControllerValues struct {

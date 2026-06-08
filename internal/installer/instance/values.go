@@ -32,6 +32,7 @@ func manifestDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *ma
 		Resources:                c.ManifestDeployer.Resources,
 		HPA:                      c.ManifestDeployer.HPA,
 		MCPClusterKubeconfig:     string(kubeconfigs.MCPCluster),
+		CAConfigMap:              c.CaConfigMap,
 	}
 
 	return v
@@ -50,6 +51,7 @@ func helmDeployerValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs) *helmde
 		Resources:                c.HelmDeployer.Resources,
 		HPA:                      c.HelmDeployer.HPA,
 		MCPClusterKubeconfig:     string(kubeconfigs.MCPCluster),
+		CAConfigMap:              c.CaConfigMap,
 	}
 
 	return v
@@ -74,6 +76,7 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 			ResourcesMain:      c.Landscaper.Controller.ResourcesMain,
 			Metrics:            nil,
 			HPAMain:            c.Landscaper.Controller.HPAMain,
+			CAConfigMap:        c.CaConfigMap,
 		},
 		WebhooksServer: landscaper.WebhooksServerValues{
 			DisableWebhooks: nil,
@@ -84,9 +87,10 @@ func landscaperValues(c *Configuration, kubeconfigs *rbac.Kubeconfigs, manifestE
 				Port: c.Landscaper.WebhooksServer.ServicePort,
 				Name: c.Landscaper.WebhooksServer.ServiceName,
 			},
-			URL:       c.WorkloadClusterDomain,
-			Resources: c.Landscaper.WebhooksServer.Resources,
-			HPA:       c.Landscaper.WebhooksServer.HPA,
+			URL:         c.WorkloadClusterDomain,
+			Resources:   c.Landscaper.WebhooksServer.Resources,
+			HPA:         c.Landscaper.WebhooksServer.HPA,
+			CAConfigMap: c.CaConfigMap,
 		},
 	}
 

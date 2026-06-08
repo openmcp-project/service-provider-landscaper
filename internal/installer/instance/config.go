@@ -19,6 +19,7 @@ type Configuration struct {
 	MCPCluster               *clusters.Cluster
 	WorkloadCluster          *clusters.Cluster
 	WorkloadClusterDomain    string
+	CaConfigMap              *core.ConfigMapKeySelector
 
 	Landscaper LandscaperConfig
 
