@@ -6,16 +6,16 @@
 
 [![Quality: Incubating](https://img.shields.io/badge/Quality-Incubating-3d9970?style=flat-square&labelColor=555)](https://open-control-plane.io/developers/serviceprovider/quality-criteria)
 
-| Criterion                         | Status  | Notes                                                                                                                                                                                                                                                            |
-| --------------------------------- | :----:  | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Deletion behaviour                |   ⚠️    | A finalizer ensures the Service Provider managed resources like `Deployments` etc. But there is no behaviour that ensures deletion is blocked if custom resources (e.g. Landscaper' `Installation` objects) in a `ControlPlane` still exist.                     |
-| Status reporting & error messages |   ✅    |                                                                                                                                                                                                                                                                  |
-| Operation annotations             |   ❌    | `openmcp.cloud/operation` (pause / force-reconcile) annotations are not honoured.                                                                                                                                                                                |
-| API stability policy              |   ✅    |                                                                                                                                                                                                                                                                  |
-| Custom CA support                 |   ❌    | Custom CA bundle propagation to Landscaper components is not implemented.                                                                                                                                                                                        |
-| Release artifacts (image + OCM)   |   ✅    |                                                                                                                                                                                                                                                                  |
-| Testing                           |   ⚠️    | Unit and envtest suites exist; full lifecycle tests against a real cluster are not present.                                                                                                                                                                      |
-| Ownership and maintenance docs    |   ✅    |                                                                                                                                                                                                                                                                  |
+| Criterion                         | Status | Notes                                                                                                                                                                                                                                        |
+| --------------------------------- | :----: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deletion behaviour                |   ⚠️    | A finalizer ensures the Service Provider managed resources like `Deployments` etc. are cleaned-up. But there is no behaviour that ensures deletion is blocked if custom resources (e.g. Landscaper' `Installation` objects) in a `ControlPlane` still exist. |
+| Status reporting & error messages |   ✅    |                                                                                                                                                                                                                                              |
+| Operation annotations             |   ❌    | `openmcp.cloud/operation` (pause / force-reconcile) annotations are not honoured.                                                                                                                                                            |
+| API stability policy              |   ✅    |                                                                                                                                                                                                                                              |
+| Custom CA support                 |   ❌    | Custom CA bundle propagation to Landscaper components is not implemented.                                                                                                                                                                    |
+| Release artifacts (image + OCM)   |   ✅    |                                                                                                                                                                                                                                              |
+| Testing                           |   ⚠️    | Unit and envtest suites exist; full lifecycle tests against a real cluster are not present.                                                                                                                                                  |
+| Ownership and maintenance docs    |   ✅    |                                                                                                                                                                                                                                              |
 
 See the [OpenControlPlane Quality Criteria](https://open-control-plane.io/developers/serviceprovider/quality-criteria) for definitions.
 
@@ -25,7 +25,7 @@ Service Provider Landscaper manages the lifecycle of Landscaper instances.
 
 ### Provider Configuration
 
-The Service Provider Landscaper requires a `ProviderConfig` resource to be present on the platform cluster of an OpenMCP landscape. 
+The Service Provider Landscaper requires a `ProviderConfig` resource to be present on the platform cluster of an OpenMCP landscape.
 This resource defines the container image repository and the available versions of the Landscaper instances that can be installed.
 
 ```yaml
@@ -37,10 +37,10 @@ metadata:
     landscaper.services.openmcp.cloud/providertype: default
 spec:
   deployment:
-    repository: ghcr.io/openmcp-project/components 
+    repository: ghcr.io/openmcp-project/components
     availableVersions:
       - v1.1.0
-      - v1.1.0 
+      - v1.1.0
 ```
 
 If the label `landscaper.services.openmcp.cloud/providertype` is set to `default`, the Service Provider Landscaper will automatically use this `ProviderConfig` resource.
@@ -85,7 +85,7 @@ The Service Provider Landscaper runs on the platform cluster of an OpenMCP lands
 
 ```mermaid
 flowchart LR
-    
+
     subgraph Platform
         provider[Landscaper Provider]
     end
