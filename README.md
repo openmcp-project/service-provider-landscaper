@@ -12,7 +12,7 @@ The Service Provider Landscaper requires a `ProviderConfig` resource to be prese
 This resource defines the container image repository and the available versions of the Landscaper instances that can be installed.
 
 ```yaml
-apiVersion: landscaper.services.openmcp.cloud/v1alpha2
+apiVersion: landscaper.services.open-control-plane.io/v1alpha2
 kind: ProviderConfig
 metadata:
   name: default
@@ -36,7 +36,7 @@ An OpenMCP user can request a Landscaper instance by creating a custom resource 
 For example, let's suppose an OpenMCP user has already created a `ManagedControlPlane` resource with name `sample` in namespace `project-x--workspace-y`. The user could then create the following `Landscaper` resource to use the MCP together with a Landscaper instance:
 
 ```yaml
-apiVersion: landscaper.services.openmcp.cloud/v1alpha2
+apiVersion: landscaper.services.open-control-plane.io/v1alpha2
 kind: Landscaper
 metadata:
   name: sample
@@ -48,7 +48,7 @@ spec:
 If the Landscaper instance should use a specific provider configuration, the user can specify the name of the `ProviderConfig` resource in the `spec.providerConfigRef` field.
 
 ```yaml
-apiVersion: landscaper.services.openmcp.cloud/v1alpha2
+apiVersion: landscaper.services.open-control-plane.io/v1alpha2
 kind: Landscaper
 metadata:
   name: sample

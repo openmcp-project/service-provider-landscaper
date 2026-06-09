@@ -37,7 +37,7 @@ flowchart LR
 The `ProviderConfig` resource lives on the **platform cluster** and defines the container image registry and available versions for all Landscaper instances managed by the provider.
 
 ```yaml
-apiVersion: landscaper.services.openmcp.cloud/v1alpha2
+apiVersion: landscaper.services.open-control-plane.io/v1alpha2
 kind: ProviderConfig
 metadata:
   name: default
@@ -93,7 +93,7 @@ If the label `landscaper.services.openmcp.cloud/providertype: default` is set, t
 ## Landscaper Resource
 
 ```yaml
-apiVersion: landscaper.services.openmcp.cloud/v1alpha1
+apiVersion: landscaper.services.open-control-plane.io/v1alpha1
 kind: Landscaper
 metadata:
   name: sample
@@ -150,7 +150,7 @@ Next the user has to create a Landscaper resource with the name <name> and names
 ```shell
 
 ```yaml
-apiVersion: landscaper.services.openmcp.cloud/v1alpha1
+apiVersion: landscaper.services.open-control-plane.io/v1alpha1
 kind: Landscaper
 metadata:
   name: <name>

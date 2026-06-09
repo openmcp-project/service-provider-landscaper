@@ -6,9 +6,9 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.20.1
   labels:
     openmcp.cloud/cluster: onboarding
-  name: landscapers.landscaper.services.openmcp.cloud
+  name: landscapers.landscaper.services.open-control-plane.io
 spec:
-  group: landscaper.services.openmcp.cloud
+  group: landscaper.services.open-control-plane.io
   names:
     kind: Landscaper
     listKind: LandscaperList
