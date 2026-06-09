@@ -8,7 +8,7 @@ Service Provider Landscaper manages the lifecycle of Landscaper instances.
 
 ### Provider Configuration
 
-The Service Provider Landscaper requires a `ProviderConfig` resource to be present on the platform cluster of an OpenMCP landscape.
+The Service Provider Landscaper requires a `ProviderConfig` resource to be present on the platform cluster of an OpenControlPlane landscape.
 This resource defines the container image repository and the available versions of the Landscaper instances that can be installed.
 
 ```yaml
@@ -31,9 +31,9 @@ The default provider configuration will be used by all Landscaper instances that
 
 ### Requesting a Landscaper
 
-An OpenMCP user can request a Landscaper instance by creating a custom resource of kind `Landscaper` on the onboarding cluster of an OpenMCP landscape. A prerequisite is that the user has already created an `ManagedControlPlane` (MCP). Both resources, `ManagedControlPlane` and `Landscaper`, must have the same name and namespace.
+An OpenControlPlane user can request a Landscaper instance by creating a custom resource of kind `Landscaper` on the onboarding cluster of an OpenControlPlane landscape. A prerequisite is that the user has already created an `ManagedControlPlane` (MCP). Both resources, `ManagedControlPlane` and `Landscaper`, must have the same name and namespace.
 
-For example, let's suppose an OpenMCP user has already created a `ManagedControlPlane` resource with name `sample` in namespace `project-x--workspace-y`. The user could then create the following `Landscaper` resource to use the MCP together with a Landscaper instance:
+For example, let's suppose an OpenControlPlane user has already created a `ManagedControlPlane` resource with name `sample` in namespace `project-x--workspace-y`. The user could then create the following `Landscaper` resource to use the MCP together with a Landscaper instance:
 
 ```yaml
 apiVersion: landscaper.services.open-control-plane.io/v1alpha2
@@ -64,7 +64,7 @@ The Service Provider Landscaper will then install a Landscaper instance together
 
 ### Architecture Overview
 
-The Service Provider Landscaper runs on the platform cluster of an OpenMCP landscape. It reconciles `Landscaper` resources and installs the corresponding Landscaper instances. Each Landscaper installed in this way runs on a so-called workload cluster and reconciles `Installation` resources on the MCP cluster.
+The Service Provider Landscaper runs on the platform cluster of an OpenControlPlane landscape. It reconciles `Landscaper` resources and installs the corresponding Landscaper instances. Each Landscaper installed in this way runs on a so-called workload cluster and reconciles `Installation` resources on the MCP cluster.
 
 ```mermaid
 flowchart LR
@@ -96,7 +96,7 @@ flowchart LR
 
 ## Requirements and Setup
 
-The setup of the Service Provider Landscaper  within an OpenMCP landscape is described in: [Installing the Service Provider Landscaper](docs/technical/install.md).
+The setup of the Service Provider Landscaper  within an OpenControlPlane landscape is described in: [Installing the Service Provider Landscaper](docs/technical/install.md).
 
 ## Quality Criteria
 
