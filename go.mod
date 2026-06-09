@@ -6,7 +6,7 @@ go 1.26.3
 
 require (
 	github.com/onsi/ginkgo/v2 v2.28.3
-	github.com/onsi/gomega v1.40.0
+	github.com/onsi/gomega v1.41.0
 	github.com/openmcp-project/controller-utils v0.27.1
 	github.com/openmcp-project/landscaper/apis v1.2.0
 	github.com/openmcp-project/openmcp-operator/api v0.19.1
