@@ -5,7 +5,7 @@ go 1.26.3
 //godebug default=go1.23
 
 require (
-	github.com/onsi/ginkgo/v2 v2.29.0
+	github.com/onsi/ginkgo/v2 v2.30.0
 	github.com/onsi/gomega v1.41.0
 	github.com/openmcp-project/controller-utils v0.29.0
 	github.com/openmcp-project/landscaper/apis v1.2.0
