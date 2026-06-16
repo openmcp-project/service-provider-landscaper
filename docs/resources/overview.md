@@ -86,6 +86,26 @@ spec:
       image: my.registry.example/custom-manifest-deployer
 ```
 
+### Custom CA Certificates
+
+The `CABundleRef` property in the `ProviderConfig` allows you to configure custom Certificate Authority (CA) bundles for the Landscaper instances as shown below. 
+For a more detailed guide see the [custom CA guide](../technical/custom-ca.md).
+
+```yaml
+apiVersion: landscaper.services.openmcp.cloud/v1alpha2
+kind: ProviderConfig
+metadata:
+  name: default
+  labels:
+    landscaper.services.openmcp.cloud/providertype: default
+spec:
+  # ... other configuration ...
+
+  caBundleRef:
+    name: custom-ca-bundle      # Name of the ConfigMap
+    key: ca-bundle.crt          # Key within the ConfigMap containing the certificate bundle
+```
+
 ### Default ProviderConfig
 
 If the label `landscaper.services.openmcp.cloud/providertype: default` is set, this `ProviderConfig` is used by all `Landscaper` resources that do not explicitly reference a provider configuration.

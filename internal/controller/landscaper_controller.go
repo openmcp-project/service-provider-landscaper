@@ -121,6 +121,9 @@ func (r *LandscaperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WatchesRawSource(source.Kind(r.PlatformCluster.Cluster().GetCache(), &corev1.Secret{},
 			handler.TypedEnqueueRequestsFromMapFunc(r.mapImagePullSecretToRequests(mgr)),
 		)).
+		WatchesRawSource(source.Kind(r.PlatformCluster.Cluster().GetCache(), &corev1.ConfigMap{},
+			handler.TypedEnqueueRequestsFromMapFunc(r.mapCABundleConfigMapToRequests(mgr)),
+		)).
 		Named(controllerName).
 		Complete(r)
 }
@@ -241,6 +244,60 @@ func (r *LandscaperReconciler) isReferencedImagePullSecret(ctx context.Context, 
 func referencesSecret(refs []common.LocalObjectReference, name string) bool {
 	for _, ref := range refs {
 		if ref.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// mapCABundleConfigMapToRequests returns a handler function that triggers reconciliation of Landscaper resources
+// whenever a ProviderConfig-referenced CA bundle ConfigMap changes.
+func (r *LandscaperReconciler) mapCABundleConfigMapToRequests(mgr ctrl.Manager) func(context.Context, *corev1.ConfigMap) []ctrl.Request {
+	return func(ctx context.Context, configMap *corev1.ConfigMap) []ctrl.Request {
+		log := logging.Wrap(mgr.GetLogger()).WithName(controllerName + "/ConfigMap")
+
+		if configMap.Namespace != r.ProviderNamespace {
+			return nil
+		}
+
+		if !r.isReferencedCaConfigMap(ctx, configMap.Name) {
+			return nil
+		}
+
+		log.Debug("CA bundle configmap changed, triggering reconcile", "configMap", configMap.Name)
+
+		landscapers := &v1alpha2.LandscaperList{}
+		if err := r.OnboardingCluster.Client().List(ctx, landscapers); err != nil {
+			log.Error(err, "Failed to list Landscaper resources")
+			return nil
+		}
+
+		for _, landscaper := range landscapers.Items {
+			if err := controller.EnsureAnnotation(
+				ctx, r.OnboardingCluster.Client(),
+				&landscaper,
+				v1alpha2.LandscaperOperation, v1alpha2.OperationReconcile,
+				true, controller.OVERWRITE); err != nil {
+				log.Error(err, "Failed to set reconcile annotation for Landscaper resource", "landscaper", landscaper.Name, "namespace", landscaper.Namespace)
+			}
+		}
+		return nil
+	}
+}
+
+// isReferencedCaConfigMap checks whether the given configmap name is referenced as a CA bundle
+// in any ProviderConfig resource on the platform cluster.
+func (r *LandscaperReconciler) isReferencedCaConfigMap(ctx context.Context, configMapName string) bool {
+	log := logging.Wrap(ctrl.Log).WithName(controllerName + "/ConfigMap")
+
+	providerConfigList := &v1alpha2.ProviderConfigList{}
+	if err := r.PlatformCluster.Client().List(ctx, providerConfigList); err != nil {
+		log.Error(err, "Failed to list ProviderConfig resources")
+		return false
+	}
+
+	for _, providerConfig := range providerConfigList.Items {
+		if providerConfig.Spec.CABundleRef != nil && providerConfig.Spec.CABundleRef.Name == configMapName {
 			return true
 		}
 	}

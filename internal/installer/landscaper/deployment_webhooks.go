@@ -10,6 +10,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	configmapsync "github.com/openmcp-project/service-provider-landscaper/internal/shared/configmaps"
 )
 
 type webhooksDeploymentMutator struct {
@@ -97,6 +99,24 @@ func (m *webhooksDeploymentMutator) volumes() []corev1.Volume {
 		},
 	}
 
+	if m.values.Controller.CAConfigMap != nil {
+		caVolume := corev1.Volume{
+			Name: configmapsync.CustomCaVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: m.values.Controller.CAConfigMap.LocalObjectReference,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  m.values.Controller.CAConfigMap.Key,
+							Path: m.values.Controller.CAConfigMap.Key,
+						},
+					},
+				},
+			},
+		}
+		volumes = append(volumes, caVolume)
+	}
+
 	return volumes
 }
 
@@ -106,6 +126,14 @@ func (m *webhooksDeploymentMutator) volumeMounts() []corev1.VolumeMount {
 			Name:      m.controllerMCPKubeconfigSecretName(),
 			MountPath: fmt.Sprint("/app/ls/", m.controllerMCPKubeconfigSecretName()),
 		},
+	}
+
+	if m.values.Controller.CAConfigMap != nil {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      configmapsync.CustomCaVolumeName,
+			MountPath: configmapsync.CustomCaPath,
+			ReadOnly:  true,
+		})
 	}
 
 	return volumeMounts
@@ -136,10 +164,20 @@ func (m *webhooksDeploymentMutator) args() []string {
 }
 
 func (m *webhooksDeploymentMutator) env() []corev1.EnvVar {
-	return []corev1.EnvVar{
+	envVars := []corev1.EnvVar{
 		{
 			Name:  "KUBECONFIG",
 			Value: fmt.Sprint("/app/ls/", m.controllerMCPKubeconfigSecretName(), "/kubeconfig"),
 		},
 	}
+
+	if m.values.Controller.CAConfigMap != nil {
+		caEnvVar := corev1.EnvVar{
+			Name:  "SSL_CERT_DIR",
+			Value: configmapsync.SSLCertDirEnvValue(),
+		}
+		envVars = append(envVars, caEnvVar)
+	}
+
+	return envVars
 }

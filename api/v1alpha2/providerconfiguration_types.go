@@ -18,6 +18,7 @@ package v1alpha2
 
 import (
 	"github.com/openmcp-project/openmcp-operator/api/common"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -34,6 +35,10 @@ const (
 type ProviderConfigSpec struct {
 	// +kubebuilder:validation:Required
 	Deployment Deployment `json:"deployment"`
+	// CABundleRef is a reference to a config map containing a PEM-encoded certificate bundle.
+	// It will be installed on the OpenControlPlane and configured for the domain service.
+	// +kubebuilder:validation:Optional
+	CABundleRef *corev1.ConfigMapKeySelector `json:"caBundleRef,omitempty"`
 }
 
 // ProviderConfigStatus is the status of the Landscaper Service Provider configuration

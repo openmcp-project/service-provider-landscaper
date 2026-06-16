@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
+	"github.com/openmcp-project/controller-utils/pkg/resources"
 	"github.com/openmcp-project/openmcp-operator/api/common"
 	"github.com/openmcp-project/openmcp-operator/api/provider/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/openmcp-project/service-provider-landscaper/api/v1alpha2"
 	"github.com/openmcp-project/service-provider-landscaper/internal/installer/instance"
+	configmapsync "github.com/openmcp-project/service-provider-landscaper/internal/shared/configmaps"
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 )
 
@@ -153,6 +155,25 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return reconcile.Result{}, status, err
 	}
 
+	if providerConfig.Spec.CABundleRef != nil {
+		if err := resources.CreateOrUpdateResource(ctx, conf.WorkloadCluster.Client(), resources.NewNamespaceMutator(conf.Instance.Namespace())); err != nil {
+			return reconcile.Result{}, status, err
+		}
+		caConfigMapSync := configmapsync.ConfigMapSync{
+			PlatformCluster:          r.PlatformCluster,
+			PlatformClusterNamespace: conf.PlatformClusterNamespace,
+			WorkloadCluster:          conf.WorkloadCluster,
+			WorkloadClusterNamespace: conf.Instance.Namespace(),
+		}
+
+		caConfigMap, err := caConfigMapSync.CreateOrUpdate(ctx, providerConfig.Spec.CABundleRef)
+		if err != nil {
+			return reconcile.Result{}, status, fmt.Errorf("failed to sync CA bundle configmap: %w", err)
+		}
+
+		conf.CaConfigMap = caConfigMap
+	}
+
 	if err := instance.InstallLandscaperInstance(ctx, conf); err != nil {
 		log.Error(err, "failed to install landscaper instance")
 		status.setInstallFailed(err)
@@ -263,6 +284,18 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 			log.Error(err, "failed to delete TLS route for landscaper instance")
 			status.SetUninstallDNSConfigFailed(err)
 			return reconcile.Result{}, status, err
+		}
+
+		if providerConfig.Spec.CABundleRef != nil {
+			caConfigMapSync := configmapsync.ConfigMapSync{
+				WorkloadCluster:          conf.WorkloadCluster,
+				WorkloadClusterNamespace: conf.Instance.Namespace(),
+			}
+			if err := caConfigMapSync.Delete(ctx, providerConfig.Spec.CABundleRef); err != nil {
+				if !apierrors.IsNotFound(err) {
+					return reconcile.Result{}, status, fmt.Errorf("failed to delete synced CA bundle configmap: %w", err)
+				}
+			}
 		}
 
 		if err = instance.UninstallLandscaperInstance(ctx, conf); err != nil {

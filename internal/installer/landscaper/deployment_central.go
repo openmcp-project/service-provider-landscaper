@@ -11,6 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openmcp-project/controller-utils/pkg/resources"
+
+	configmapsync "github.com/openmcp-project/service-provider-landscaper/internal/shared/configmaps"
 )
 
 type centralDeploymentMutator struct {
@@ -129,6 +131,24 @@ func (m *centralDeploymentMutator) volumes() []corev1.Volume {
 		},
 	}
 
+	if m.values.Controller.CAConfigMap != nil {
+		caVolume := corev1.Volume{
+			Name: configmapsync.CustomCaVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: m.values.Controller.CAConfigMap.LocalObjectReference,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  m.values.Controller.CAConfigMap.Key,
+							Path: m.values.Controller.CAConfigMap.Key,
+						},
+					},
+				},
+			},
+		}
+		volumes = append(volumes, caVolume)
+	}
+
 	return volumes
 }
 
@@ -152,6 +172,14 @@ func (m *centralDeploymentMutator) volumeMounts() []corev1.VolumeMount {
 		},
 	}
 
+	if m.values.Controller.CAConfigMap != nil {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      configmapsync.CustomCaVolumeName,
+			MountPath: configmapsync.CustomCaPath,
+			ReadOnly:  true,
+		})
+	}
+
 	return volumeMounts
 }
 
@@ -168,7 +196,7 @@ func (m *centralDeploymentMutator) args() []string {
 }
 
 func (m *centralDeploymentMutator) env() []corev1.EnvVar {
-	return []corev1.EnvVar{
+	envVars := []corev1.EnvVar{
 		{
 			Name:  "KUBECONFIG",
 			Value: fmt.Sprint("/app/ls/", m.controllerWorkloadKubeconfigSecretName(), "/kubeconfig"),
@@ -210,6 +238,16 @@ func (m *centralDeploymentMutator) env() []corev1.EnvVar {
 			Value: strconv.FormatInt(int64(m.values.Controller.MCPClientSettings.QPS), 10),
 		},
 	}
+
+	if m.values.Controller.CAConfigMap != nil {
+		caEnvVar := corev1.EnvVar{
+			Name:  "SSL_CERT_DIR",
+			Value: configmapsync.SSLCertDirEnvValue(),
+		}
+		envVars = append(envVars, caEnvVar)
+	}
+
+	return envVars
 }
 
 func (m *centralDeploymentMutator) ports() []corev1.ContainerPort {

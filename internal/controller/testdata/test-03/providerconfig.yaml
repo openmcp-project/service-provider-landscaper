@@ -5,6 +5,9 @@ metadata:
     landscaper.services.openmcp.cloud/providertype: default
   name: default
 spec:
+  caBundleRef:
+    name: ca-bundle
+    key: ca.crt
   deployment:
     repository: registry.test/components
     availableVersions:

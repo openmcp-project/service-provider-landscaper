@@ -10,6 +10,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/openmcp-project/service-provider-landscaper/internal/dns"
+	configmapsync "github.com/openmcp-project/service-provider-landscaper/internal/shared/configmaps"
 
 	"github.com/openmcp-project/service-provider-landscaper/internal/shared/identity"
 
@@ -42,7 +43,9 @@ import (
 )
 
 const (
-	controllerName = "test-controller"
+	controllerName  = "test-controller"
+	caConfigMapName = "ca-bundle"
+	caConfigMapKey  = "ca.crt"
 )
 
 func setDeploymentReady(ctx context.Context, deployment *appsv1.Deployment, c client.Client) {
@@ -77,6 +80,52 @@ func expectImagePullSecretsValid(ctx context.Context, c client.Client, deploymen
 		Expect(secret.Type).To(Equal(corev1.SecretTypeDockerConfigJson))
 		Expect(secret.Data).To(HaveKey(".dockerconfigjson"))
 	}
+}
+
+// expectCaConfigMapValid verifies that a deployment mounts CA configmaps at the expected path
+// and that each referenced configmap exists in the given namespace with the expected key.
+func expectCaConfigMapValid(ctx context.Context, c client.Client, deployment *appsv1.Deployment, namespace string) {
+	var foundVolumeMount bool
+	var foundVolume bool
+	var foundEnvVar bool
+
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		for _, volumeMount := range container.VolumeMounts {
+			if volumeMount.Name == configmapsync.CustomCaVolumeName {
+				foundVolumeMount = true
+				break
+			}
+		}
+	}
+
+	for _, volume := range deployment.Spec.Template.Spec.Volumes {
+		if volume.Name == configmapsync.CustomCaVolumeName {
+			foundVolume = true
+			break
+		}
+	}
+
+	for _, container := range deployment.Spec.Template.Spec.Containers {
+		for _, envVar := range container.Env {
+			if envVar.Value == configmapsync.SSLCertDirEnvValue() {
+				foundEnvVar = true
+			}
+		}
+	}
+
+	Expect(foundVolumeMount).To(BeTrue())
+	Expect(foundVolume).To(BeTrue())
+	Expect(foundEnvVar).To(BeTrue())
+
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      caConfigMapName,
+			Namespace: namespace,
+		},
+	}
+	Expect(c.Get(ctx, client.ObjectKeyFromObject(configMap), configMap)).To(Succeed())
+	Expect(configMap.Data).To(HaveKey(caConfigMapKey))
+
 }
 
 type testInstanceClusterAccess struct {
@@ -395,6 +444,13 @@ var _ = Describe("Landscaper Controller", func() {
 			expectImagePullSecretsValid(env.Ctx, env.Client(), lsWebhooksServerDeployment, 2, installationNamespace)
 			expectImagePullSecretsValid(env.Ctx, env.Client(), manifestDeployerDeployment, 2, installationNamespace)
 			expectImagePullSecretsValid(env.Ctx, env.Client(), helmDeployerDeployment, 1, installationNamespace)
+
+			// expect the synced CA configmap to be mounted for all component deployments
+			expectCaConfigMapValid(env.Ctx, env.Client(), lsControllerDeployment, installationNamespace)
+			expectCaConfigMapValid(env.Ctx, env.Client(), lsMainDeployment, installationNamespace)
+			expectCaConfigMapValid(env.Ctx, env.Client(), lsWebhooksServerDeployment, installationNamespace)
+			expectCaConfigMapValid(env.Ctx, env.Client(), manifestDeployerDeployment, installationNamespace)
+			expectCaConfigMapValid(env.Ctx, env.Client(), helmDeployerDeployment, installationNamespace)
 
 			// set deployments to ready
 			setDeploymentReady(env.Ctx, lsControllerDeployment, env.Client())
