@@ -155,7 +155,7 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 		return reconcile.Result{}, status, err
 	}
 
-	if providerConfig.Spec.CaBundleRef != nil {
+	if providerConfig.Spec.CABundleRef != nil {
 		if err := resources.CreateOrUpdateResource(ctx, conf.WorkloadCluster.Client(), resources.NewNamespaceMutator(conf.Instance.Namespace())); err != nil {
 			return reconcile.Result{}, status, err
 		}
@@ -166,7 +166,7 @@ func (r *LandscaperReconciler) handleCreateUpdateOperation(ctx context.Context,
 			WorkloadClusterNamespace: conf.Instance.Namespace(),
 		}
 
-		caConfigMap, err := caConfigMapSync.CreateOrUpdate(ctx, providerConfig.Spec.CaBundleRef)
+		caConfigMap, err := caConfigMapSync.CreateOrUpdate(ctx, providerConfig.Spec.CABundleRef)
 		if err != nil {
 			return reconcile.Result{}, status, fmt.Errorf("failed to sync CA bundle configmap: %w", err)
 		}
@@ -286,12 +286,12 @@ func (r *LandscaperReconciler) handleDeleteOperation(ctx context.Context, ls *v1
 			return reconcile.Result{}, status, err
 		}
 
-		if providerConfig.Spec.CaBundleRef != nil {
+		if providerConfig.Spec.CABundleRef != nil {
 			caConfigMapSync := configmapsync.ConfigMapSync{
 				WorkloadCluster:          conf.WorkloadCluster,
 				WorkloadClusterNamespace: conf.Instance.Namespace(),
 			}
-			if err := caConfigMapSync.Delete(ctx, providerConfig.Spec.CaBundleRef); err != nil {
+			if err := caConfigMapSync.Delete(ctx, providerConfig.Spec.CABundleRef); err != nil {
 				if !apierrors.IsNotFound(err) {
 					return reconcile.Result{}, status, fmt.Errorf("failed to delete synced CA bundle configmap: %w", err)
 				}

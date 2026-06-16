@@ -38,7 +38,7 @@ type ProviderConfigSpec struct {
 	// CABundleRef is a reference to a config map containing a PEM-encoded certificate bundle.
 	// It will be installed on the OpenControlPlane and configured for the domain service.
 	// +kubebuilder:validation:Optional
-	CaBundleRef *corev1.ConfigMapKeySelector `json:"caBundleRef,omitempty"`
+	CABundleRef *corev1.ConfigMapKeySelector `json:"caBundleRef,omitempty"`
 }
 
 // ProviderConfigStatus is the status of the Landscaper Service Provider configuration

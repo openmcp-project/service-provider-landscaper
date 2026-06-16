@@ -255,8 +255,8 @@ func (in *ProviderConfigList) DeepCopyObject() runtime.Object {
 func (in *ProviderConfigSpec) DeepCopyInto(out *ProviderConfigSpec) {
 	*out = *in
 	in.Deployment.DeepCopyInto(&out.Deployment)
-	if in.CaBundleRef != nil {
-		in, out := &in.CaBundleRef, &out.CaBundleRef
+	if in.CABundleRef != nil {
+		in, out := &in.CABundleRef, &out.CABundleRef
 		*out = new(v1.ConfigMapKeySelector)
 		(*in).DeepCopyInto(*out)
 	}

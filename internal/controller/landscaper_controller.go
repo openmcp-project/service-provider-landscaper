@@ -297,7 +297,7 @@ func (r *LandscaperReconciler) isReferencedCaConfigMap(ctx context.Context, conf
 	}
 
 	for _, providerConfig := range providerConfigList.Items {
-		if providerConfig.Spec.CaBundleRef != nil && providerConfig.Spec.CaBundleRef.Name == configMapName {
+		if providerConfig.Spec.CABundleRef != nil && providerConfig.Spec.CABundleRef.Name == configMapName {
 			return true
 		}
 	}
