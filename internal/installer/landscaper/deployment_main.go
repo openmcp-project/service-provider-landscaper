@@ -1,6 +1,8 @@
 package landscaper
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -86,8 +88,16 @@ func (m *mainDeploymentMutator) strategy() appsv1.DeploymentStrategy {
 }
 
 func (m *mainDeploymentMutator) templateAnnotations() map[string]string {
+	hash := sha256.Sum256([]byte(m.values.Controller.MCPKubeconfig))
+	mcpKubeconfigHash := hex.EncodeToString(hash[:])
+
+	hash = sha256.Sum256([]byte(m.values.Controller.WorkloadKubeconfig))
+	workloadKubeconfigHash := hex.EncodeToString(hash[:])
+
 	annotations := map[string]string{
-		"checksum/config": m.configHash,
+		"checksum/config":             m.configHash,
+		"checksum/mcpKubeconfig":      mcpKubeconfigHash,
+		"checksum/workloadKubeconfig": workloadKubeconfigHash,
 	}
 	return annotations
 }
