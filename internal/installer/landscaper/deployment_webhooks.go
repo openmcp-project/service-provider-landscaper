@@ -1,6 +1,8 @@
 package landscaper
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -59,7 +61,8 @@ func (m *webhooksDeploymentMutator) Mutate(r *appsv1.Deployment) error {
 		Selector: &metav1.LabelSelector{MatchLabels: m.webhooksComponent.SelectorLabels()},
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: m.webhooksComponent.DeploymentTemplateLabels(),
+				Labels:      m.webhooksComponent.DeploymentTemplateLabels(),
+				Annotations: m.templateAnnotations(),
 			},
 			Spec: corev1.PodSpec{
 				AutomountServiceAccountToken: ptr.To(false),
@@ -72,6 +75,16 @@ func (m *webhooksDeploymentMutator) Mutate(r *appsv1.Deployment) error {
 		},
 	}
 	return nil
+}
+
+func (m *webhooksDeploymentMutator) templateAnnotations() map[string]string {
+	hash := sha256.Sum256([]byte(m.values.Controller.MCPKubeconfig))
+	mcpKubeconfigHash := hex.EncodeToString(hash[:])
+
+	annotations := map[string]string{
+		"checksum/mcpKubeconfig": mcpKubeconfigHash,
+	}
+	return annotations
 }
 
 func (m *webhooksDeploymentMutator) containers() []corev1.Container {

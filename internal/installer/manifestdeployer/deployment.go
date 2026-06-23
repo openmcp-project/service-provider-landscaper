@@ -1,6 +1,8 @@
 package manifestdeployer
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -86,8 +88,12 @@ func (d *deploymentMutator) strategy() appsv1.DeploymentStrategy {
 }
 
 func (d *deploymentMutator) templateAnnotations() map[string]string {
+	hash := sha256.Sum256([]byte(d.values.MCPClusterKubeconfig))
+	mcpKubeconfigHash := hex.EncodeToString(hash[:])
+
 	annotations := map[string]string{
-		"checksum/config": d.configHash,
+		"checksum/config":        d.configHash,
+		"checksum/mcpKubeconfig": mcpKubeconfigHash,
 	}
 	return annotations
 }
