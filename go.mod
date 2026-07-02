@@ -9,8 +9,8 @@ require (
 	github.com/onsi/gomega v1.42.0
 	github.com/openmcp-project/controller-utils v0.30.0
 	github.com/openmcp-project/landscaper/apis v1.2.2
-	github.com/openmcp-project/openmcp-operator/api v1.0.1
-	github.com/openmcp-project/openmcp-operator/lib v1.0.1
+	github.com/openmcp-project/openmcp-operator/api v1.1.0
+	github.com/openmcp-project/openmcp-operator/lib v1.1.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/exp v0.0.0-20260611194520-c48552f49976
 	k8s.io/api v0.36.2
@@ -36,7 +36,6 @@ require (
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fluxcd/pkg/apis/meta v1.28.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
