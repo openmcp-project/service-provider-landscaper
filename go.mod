@@ -5,12 +5,12 @@ go 1.26.5
 //godebug default=go1.23
 
 require (
-	github.com/onsi/ginkgo/v2 v2.31.0
+	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.1
 	github.com/openmcp-project/controller-utils v0.30.0
 	github.com/openmcp-project/landscaper/apis v1.2.2
-	github.com/openmcp-project/openmcp-operator/api v1.1.0
-	github.com/openmcp-project/openmcp-operator/lib v1.1.0
+	github.com/openmcp-project/openmcp-operator/api v1.2.0
+	github.com/openmcp-project/openmcp-operator/lib v1.2.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/exp v0.0.0-20260611194520-c48552f49976
 	k8s.io/api v0.36.2
