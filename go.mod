@@ -9,8 +9,8 @@ require (
 	github.com/onsi/gomega v1.42.1
 	github.com/openmcp-project/controller-utils v0.31.0
 	github.com/openmcp-project/landscaper/apis v1.2.2
-	github.com/openmcp-project/openmcp-operator/api v1.2.0
-	github.com/openmcp-project/openmcp-operator/lib v1.2.0
+	github.com/openmcp-project/openmcp-operator/api v1.3.0
+	github.com/openmcp-project/openmcp-operator/lib v1.3.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/exp v0.0.0-20260709172345-9ea1abe57597
 	k8s.io/api v0.36.2
