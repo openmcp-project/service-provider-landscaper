@@ -3,8 +3,9 @@ package identity
 import (
 	"fmt"
 
+	"maps"
+
 	"github.com/openmcp-project/controller-utils/pkg/controller"
-	"golang.org/x/exp/maps"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
