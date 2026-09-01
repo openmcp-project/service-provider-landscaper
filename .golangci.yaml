@@ -42,6 +42,10 @@ linters:
           - unparam
         path: internal/controller/reconcile.go
 
+      - linters:
+          - goconst
+        path: _test\.go
+
     paths:
       - third_party$
       - builtin$
