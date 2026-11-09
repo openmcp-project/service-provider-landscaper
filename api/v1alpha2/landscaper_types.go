@@ -95,6 +95,7 @@ type LandscaperStatus struct {
 // +kubebuilder:printcolumn:JSONPath=`.status.phase`,name="Phase",type=string
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:metadata:labels="openmcp.cloud/cluster=onboarding"
+// +kubebuilder:metadata:labels="services.open-control-plane.io/kind=Landscaper"
 
 // Landscaper is the Schema for the landscapers API.
 type Landscaper struct {
